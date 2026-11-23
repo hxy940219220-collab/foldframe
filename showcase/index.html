@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Foldframe · AI 内容创作与发布工作台</title>
-  <meta name="description" content="把多模态 AI 创作、无限画布节点协作、多维二创与多平台仿真排版发布串成一条可控的本地工作流。" />
-  <meta property="og:title" content="Foldframe · AI 内容创作与发布工作台" />
-  <meta property="og:description" content="从灵感到全平台成片发布：快捷工作台、无限画布 Agent、多维改图、仿真手机排版工坊与本机多模型 CLI 桥接。" />
+  <title>Foldframe · AI 内容创作与多端发布工作台</title>
+  <meta name="description" content="覆盖商业生图、短视频制作、多维改图、仿真手机排版、13+ 平台发布待办与本机多模型接入的一体化 AI 工作台。" />
+  <meta property="og:title" content="Foldframe · AI 内容创作与多端发布工作台" />
+  <meta property="og:description" content="从商业产品图、写实人像、品牌海报和短视频创作，到手机端实时排版、多平台发布待办与本机 Antigravity / Codex / 即梦模型接入。" />
   <meta property="og:image" content="/images/layout-workshop.webp" />
   <meta property="og:type" content="website" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -20,12 +20,10 @@
       --line: rgba(255, 255, 255, 0.10);
       --line-strong: rgba(255, 255, 255, 0.18);
       --text: #f5f7ff;
-      --body: #c5c9da;
+      --body: #c9cddf;
       --muted: #8b90a6;
       --accent: #a78bfa;
-      --accent-2: #38bdf8;
       --warm: #f3c489;
-      --radius: 16px;
     }
 
     * { box-sizing: border-box; }
@@ -33,12 +31,12 @@
     body {
       margin: 0;
       background:
-        radial-gradient(900px 520px at 50% -120px, rgba(139, 92, 246, 0.18), transparent 65%),
+        radial-gradient(900px 520px at 50% -120px, rgba(139, 92, 246, 0.16), transparent 65%),
         radial-gradient(700px 420px at 85% 18%, rgba(56, 189, 248, 0.08), transparent 60%),
         var(--bg);
       color: var(--text);
       font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
-      line-height: 1.65;
+      line-height: 1.68;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -46,7 +44,7 @@
     img { max-width: 100%; display: block; }
 
     .wrap {
-      width: min(1160px, calc(100% - 40px));
+      width: min(1200px, calc(100% - 40px));
       margin-inline: auto;
     }
 
@@ -56,7 +54,7 @@
       top: 0;
       z-index: 40;
       border-bottom: 1px solid var(--line);
-      background: rgba(8, 8, 17, 0.82);
+      background: rgba(8, 8, 17, 0.84);
       backdrop-filter: blur(18px);
     }
     .topbar-inner {
@@ -89,7 +87,7 @@
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
     .nav-link {
@@ -110,15 +108,14 @@
 
     /* Hero */
     .hero {
-      padding: clamp(44px, 7vw, 84px) 0 36px;
+      padding: clamp(40px, 6vw, 76px) 0 32px;
     }
     .eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 10px;
       font-size: 12px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
+      letter-spacing: 0.1em;
       color: var(--warm);
       font-weight: 500;
     }
@@ -130,22 +127,22 @@
       box-shadow: 0 0 12px var(--accent);
     }
     h1 {
-      margin: 14px 0 0;
+      margin: 12px 0 0;
       font-family: "Noto Serif SC", "Songti SC", serif;
-      font-size: clamp(2.15rem, 5vw, 3.85rem);
+      font-size: clamp(2.1rem, 4.8vw, 3.6rem);
       font-weight: 500;
-      line-height: 1.18;
+      line-height: 1.2;
       letter-spacing: 0.02em;
     }
     .lead {
-      margin: 18px 0 0;
-      max-width: 44em;
-      font-size: clamp(1rem, 1.55vw, 1.16rem);
+      margin: 16px 0 0;
+      max-width: 48em;
+      font-size: clamp(1rem, 1.45vw, 1.12rem);
       color: var(--body);
-      line-height: 1.75;
+      line-height: 1.78;
     }
     .hero-actions {
-      margin-top: 26px;
+      margin-top: 24px;
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
@@ -177,7 +174,7 @@
 
     /* Interactive Stage */
     .stage-card {
-      margin-top: 34px;
+      margin-top: 32px;
       border: 1px solid var(--line-strong);
       border-radius: 22px;
       background: var(--surface);
@@ -205,9 +202,9 @@
       background: transparent;
       color: var(--muted);
       font-family: inherit;
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 500;
-      padding: 7px 14px;
+      padding: 7px 13px;
       border-radius: 999px;
       cursor: pointer;
       transition: all .18s;
@@ -239,27 +236,27 @@
       grid-template-columns: 1fr auto;
       gap: 16px;
       align-items: center;
-      padding: 16px 20px;
+      padding: 18px 22px;
       border-top: 1px solid var(--line);
       background: var(--surface-2);
     }
     .stage-meta h3 {
       margin: 0;
-      font-size: 15px;
+      font-size: 15.5px;
       font-weight: 600;
       color: var(--text);
     }
     .stage-meta p {
-      margin: 4px 0 0;
-      font-size: 13px;
+      margin: 5px 0 0;
+      font-size: 13.5px;
       color: var(--body);
     }
     .zoom-chip {
       border: 1px solid var(--line-strong);
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(255, 255, 255, 0.05);
       color: var(--text);
       font-size: 12px;
-      padding: 7px 13px;
+      padding: 8px 14px;
       border-radius: 999px;
       cursor: pointer;
       white-space: nowrap;
@@ -281,20 +278,19 @@
     }
     .stat-k {
       font-size: 11px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
+      letter-spacing: 0.08em;
       color: var(--muted);
     }
     .stat-v {
       margin-top: 6px;
-      font-size: 15px;
+      font-size: 14.5px;
       font-weight: 600;
       color: var(--text);
     }
 
     /* Section */
     section.block {
-      padding: 56px 0 12px;
+      padding: 58px 0 12px;
     }
     .section-head {
       display: flex;
@@ -304,113 +300,89 @@
       flex-wrap: wrap;
       padding-bottom: 14px;
       border-bottom: 1px solid var(--line);
-      margin-bottom: 28px;
+      margin-bottom: 30px;
     }
     .section-head h2 {
       margin: 0;
       font-family: "Noto Serif SC", "Songti SC", serif;
-      font-size: clamp(1.55rem, 3.2vw, 2.35rem);
+      font-size: clamp(1.55rem, 3.2vw, 2.3rem);
       font-weight: 500;
     }
     .section-head p {
       margin: 0;
-      font-size: 13px;
+      font-size: 13.5px;
       color: var(--muted);
-      max-width: 36em;
+      max-width: 38em;
     }
 
-    /* Walkthrough cards */
+    /* Full-width Retina Walkthrough (crisp large screenshots!) */
     .walkthrough {
       display: grid;
-      gap: 28px;
+      gap: 44px;
     }
-    .step-card {
+    .step-block {
       border: 1px solid var(--line);
-      border-radius: 20px;
+      border-radius: 22px;
       background: var(--surface);
       overflow: hidden;
-      display: grid;
-      grid-template-columns: 0.36fr 0.64fr;
     }
-    .step-copy {
-      padding: 28px;
-      border-right: 1px solid var(--line);
+    .step-header {
+      padding: 24px 28px 20px;
       display: flex;
-      flex-direction: column;
+      flex-wrap: wrap;
+      align-items: flex-start;
       justify-content: space-between;
-      gap: 18px;
+      gap: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .step-title-row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
     }
     .step-num {
       font-family: "Noto Serif SC", serif;
-      font-size: 32px;
+      font-size: 26px;
       line-height: 1;
-      color: var(--accent);
-    }
-    .step-copy h3 {
-      margin: 10px 0 8px;
-      font-size: 19px;
+      color: var(--warm);
       font-weight: 600;
-      line-height: 1.35;
     }
-    .step-copy p {
+    .step-header h3 {
       margin: 0;
-      font-size: 13.5px;
+      font-size: clamp(1.1rem, 2vw, 1.38rem);
+      font-weight: 600;
+      color: var(--text);
+    }
+    .step-desc {
+      margin: 10px 0 0;
+      max-width: 56em;
+      font-size: 14px;
       color: var(--body);
-      line-height: 1.75;
+      line-height: 1.78;
     }
     .step-tags {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
+      padding-top: 4px;
     }
     .step-tag {
-      font-size: 11px;
-      padding: 4px 10px;
+      font-size: 11.5px;
+      padding: 4px 11px;
       border-radius: 999px;
       border: 1px solid var(--line-strong);
       color: var(--body);
       background: rgba(255, 255, 255, 0.03);
+      white-space: nowrap;
     }
     .step-media {
       background: #0d0d17;
-      display: flex;
-      align-items: center;
       cursor: zoom-in;
     }
     .step-media img {
       width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    /* Architecture grid */
-    .arch-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-    }
-    .arch-box {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: var(--surface);
-      padding: 22px;
-    }
-    .arch-label {
-      font-size: 11px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--warm);
-    }
-    .arch-box h3 {
-      margin: 10px 0 8px;
-      font-size: 16px;
-      font-weight: 600;
-    }
-    .arch-box p {
-      margin: 0;
-      font-size: 13px;
-      color: var(--body);
-      line-height: 1.7;
+      height: auto;
     }
 
     .footer {
@@ -433,27 +405,27 @@
       position: fixed;
       inset: 0;
       z-index: 100;
-      background: rgba(4, 4, 10, 0.88);
+      background: rgba(4, 4, 10, 0.90);
       backdrop-filter: blur(10px);
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 20px;
     }
     .lightbox.open { display: flex; }
     .lightbox-inner {
-      max-width: min(1320px, 95vw);
-      max-height: 92vh;
+      max-width: min(1400px, 96vw);
+      max-height: 94vh;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
     .lightbox-inner img {
-      max-height: 82vh;
+      max-height: 85vh;
       width: auto;
       border-radius: 14px;
       border: 1px solid var(--line-strong);
-      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
     }
     .lightbox-bar {
       display: flex;
@@ -474,10 +446,8 @@
 
     @media (max-width: 900px) {
       .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .step-card { grid-template-columns: 1fr; }
-      .step-copy { border-right: none; border-bottom: 1px solid var(--line); }
-      .arch-grid { grid-template-columns: 1fr; }
       .stage-meta { grid-template-columns: 1fr; }
+      .step-header { padding: 18px 20px; }
     }
   </style>
 </head>
@@ -490,10 +460,9 @@
       </a>
       <nav class="nav-links" aria-label="页面导航">
         <a href="#interactive" class="nav-link">界面体验</a>
-        <a href="#walkthrough" class="nav-link">完整流程</a>
-        <a href="#architecture" class="nav-link">本机架构</a>
+        <a href="#walkthrough" class="nav-link">7 大核心功能</a>
         <a href="https://github.com/hxy940219220-collab/foldframe" target="_blank" rel="noopener noreferrer" class="nav-link nav-pill">GitHub 源码 ↗</a>
-        <a href="https://www.huangxiyuan.net/projects/foldframe" class="nav-link nav-pill">返回个人作品集</a>
+        <a href="https://www.huangxiyuan.net/projects/foldframe" class="nav-link nav-pill">返回作品集</a>
       </nav>
     </div>
   </header>
@@ -502,190 +471,223 @@
     <section class="hero">
       <div class="eyebrow">
         <span class="eyebrow-dot"></span>
-        <span>AI Content Creation &amp; Multi-Platform Publishing Workbench</span>
+        <span>AI 内容创作与多端发布工作台</span>
       </div>
-      <h1>Foldframe · AI 内容创作与发布工作台</h1>
+      <h1>Foldframe · 从商业设计到多平台发布</h1>
       <p class="lead">
-        面向自媒体与内容团队的一体化本地工作台。将「内容创作（快捷工作台 / 无限画布 / 多维改图）」「AI 生成素材库」与「AI 发布（对话发布 / 手机端实时排版工坊 / 发布待办）」串成一条可控闭环，并直连本机多模型 CLI 引擎。
+        面向内容团队与品牌运营的一体化 AI 工作台。不仅支持商业产品图、写实人物照、品牌广告、宣传短视频和文案创作，还能直接在手机端排版预览、统一管理 13 个国内外社媒平台的发布待办，并直连电脑本机的 Antigravity、Codex、即梦 AI 等模型引擎。
       </p>
       <div class="hero-actions">
-        <a href="#interactive" class="btn btn-primary">切换真实界面预览 ↓</a>
-        <a href="https://github.com/hxy940219220-collab/foldframe" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">查看 GitHub 仓库 ↗</a>
+        <a href="#walkthrough" class="btn btn-primary">查看 7 大核心功能 ↓</a>
+        <a href="https://github.com/hxy940219220-collab/foldframe" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">GitHub 源码 ↗</a>
         <a href="https://www.huangxiyuan.net/#project-foldframe" class="btn btn-ghost">huangxiyuan.net ↗</a>
       </div>
 
-      <!-- Interactive Screenshot Explorer -->
+      <!-- Interactive Retina Stage -->
       <div id="interactive" class="stage-card">
         <div class="stage-tabs">
           <div class="tab-group" role="tablist" aria-label="核心模块切换">
-            <button class="tab-btn" role="tab" aria-selected="true" data-key="layout">01 排版工坊</button>
-            <button class="tab-btn" role="tab" aria-selected="false" data-key="workspace">02 快捷工作台</button>
-            <button class="tab-btn" role="tab" aria-selected="false" data-key="canvas">03 无限画布</button>
-            <button class="tab-btn" role="tab" aria-selected="false" data-key="remix">04 多维改图</button>
-            <button class="tab-btn" role="tab" aria-selected="false" data-key="assets">05 AI 素材库</button>
+            <button class="tab-btn" role="tab" aria-selected="true" data-key="layout">1. 排版工坊</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="workspace">2. 创作工作台</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="canvas">3. 无限画布</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="remix">4. 多维改图</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="assets">5. AI 素材库</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="publish">6. 发布待办</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="models">7. 模型接入</button>
           </div>
-          <span class="stage-hint">点击画面查看大图 · 支持左右方向键切换</span>
+          <span class="stage-hint">2x Retina 原图 · 点击放大 · 支持左右方向键切换</span>
         </div>
 
         <div class="stage-viewport" id="stageViewport">
-          <img id="stageImg" src="/images/layout-workshop.webp" alt="Foldframe 排版工坊：左侧图文/视频编辑区，右侧仿真手机实时预览与竖排比例工具栏" />
+          <img id="stageImg" src="/images/layout-workshop.webp" width="2880" height="1800" alt="Foldframe 排版工坊超清实拍" />
         </div>
 
         <div class="stage-meta">
           <div>
-            <h3 id="stageTitle">AI 发布 · 排版工坊（仿真手机实时预览）</h3>
-            <p id="stageDesc">入口严格区分「图文发布」与「视频发布」，左侧仅保留唯一「+」号支持本地上传或从资产库挑选；右侧仿真手机实时同步标题、正文与标签，紧贴手机右侧的竖排比例栏支持一键切 3:4 / 1:1 / 4:3 / 原图、拖动取景、单击自由裁剪与按比例重构。</p>
+            <h3 id="stageTitle">排版工坊 · 手机端所见即所得预览与文案排版</h3>
+            <p id="stageDesc">图文发布与视频发布严格分开，右侧仿真手机实时同步小红书、抖音与 Instagram 排版效果；支持在手机旁切换 3:4 / 1:1 / 4:3 / 原图、拖动微调构图、手动裁剪与一键重构比例。</p>
           </div>
-          <button type="button" class="zoom-chip" id="stageZoomBtn">放大原图 ⤢</button>
+          <button type="button" class="zoom-chip" id="stageZoomBtn">查看 2K 原图 ⤢</button>
         </div>
       </div>
 
       <div class="stats">
         <div class="stat">
-          <div class="stat-k">Creation Modes</div>
+          <div class="stat-k">商业视觉类型</div>
+          <div class="stat-v">产品主图 · 写实人像 · 品牌海报 · 短视频</div>
+        </div>
+        <div class="stat">
+          <div class="stat-k">三种创作模式</div>
           <div class="stat-v">快捷工作台 · 无限画布 · 多维改图</div>
         </div>
         <div class="stat">
-          <div class="stat-k">Publishing Stage</div>
-          <div class="stat-v">AI 对话发布 · 仿真排版工坊</div>
+          <div class="stat-k">多平台发布待办</div>
+          <div class="stat-v">小红书 / 视频号 / B站 / YouTube / TikTok 等 13 端</div>
         </div>
         <div class="stat">
-          <div class="stat-k">Local Model Bridge</div>
-          <div class="stat-v">即梦 5.0 / Seedance · GPT Image 2 · 本机 LLM</div>
-        </div>
-        <div class="stat">
-          <div class="stat-k">Stack</div>
-          <div class="stat-v">Next.js 14 · NestJS · MongoDB · Docker</div>
+          <div class="stat-k">本地模型接入</div>
+          <div class="stat-v">Antigravity · Codex (GPT) · 即梦 AI · Ollama</div>
         </div>
       </div>
     </section>
 
     <section id="walkthrough" class="block">
       <div class="section-head">
-        <h2>从灵感到发布的五段真实工作流</h2>
-        <p>以下均为本地容器实跑截屏，不以概念稿替代真实交互。</p>
+        <h2>7 大核心功能全流程拆解</h2>
+        <p>所有界面均为本地实跑 2880×1800 超清截屏，点击任意图片可放大查看细节。</p>
       </div>
 
       <div class="walkthrough">
-        <article class="step-card">
-          <div class="step-copy">
+        <article class="step-block" id="step-1">
+          <div class="step-header">
             <div>
-              <div class="step-num">01</div>
-              <h3>内容创作 · 快捷工作台</h3>
-              <p>收拢式提示词栏支持拖拽上传参考图，并把「生成草稿（图文/视频）」与「生图 / 生视频」清晰解耦：草稿模式直连本机大语言模型生成结构化文案，图片与视频走独立多模态管线，点开任意成品即可在右侧查看提示词、模型、尺寸与真实积分消耗。</p>
+              <div class="step-title-row">
+                <span class="step-num">01</span>
+                <h3>内容创作工作台：商业生图、生视频、写文案一站完成</h3>
+              </div>
+              <p class="step-desc">在一个界面里就能完成商业产品主图、写实人物照、品牌海报、宣传短视频和图文文案生成。支持直接拖入参考图，点开任意一张成品还能在右侧看到提示词、所用模型、尺寸与积分消耗，方便团队复盘和复用。</p>
             </div>
             <div class="step-tags">
-              <span class="step-tag">纯 LLM 草稿</span>
-              <span class="step-tag">拖拽参考图</span>
-              <span class="step-tag">生成详情侧栏</span>
+              <span class="step-tag">商业产品图</span>
+              <span class="step-tag">写实人像与海报</span>
+              <span class="step-tag">宣传短视频</span>
+              <span class="step-tag">图文文案草稿</span>
             </div>
           </div>
-          <div class="step-media" data-zoom-src="/images/workspace.webp" data-zoom-title="内容创作 · 快捷工作台">
-            <img src="/images/workspace.webp" alt="Foldframe 快捷工作台：左侧导航栏、精简提示词栏与图文草稿混合资源网格" loading="lazy" />
+          <div class="step-media" data-zoom-src="/images/workspace.webp" data-zoom-title="01 内容创作工作台">
+            <img src="/images/workspace.webp" width="2880" height="1800" alt="Foldframe 内容创作工作台：展示商业耳机宣传短片、男女写实人物照、运动鞋与腕表产品图、新能源车与咖啡品牌广告以及图文文案草稿" loading="lazy" />
           </div>
         </article>
 
-        <article class="step-card">
-          <div class="step-copy">
+        <article class="step-block" id="step-2">
+          <div class="step-header">
             <div>
-              <div class="step-num">02</div>
-              <h3>无限画布 · 节点连线与 Agent 协作</h3>
-              <p>进入画布自动收起侧栏并水平居中展示已有资产，支持平滑阻尼缩放与一键居中整理；点击任意图片或视频节点时，下方就近弹出可编辑的参数与提示词面板，并可通过节点连线把多张图/视频串成二次衍生参考工作流。</p>
+              <div class="step-title-row">
+                <span class="step-num">02</span>
+                <h3>无限画布：把素材铺开整理，选中图片就能继续改图出新</h3>
+              </div>
+              <p class="step-desc">进入画布后，所有图片和视频会自动居中排开，不用在文件夹里来回翻找。点中任意一张图，下方就会直接弹出提示词和模型、比例、清晰度设置，改两句话就能继续生成新版本；也能把几张素材连上线作为参考，边做边让 AI 助手帮忙出创意。</p>
             </div>
             <div class="step-tags">
-              <span class="step-tag">自动居中画布</span>
-              <span class="step-tag">就近参数浮窗</span>
-              <span class="step-tag">图文/视频互连</span>
+              <span class="step-tag">自动居中排布</span>
+              <span class="step-tag">点图直接改词出图</span>
+              <span class="step-tag">多素材连线参考</span>
+              <span class="step-tag">AI 助手对话</span>
             </div>
           </div>
-          <div class="step-media" data-zoom-src="/images/canvas.webp" data-zoom-title="无限画布 · 节点连线与就近参数面板">
-            <img src="/images/canvas.webp" alt="Foldframe 无限画布：居中排布的节点网格、底部功能栏与图片下方弹出的提示词参数面板" loading="lazy" />
+          <div class="step-media" data-zoom-src="/images/canvas.webp" data-zoom-title="02 无限画布">
+            <img src="/images/canvas.webp" width="2880" height="1800" alt="Foldframe 无限画布：居中排布的商业人像、产品图与品牌广告，选中主图后在下方弹出可编辑的提示词和模型参数面板" loading="lazy" />
           </div>
         </article>
 
-        <article class="step-card">
-          <div class="step-copy">
+        <article class="step-block" id="step-3">
+          <div class="step-header">
             <div>
-              <div class="step-num">03</div>
-              <h3>多维改图 · 可控二创实验室</h3>
-              <p>围绕中心完整原图展开六个通俗维度（换镜头角度、换光影氛围、换背景场景、换画风质感、换穿搭造型、换表情动作）。每项内置景别/角度/风格等下拉预设，并可展开微调提示词后显式触发生成；参考图支持二次确认删除与多图首尾帧转视频。</p>
+              <div class="step-title-row">
+                <span class="step-num">03</span>
+                <h3>多维改图：不用写复杂提示词，按 6 个方向精准微调画面</h3>
+              </div>
+              <p class="step-desc">选好一张人物照或产品主图后，直接按「换镜头角度、换光影氛围、换背景场景、换画风质感、换穿搭造型、换表情动作」六个方向微调。每项内置了常用下拉选项，也可以点开修改提示词再生成；还能一键批量出 4 张，或选 2 张图直接转成宣传短视频。</p>
             </div>
             <div class="step-tags">
-              <span class="step-tag">六维预设 + 改词</span>
-              <span class="step-tag">原比例完整展示</span>
-              <span class="step-tag">删除二次确认</span>
+              <span class="step-tag">6 维可视化预设</span>
+              <span class="step-tag">支持编辑提示词</span>
+              <span class="step-tag">批量生成 4 张</span>
+              <span class="step-tag">首尾帧转视频</span>
             </div>
           </div>
-          <div class="step-media" data-zoom-src="/images/remix.webp" data-zoom-title="多维改图 · 六维可控二创">
-            <img src="/images/remix.webp" alt="Foldframe 多维改图：中心完整原图搭配左右六张可编辑预设与提示词卡片" loading="lazy" />
+          <div class="step-media" data-zoom-src="/images/remix.webp" data-zoom-title="03 多维改图">
+            <img src="/images/remix.webp" width="2880" height="1800" alt="Foldframe 多维改图：中心完整展示写实人物肖像，左右排布镜头、光影、背景、画风、穿搭、表情六组可编辑微调卡片" loading="lazy" />
           </div>
         </article>
 
-        <article class="step-card">
-          <div class="step-copy">
+        <article class="step-block" id="step-4">
+          <div class="step-header">
             <div>
-              <div class="step-num">04</div>
-              <h3>AI 发布 · 仿真手机排版工坊</h3>
-              <p>独立归属到「AI 发布」栏目下，入口即彻底隔离「图文发布」与「视频发布」。左侧精简为唯一「+」号（本地上传 / 资产库选择）与 AI 辅助写作卡；右侧仿真手机实时映射小红书、抖音与 Instagram 的笔记/封面效果，手机右侧竖排比例栏整合画幅切换、自由裁剪与按比例 AI 重构。</p>
+              <div class="step-title-row">
+                <span class="step-num">04</span>
+                <h3>AI 生成素材库：按类型与画面比例快速筛选所有图片和视频</h3>
+              </div>
+              <p class="step-desc">所有生成的商业产品图、写实人物、品牌海报和宣传短视频都会自动沉淀在这里。顶部支持按「全部 / 图片 / 视频」分类，以及按「竖版 / 横版 / 方图 / 9:16 / 3:4 / 1:1 / 16:9」一键筛选，每张卡片自动标注类型和真实比例，找素材一目了然。</p>
             </div>
             <div class="step-tags">
-              <span class="step-tag">图文/视频分流</span>
-              <span class="step-tag">竖排比例工具栏</span>
-              <span class="step-tag">拖拽取景 + 比例重构</span>
+              <span class="step-tag">图片 / 视频分类</span>
+              <span class="step-tag">多比例快速筛选</span>
+              <span class="step-tag">自动标注 3:4 / 1:1 / 16:9</span>
             </div>
           </div>
-          <div class="step-media" data-zoom-src="/images/layout-workshop.webp" data-zoom-title="AI 发布 · 排版工坊">
-            <img src="/images/layout-workshop.webp" alt="Foldframe 排版工坊：图文发布编辑区与仿真手机实时预览及右侧竖排比例栏" loading="lazy" />
+          <div class="step-media" data-zoom-src="/images/assets.webp" data-zoom-title="04 AI 生成素材库">
+            <img src="/images/assets.webp" width="2880" height="1800" alt="Foldframe AI 生成素材库：展示耳机宣传视频、写实男女人物照、运动鞋与护肤品 3:4 主图、腕表与冷泡茶 1:1 电商图及新能源车与咖啡 16:9 宽屏广告" loading="lazy" />
           </div>
         </article>
 
-        <article class="step-card">
-          <div class="step-copy">
+        <article class="step-block" id="step-5">
+          <div class="step-header">
             <div>
-              <div class="step-num">05</div>
-              <h3>AI 生成素材库 · 类型与比例速筛</h3>
-              <p>集中沉淀所有 AI 生成的图片与视频素材。顶部提供「全部 / 图片 / 视频」分类计数与比例下拉筛选（竖版、横版、方图及 9:16 / 3:4 / 1:1 / 16:9 等），前端自动识别真实像素尺寸并标注角标，点击大图即可回溯生成模型、参数与提示词。</p>
+              <div class="step-title-row">
+                <span class="step-num">05</span>
+                <h3>排版工坊：所见即所得的手机端预览与图文 / 视频分流</h3>
+              </div>
+              <p class="step-desc">入口处把「图文发布」和「视频发布」彻底分开。左侧点击「+」号即可从本地上传或直接从素材库选图，标题、正文和话题标签都能让 AI 一键辅助生成；右侧仿真手机实时呈现小红书、抖音和 Instagram 的发布效果，手机旁还能一键切 3:4 / 1:1 / 4:3 / 原图、拖动微调构图、手动裁剪或按目标比例重构画面。</p>
             </div>
             <div class="step-tags">
-              <span class="step-tag">类型 + 比例筛选</span>
-              <span class="step-tag">像素比例自动识别</span>
-              <span class="step-tag">可回溯生成元数据</span>
+              <span class="step-tag">图文 / 视频彻底分开</span>
+              <span class="step-tag">仿真手机实时预览</span>
+              <span class="step-tag">竖排比例与裁剪工具</span>
+              <span class="step-tag">AI 写标题与正文</span>
             </div>
           </div>
-          <div class="step-media" data-zoom-src="/images/assets.webp" data-zoom-title="AI 生成素材库 · 分类与比例筛选">
-            <img src="/images/assets.webp" alt="Foldframe AI 生成素材页：类型 Tabs、比例筛选框与带类型/9:16角标的瀑布流卡片" loading="lazy" />
+          <div class="step-media" data-zoom-src="/images/layout-workshop.webp" data-zoom-title="05 排版工坊">
+            <img src="/images/layout-workshop.webp" width="2880" height="1800" alt="Foldframe 排版工坊：3:4 极简琥珀护肤精华主图完整呈现在小红书仿真手机中，搭配右侧竖排比例栏与左侧图文写作区" loading="lazy" />
           </div>
         </article>
-      </div>
-    </section>
 
-    <section id="architecture" class="block">
-      <div class="section-head">
-        <h2>本机多模型桥接与工程架构</h2>
-        <p>基于 MIT 开源底座深度定制，所有模型凭证与生成资产均可留在本地闭环运行。</p>
-      </div>
+        <article class="step-block" id="step-6">
+          <div class="step-header">
+            <div>
+              <div class="step-title-row">
+                <span class="step-num">06</span>
+                <h3>发布待办：多平台账号统一管理、排期与一键分发</h3>
+              </div>
+              <p class="step-desc">做好的图文和视频可以直接流转到「发布待办」进行日历排期和跨平台分发。支持统一接入小红书、微信视频号、微信公众号、快手、B站、YouTube、TikTok、Instagram、Facebook、X (Twitter)、Threads、LinkedIn、Pinterest 等 13 个国内外主流内容平台，真正打通「做完即发布」的最后一公里。</p>
+            </div>
+            <div class="step-tags">
+              <span class="step-tag">13 个国内外社媒平台</span>
+              <span class="step-tag">日历定时排期</span>
+              <span class="step-tag">多账号统一管理</span>
+              <span class="step-tag">一键跨平台发布</span>
+            </div>
+          </div>
+          <div class="step-media" data-zoom-src="/images/publish-queue.webp" data-zoom-title="06 发布待办 · 多平台频道接入与排期">
+            <img src="/images/publish-queue.webp" width="2880" height="1800" alt="Foldframe 发布待办：支持连接小红书、微信视频号、Instagram、快手、YouTube、B站、TikTok、LinkedIn、Facebook、微信公众号等 13 个内容平台" loading="lazy" />
+          </div>
+        </article>
 
-      <div class="arch-grid">
-        <div class="arch-box">
-          <div class="arch-label">01 / Local Bridge</div>
-          <h3>宿主机 CLI 引擎桥接</h3>
-          <p>通过 <code>scripts/local-bridge.mjs</code> 统一编排本机已登录的 <strong>即梦 CLI（5.0 Lite / 5.0 Pro / 4.5 / Seedance 2.0 &amp; 2.5）</strong>、<strong>Codex CLI（GPT Image 2 + 文本）</strong> 与 <strong>Antigravity CLI</strong>，容器内服务通过受 Token 保护的本地网桥安全调用。</p>
-        </div>
-        <div class="arch-box">
-          <div class="arch-label">02 / Media &amp; Metering</div>
-          <h3>真实积分与元数据追踪</h3>
-          <p>生图与视频任务执行前后自动采集引擎余额差值，区分真实扣费与活动限免，并将提示词、模型、画质、比例和耗时持久化写入任务元数据，支撑画布节点复用与资产回溯。</p>
-        </div>
-        <div class="arch-box">
-          <div class="arch-label">03 / Self-Hosted Stack</div>
-          <h3>全栈容器一键拉起</h3>
-          <p>Next.js 14 前端 + NestJS 微服务（<code>aitoearn-server</code> / <code>aitoearn-ai</code>）+ MongoDB 副本集 + Redis + RustFS 对象存储 + Nginx 反向代理，本地双击 <code>启动本地版.command</code> 即可运行。</p>
-        </div>
+        <article class="step-block" id="step-7">
+          <div class="step-header">
+            <div>
+              <div class="step-title-row">
+                <span class="step-num">07</span>
+                <h3>本地模型接入：直连本机 Antigravity、Codex、即梦与第三方 API</h3>
+              </div>
+              <p class="step-desc">不被单一云端平台锁定。支持直接接入电脑本机已登录的 <strong>Antigravity</strong>、<strong>Codex（含 ChatGPT / GPT 生图）</strong>、<strong>即梦 AI（5.0 生图 / Seedance 视频）</strong> 以及本地离线 <strong>Ollama</strong>，也可按需填写真实第三方 API Key（OpenAI / DeepSeek / Gemini 等），并为「内容 Agent、文案草稿、图片生成、视频生成」分别指定默认模型。</p>
+            </div>
+            <div class="step-tags">
+              <span class="step-tag">本机 Antigravity</span>
+              <span class="step-tag">本机 Codex / GPT 生图</span>
+              <span class="step-tag">即梦 5.0 / Seedance</span>
+              <span class="step-tag">分场景模型路由</span>
+            </div>
+          </div>
+          <div class="step-media" data-zoom-src="/images/models-hub.webp" data-zoom-title="07 本地模型接入与分场景路由">
+            <img src="/images/models-hub.webp" width="2880" height="1800" alt="Foldframe 模型接入中心：展示已就绪的本机 Antigravity、Codex、即梦 AI、Ollama 引擎状态，以及 Agent、文案、生图、生视频四个场景的默认模型路由配置" loading="lazy" />
+          </div>
+        </article>
       </div>
     </section>
 
     <footer class="footer">
-      <span>Foldframe · Built on MIT open-source foundation · Deployed via Vercel</span>
+      <span>Foldframe · Next.js 14 · NestJS · MongoDB · 本地多模型引擎桥接</span>
       <div style="display:flex;gap:18px;flex-wrap:wrap;">
         <a href="https://github.com/hxy940219220-collab/foldframe" target="_blank" rel="noopener noreferrer">GitHub 源码 ↗</a>
         <a href="https://www.huangxiyuan.net/projects/foldframe">作品集详情页</a>
@@ -708,28 +710,38 @@
     const SCENES = {
       layout: {
         img: "/images/layout-workshop.webp",
-        title: "AI 发布 · 排版工坊（仿真手机实时预览）",
-        desc: "入口严格区分「图文发布」与「视频发布」，左侧仅保留唯一「+」号支持本地上传或从资产库挑选；右侧仿真手机实时同步标题、正文与标签，紧贴手机右侧的竖排比例栏支持一键切 3:4 / 1:1 / 4:3 / 原图、拖动取景、单击自由裁剪与按比例重构。",
+        title: "1. 排版工坊 · 手机端所见即所得预览与文案排版",
+        desc: "图文发布与视频发布严格分开，右侧仿真手机实时同步小红书、抖音与 Instagram 排版效果；支持在手机旁切换 3:4 / 1:1 / 4:3 / 原图、拖动微调构图、手动裁剪与一键重构比例。",
       },
       workspace: {
         img: "/images/workspace.webp",
-        title: "内容创作 · 快捷工作台",
-        desc: "顶部模式栏聚合快捷工作台、无限画布与多维改图；提示词栏支持拖拽参考图与纯大语言模型生成图文/视频草稿，下方资源网格同时承载图片、视频与纯文本草稿并附带生成详情侧栏。",
+        title: "2. 内容创作工作台 · 商业生图、短视频与文案一站完成",
+        desc: "统一生成商业产品图、写实人物照、品牌海报、宣传短视频和图文文案。支持拖拽参考图，点击任意作品可查看完整提示词、模型、尺寸与积分消耗。",
       },
       canvas: {
         img: "/images/canvas.webp",
-        title: "无限画布 · 节点连线与就近参数浮窗",
-        desc: "进入画布自动居中排布素材节点；选中任意节点后在图片下方就近弹出可编辑的提示词与模型/比例/画质参数卡，支持节点间连线参考与底部资产库/生成历史快捷抽屉。",
+        title: "3. 无限画布 · 铺开素材，点图直接改词出新",
+        desc: "所有素材自动居中铺开在画布上，选中任意图片即可在下方直接改提示词、换比例继续生成，也能把多张素材连线当参考并搭配 AI 助手协作。",
       },
       remix: {
         img: "/images/remix.webp",
-        title: "多维改图 · 六维可控二创",
-        desc: "保持中心原图按真实比例完整展示，围绕镜头角度、光影氛围、背景场景、画风质感、穿搭造型与表情动作六个维度提供下拉预设与可编辑提示词，并支持参考图删除二次确认与首尾帧转视频。",
+        title: "4. 多维改图 · 6 个可视化方向精准微调成片",
+        desc: "围绕原图从镜头角度、光影氛围、背景场景、画风质感、穿搭造型、表情动作六个方向微调，内置下拉选项并可改词，支持批量出 4 张和首尾帧转视频。",
       },
       assets: {
         img: "/images/assets.webp",
-        title: "AI 生成素材库 · 分类与画面比例筛选",
-        desc: "按「全部 / 图片 / 视频」和画面比例（竖版、横版、方图及具体比例）快速检索全部 AI 产物，自动检测像素比例并展示类型与比例角标，点开即可核对完整生成参数。",
+        title: "5. AI 生成素材库 · 按类型和画面比例快速找图找视频",
+        desc: "自动归档全部图片和视频素材，支持按类型与竖版/横版/方图及具体比例一键筛选，每张卡片清晰标注类型与真实画面比例。",
+      },
+      publish: {
+        img: "/images/publish-queue.webp",
+        title: "6. 发布待办 · 13 个国内外社媒平台统一接入与定时排期",
+        desc: "支持接入小红书、微信视频号、微信公众号、快手、B站、YouTube、TikTok、Instagram、Facebook、X、LinkedIn、Pinterest 等平台，实现从创作到多端发布的完整闭环。",
+      },
+      models: {
+        img: "/images/models-hub.webp",
+        title: "7. 本地模型接入 · 直连本机 Antigravity、Codex、即梦 AI 与第三方 API",
+        desc: "直接调用电脑本机已登录的 Antigravity、Codex（含 GPT 生图）、即梦 AI 与 Ollama，并支持按 Agent / 文案 / 生图 / 视频分别指定默认模型。",
       },
     };
 
@@ -745,7 +757,7 @@
       if (!SCENES[key]) return;
       currentKey = key;
       const item = SCENES[key];
-      stageImg.style.opacity = "0.4";
+      stageImg.style.opacity = "0.45";
       stageImg.src = item.img;
       stageImg.alt = item.title;
       stageImg.onload = () => { stageImg.style.opacity = "1"; };
