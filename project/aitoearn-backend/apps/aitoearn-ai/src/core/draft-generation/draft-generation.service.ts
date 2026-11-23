@@ -242,10 +242,19 @@ export class DraftGenerationService {
             push({ value: `codex:${m}`, label: `Codex · ${m}`, provider: 'codex', tag: '本机 LLM' })
           }
         }
-        if (bridge.engines.ollama?.running) {
-          for (const m of (bridge.engines.ollama.models || []).slice(0, 8)) {
-            if (!m) continue
-            push({ value: `ollama:${m}`, label: `Ollama · ${m}`, provider: 'ollama', tag: '本地开源' })
+        if (bridge.engines.grok?.installed && bridge.engines.grok.loggedIn !== false) {
+          const eff = bridge.engines.grok.effectiveDefaultModel
+          push({ value: 'grok:default', label: eff ? `Grok CLI (${eff})` : 'Grok CLI (默认)', provider: 'grok', tag: '本机 LLM' })
+          for (const m of (bridge.engines.grok.models || []).slice(0, 8)) {
+            if (!m || m === 'default') continue
+            push({ value: `grok:${m}`, label: `Grok · ${m}`, provider: 'grok', tag: '本机 LLM' })
+          }
+        }
+        if (bridge.engines.workbuddy?.installed && bridge.engines.workbuddy.loggedIn) {
+          push({ value: 'workbuddy:default', label: 'WorkBuddy (自动路由)', provider: 'workbuddy', tag: '本机 LLM' })
+          for (const m of (bridge.engines.workbuddy.models || []).slice(0, 8)) {
+            if (!m || m === 'default') continue
+            push({ value: `workbuddy:${m}`, label: `WorkBuddy · ${m}`, provider: 'workbuddy', tag: '本机 LLM' })
           }
         }
       }

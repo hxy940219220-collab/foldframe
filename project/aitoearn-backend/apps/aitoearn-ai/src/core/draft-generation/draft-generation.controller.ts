@@ -126,7 +126,7 @@ export class DraftGenerationController {
   @Public()
   @ApiDoc({
     summary: '获取可用的草稿文本大语言模型列表',
-    description: '返回本机 LLM（Antigravity / Codex / Ollama）及已配置的第三方文本大模型',
+    description: '返回本机 LLM（Antigravity / Codex / Grok / WorkBuddy）及已配置的第三方文本大模型',
   })
   @Get('/text-models')
   async getTextModels() {

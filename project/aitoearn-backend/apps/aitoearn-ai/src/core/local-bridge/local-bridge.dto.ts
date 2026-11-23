@@ -8,7 +8,7 @@ const providerCredSchema = z.object({
 
 export const saveStudioModelsHubSchema = z.object({
   agent: z.object({
-    engine: z.enum(['agy', 'codex', 'thirdParty']),
+    engine: z.enum(['agy', 'codex', 'grok', 'workbuddy', 'thirdParty']),
     model: z.string().min(1),
     protocol: z.enum(['anthropic', 'openai', 'openrouter', 'deepseek', 'gemini']).default('anthropic'),
     baseUrl: z.string().optional(),
@@ -17,12 +17,12 @@ export const saveStudioModelsHubSchema = z.object({
     thinkModel: z.string().optional(),
   }),
   chat: z.object({
-    engine: z.enum(['agy', 'codex', 'thirdParty', 'ollama']),
+    engine: z.enum(['agy', 'codex', 'grok', 'workbuddy', 'thirdParty']),
     model: z.string().min(1),
     thirdPartyChannel: z.enum(['openai', 'anthropic', 'gemini', 'deepseek']).optional(),
   }),
   planner: z.object({
-    engine: z.enum(['agy', 'codex', 'thirdParty', 'ollama']),
+    engine: z.enum(['agy', 'codex', 'grok', 'workbuddy', 'thirdParty']),
     model: z.string().min(1),
     thirdPartyChannel: z.enum(['openai', 'gemini', 'deepseek', 'anthropic']).optional(),
   }),
@@ -52,7 +52,7 @@ export const saveStudioModelsHubSchema = z.object({
 export class SaveStudioModelsHubDto extends createZodDto(saveStudioModelsHubSchema, 'SaveStudioModelsHubDto') {}
 
 export const testStudioModelConnectionSchema = z.object({
-  kind: z.enum(['agy', 'codex', 'dreamina', 'ollama', 'thirdParty']),
+  kind: z.enum(['agy', 'codex', 'dreamina', 'grok', 'workbuddy', 'thirdParty']),
   model: z.string().optional(),
   protocol: z.enum(['openai', 'anthropic', 'openrouter', 'deepseek', 'gemini']).optional(),
   baseUrl: z.string().optional(),
@@ -72,3 +72,9 @@ export const dreaminaAuthPollSchema = z.object({
 })
 
 export class DreaminaAuthPollDto extends createZodDto(dreaminaAuthPollSchema, 'DreaminaAuthPollDto') {}
+
+export const workbuddyAuthStartSchema = z.object({
+  methodId: z.enum(['internal', 'external']).optional(),
+})
+
+export class WorkBuddyAuthStartDto extends createZodDto(workbuddyAuthStartSchema, 'WorkBuddyAuthStartDto') {}

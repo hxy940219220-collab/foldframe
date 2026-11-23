@@ -6,7 +6,7 @@
   <title>Foldframe · AI 内容创作与多端发布工作台</title>
   <meta name="description" content="覆盖商业生图、短视频制作、多维改图、仿真手机排版、13+ 平台发布待办与本机多模型接入的一体化 AI 工作台。" />
   <meta property="og:title" content="Foldframe · AI 内容创作与多端发布工作台" />
-  <meta property="og:description" content="从商业产品图、写实人像、品牌海报和短视频创作，到手机端实时排版、多平台发布待办与本机 Antigravity / Codex / 即梦模型接入。" />
+  <meta property="og:description" content="从商业产品图、写实人像、品牌海报和短视频创作，到手机端实时排版、多平台发布待办与本机 Antigravity / Codex / 即梦 / Grok / WorkBuddy 模型接入。" />
   <meta property="og:image" content="/images/layout-workshop.webp" />
   <meta property="og:type" content="website" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -476,7 +476,7 @@
       </div>
       <h1>Foldframe · 从商业设计到多平台发布</h1>
       <p class="lead">
-        面向内容团队与品牌运营的一体化 AI 工作台。不仅支持商业产品图、写实人物照、品牌广告、宣传短视频和文案创作，还能直接在手机端排版预览、统一管理 13 个国内外社媒平台的发布待办，并直连电脑本机的 Antigravity、Codex、即梦 AI 等模型引擎。
+        面向内容团队与品牌运营的一体化 AI 工作台。不仅支持商业产品图、写实人物照、品牌广告、宣传短视频和文案创作，还能直接在手机端排版预览、统一管理 13 个国内外社媒平台的发布待办，并直连电脑本机的 Antigravity、Codex、即梦 AI、Grok 与 WorkBuddy 等模型引擎。
       </p>
       <div class="hero-actions">
         <a href="#walkthrough" class="btn btn-primary">查看 7 大核心功能 ↓</a>
@@ -527,7 +527,7 @@
         </div>
         <div class="stat">
           <div class="stat-k">本地模型接入</div>
-          <div class="stat-v">Antigravity · Codex (GPT) · 即梦 AI · Ollama</div>
+          <div class="stat-v">Antigravity · Codex · 即梦 AI · Grok · WorkBuddy</div>
         </div>
       </div>
     </section>
@@ -669,19 +669,20 @@
             <div>
               <div class="step-title-row">
                 <span class="step-num">07</span>
-                <h3>本地模型接入：直连本机 Antigravity、Codex、即梦与第三方 API</h3>
+                <h3>本地模型接入：直连本机 Antigravity、Codex、即梦、Grok 与 WorkBuddy</h3>
               </div>
-              <p class="step-desc">不被单一云端平台锁定。支持直接接入电脑本机已登录的 <strong>Antigravity</strong>、<strong>Codex（含 ChatGPT / GPT 生图）</strong>、<strong>即梦 AI（5.0 生图 / Seedance 视频）</strong> 以及本地离线 <strong>Ollama</strong>，也可按需填写真实第三方 API Key（OpenAI / DeepSeek / Gemini 等），并为「内容 Agent、文案草稿、图片生成、视频生成」分别指定默认模型。</p>
+              <p class="step-desc">不被单一云端平台锁定。支持直接接入电脑本机已登录的 <strong>Antigravity</strong>、<strong>Codex（含 ChatGPT / GPT 生图）</strong>、<strong>即梦 AI（5.0 生图 / Seedance 视频）</strong>、<strong>Grok（支持一键跳转网页登录）</strong> 与腾讯 <strong>WorkBuddy（国产多模型引擎）</strong>，也可按需填写真实第三方 API Key（OpenAI / DeepSeek / Gemini 等），并为「内容 Agent、文案草稿、图片生成、视频生成」分别指定默认模型。</p>
             </div>
             <div class="step-tags">
-              <span class="step-tag">本机 Antigravity</span>
-              <span class="step-tag">本机 Codex / GPT 生图</span>
+              <span class="step-tag">本机 Antigravity / Codex</span>
+              <span class="step-tag">Grok 网页授权接入</span>
+              <span class="step-tag">腾讯 WorkBuddy</span>
               <span class="step-tag">即梦 5.0 / Seedance</span>
               <span class="step-tag">分场景模型路由</span>
             </div>
           </div>
           <div class="step-media" data-zoom-src="/images/models-hub.webp" data-zoom-title="07 本地模型接入与分场景路由">
-            <img src="/images/models-hub.webp" width="2880" height="1800" alt="Foldframe 模型接入中心：展示已就绪的本机 Antigravity、Codex、即梦 AI、Ollama 引擎状态，以及 Agent、文案、生图、生视频四个场景的默认模型路由配置" loading="lazy" />
+            <img src="/images/models-hub.webp" width="2880" height="1800" alt="Foldframe 模型接入中心：展示本机 Antigravity、Codex、即梦 AI、Grok 与 WorkBuddy 五大引擎状态与一键网页登录，以及 Agent、文案、生图、生视频四个场景的默认模型路由配置" loading="lazy" />
           </div>
         </article>
       </div>
@@ -741,8 +742,8 @@
       },
       models: {
         img: "/images/models-hub.webp",
-        title: "7. 本地模型接入 · 直连本机 Antigravity、Codex、即梦 AI 与第三方 API",
-        desc: "直接调用电脑本机已登录的 Antigravity、Codex（含 GPT 生图）、即梦 AI 与 Ollama，并支持按 Agent / 文案 / 生图 / 视频分别指定默认模型。",
+        title: "7. 本地模型接入 · 直连本机 Antigravity、Codex、即梦、Grok 与 WorkBuddy",
+        desc: "直接调用电脑本机 Antigravity、Codex（含 GPT 生图）、即梦 AI、Grok（支持一键网页登录）与 WorkBuddy，并按场景灵活路由。",
       },
     };
 

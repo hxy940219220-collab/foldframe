@@ -3,8 +3,8 @@
  * Foldframe Host Local Bridge
  *
  * Runs on macOS host (loopback only, token-authenticated) so Dockerized
- * `aitoearn-ai` can invoke local CLI engines (`agy`, `codex`, `dreamina`)
- * and local Ollama, including native Agent runs with Foldframe MCP tools.
+ * `aitoearn-ai` can invoke local CLI engines (`agy`, `codex`, `dreamina`,
+ * `grok`, `workbuddy`), including native Agent runs with Foldframe MCP tools.
  */
 
 import { spawn, spawnSync } from 'node:child_process'
@@ -23,8 +23,21 @@ const HOST = process.env.LOCAL_BRIDGE_HOST || '127.0.0.1'
 const PORT = Number.parseInt(process.env.LOCAL_BRIDGE_PORT || '18787', 10)
 const TOKEN = (process.env.LOCAL_BRIDGE_TOKEN || '').trim()
 const LOCAL_WEB_PORT = Number.parseInt(process.env.LOCAL_WEB_PORT || '8080', 10)
-const OLLAMA_URL = (process.env.OLLAMA_URL || 'http://127.0.0.1:11434').replace(/\/+$/, '')
 const DATA_DIR = resolve(process.env.FOLDFRAME_DATA_DIR || join(REPO_ROOT, '.local-run', 'bridge'))
+const WORKBUDDY_HOME = resolve(process.env.FOLDFRAME_WORKBUDDY_HOME || join(DATA_DIR, 'workbuddy-home'))
+const WORKBUDDY_META_PATH = join(DATA_DIR, 'workbuddy-meta.json')
+const WORKBUDDY_DEFAULT_MODELS = [
+  'auto',
+  'glm-5v-turbo',
+  'glm-5.1',
+  'glm-5.0-turbo',
+  'glm-5.0',
+  'glm-4.7',
+  'kimi-k2.5',
+  'minimax-m2.7',
+  'deepseek-v3-2-volc',
+]
+const GROK_FALLBACK_MODELS = ['grok-4.7', 'grok-4.7-build-fast', 'grok-4.6', 'grok-4.5']
 const DEFAULT_SKILLS_DIR = resolve(
   process.env.FOLDFRAME_SKILLS_DIR
   || join(REPO_ROOT, 'project', 'aitoearn-backend', 'apps', 'aitoearn-ai', 'src', 'core', 'agent', 'skills'),
@@ -46,11 +59,14 @@ const DREAMINA_VIDEO_RATIOS = new Set(['1:1', '3:4', '16:9', '4:3', '9:16', '21:
 
 const activeRuns = new Map()
 const activeAuthProcesses = new Map()
+const activeAuthStates = new Map()
 const fileRegistry = new Map()
 const FILE_TTL_MS = 30 * 60 * 1000
 const CODEX_COMPAT_PATH = join(DATA_DIR, 'codex-compat.json')
 
 let codexBinaryCache = { fetchedAt: 0, bin: null, version: '' }
+let grokBinaryCache = { fetchedAt: 0, bin: null, version: '' }
+let workbuddyBinaryCache = { fetchedAt: 0, bin: null, version: '', isNodeScript: false }
 
 function parseSemverTuple(versionStr) {
   const m = String(versionStr || '').match(/(\d+)\.(\d+)\.(\d+)/)
@@ -212,11 +228,15 @@ export function findBinary(name, envVar, extraCandidates = []) {
 }
 
 function childEnv(extra = {}) {
-  return {
+  const merged = {
     ...process.env,
     PATH: buildSearchPaths().join(':'),
     ...extra,
   }
+  for (const [k, v] of Object.entries(extra)) {
+    if (v === undefined) delete merged[k]
+  }
+  return merged
 }
 
 function execCapture(bin, args, options = {}) {
@@ -224,7 +244,7 @@ function execCapture(bin, args, options = {}) {
     const timeoutMs = options.timeoutMs ?? 8000
     const child = spawn(bin, args, {
       cwd: options.cwd || REPO_ROOT,
-      env: childEnv(options.env),
+      env: options.rawEnv || childEnv(options.env),
       stdio: ['pipe', 'pipe', 'pipe'],
     })
     let stdout = ''
@@ -586,30 +606,337 @@ async function detectDreamina() {
   }
 }
 
-async function detectOllama() {
+export function findGrokBinaryInfo() {
+  if (grokBinaryCache.bin && (Date.now() - grokBinaryCache.fetchedAt) < 5 * 60 * 1000 && isExecutable(grokBinaryCache.bin)) {
+    return { bin: grokBinaryCache.bin, version: grokBinaryCache.version }
+  }
+
+  const readVersion = (binPath) => {
+    const out = spawnSync(binPath, ['--version'], { encoding: 'utf8', timeout: 3000 })
+    return `${out.stdout || ''}\n${out.stderr || ''}`.split(/\r?\n/).find(l => l.trim())?.trim() || ''
+  }
+
+  const envPath = process.env.GROK_BIN
+  if (envPath && isExecutable(envPath)) {
+    const ver = readVersion(envPath)
+    grokBinaryCache = { fetchedAt: Date.now(), bin: envPath, version: ver }
+    return { bin: envPath, version: ver }
+  }
+
+  const home = homedir()
+  const candidates = [
+    ...buildSearchPaths().map(dir => join(dir, 'grok')),
+  ]
+
+  // Orca managed runtime: ~/Library/Application Support/orca/agent-runtimes/grok/<ver>/bin/grok
+  const orcaGrokBase = join(home, 'Library', 'Application Support', 'orca', 'agent-runtimes', 'grok')
   try {
-    const res = await fetch(`${OLLAMA_URL}/api/tags`, { signal: AbortSignal.timeout(1500) })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
-    const models = Array.isArray(data?.models) ? data.models.map(m => m.name).filter(Boolean) : []
-    return {
-      id: 'ollama',
-      name: 'Ollama (本机)',
-      installed: true,
-      running: true,
-      baseUrl: `${OLLAMA_URL}/v1`,
-      models,
+    if (existsSync(orcaGrokBase)) {
+      for (const ver of readdirSync(orcaGrokBase).filter(n => !n.startsWith('.'))) {
+        candidates.push(join(orcaGrokBase, ver, 'bin', 'grok'))
+        candidates.push(join(orcaGrokBase, ver, 'grok'))
+      }
     }
   }
-  catch {
-    return {
-      id: 'ollama',
-      name: 'Ollama (本机)',
-      installed: Boolean(findBinary('ollama')),
-      running: false,
-      baseUrl: `${OLLAMA_URL}/v1`,
-      models: [],
+  catch {}
+
+  // OpenBot managed runtime: ~/Library/Application Support/OpenBot/provider-runtimes/grok/<platform>/<ver>/bin/grok
+  const openbotGrokBase = join(home, 'Library', 'Application Support', 'OpenBot', 'provider-runtimes', 'grok')
+  try {
+    if (existsSync(openbotGrokBase)) {
+      for (const entry of readdirSync(openbotGrokBase).filter(n => !n.startsWith('.'))) {
+        const subDir = join(openbotGrokBase, entry)
+        candidates.push(join(subDir, 'bin', 'grok'))
+        try {
+          for (const ver of readdirSync(subDir).filter(n => !n.startsWith('.'))) {
+            candidates.push(join(subDir, ver, 'bin', 'grok'))
+            candidates.push(join(subDir, ver, 'grok'))
+          }
+        }
+        catch {}
+      }
     }
+  }
+  catch {}
+
+  const uniqueBins = [...new Set(candidates)].filter(isExecutable)
+  if (uniqueBins.length === 0) {
+    grokBinaryCache = { fetchedAt: Date.now(), bin: null, version: '' }
+    return { bin: null, version: '' }
+  }
+
+  let bestBin = uniqueBins[0]
+  let bestVer = ''
+  for (const cand of uniqueBins) {
+    const ver = readVersion(cand)
+    if (!bestVer || compareSemver(ver, bestVer) > 0) {
+      bestBin = cand
+      bestVer = ver
+    }
+  }
+
+  grokBinaryCache = { fetchedAt: Date.now(), bin: bestBin, version: bestVer }
+  return { bin: bestBin, version: bestVer }
+}
+
+export function findGrokBinary() {
+  return findGrokBinaryInfo().bin
+}
+
+function readGrokLocalMetadata() {
+  const grokHome = join(homedir(), '.grok')
+  const authPath = join(grokHome, 'auth.json')
+  let loggedIn = Boolean(process.env.XAI_API_KEY)
+  let authMtimeMs = 0
+  try {
+    if (existsSync(authPath)) {
+      const stat = statSync(authPath)
+      authMtimeMs = stat.mtimeMs
+      if (stat.size > 20) {
+        loggedIn = true
+      }
+    }
+  }
+  catch {}
+
+  let visibleModels = []
+  let authMethod = ''
+  try {
+    const cachePath = join(grokHome, 'models_cache.json')
+    if (existsSync(cachePath)) {
+      const parsed = JSON.parse(readFileSync(cachePath, 'utf8'))
+      if (typeof parsed?.auth_method === 'string') {
+        authMethod = parsed.auth_method.trim()
+      }
+      if (Array.isArray(parsed?.models)) {
+        visibleModels = parsed.models
+          .filter(m => m && !m.hidden)
+          .map(m => String(m.id || m.slug || m.model || '').trim())
+          .filter(Boolean)
+      }
+      else if (parsed?.models && typeof parsed.models === 'object') {
+        visibleModels = Object.entries(parsed.models)
+          .filter(([, entry]) => !entry?.info?.hidden)
+          .map(([id, entry]) => String(entry?.info?.id || id).trim())
+          .filter(Boolean)
+      }
+    }
+  }
+  catch {}
+
+  let configuredModel = ''
+  try {
+    const cfgPath = join(grokHome, 'config.toml')
+    if (existsSync(cfgPath)) {
+      const raw = readFileSync(cfgPath, 'utf8')
+      for (const line of raw.split(/\r?\n/)) {
+        const trimmed = line.trim()
+        if (!trimmed || trimmed.startsWith('#')) continue
+        if (trimmed.startsWith('[')) break
+        const m = trimmed.match(/^model\s*=\s*["']([^"']+)["']/)
+        if (m) configuredModel = m[1].trim()
+      }
+    }
+  }
+  catch {}
+
+  return { loggedIn, authMtimeMs, authMethod, visibleModels, configuredModel }
+}
+
+async function detectGrok() {
+  const { bin, version } = findGrokBinaryInfo()
+  if (!bin) {
+    return {
+      id: 'grok',
+      name: 'Grok CLI',
+      installed: false,
+      loggedIn: false,
+      path: null,
+      version: null,
+      models: ['default', ...GROK_FALLBACK_MODELS],
+      installHint: '安装本机 Grok CLI 后即可在本页点击「一键网页登录」完成 xAI / Grok 账号授权',
+    }
+  }
+
+  const meta = readGrokLocalMetadata()
+  const modelSlugs = meta.visibleModels.length > 0 ? meta.visibleModels : GROK_FALLBACK_MODELS
+  const ordered = meta.configuredModel ? [meta.configuredModel, ...modelSlugs] : modelSlugs
+  const models = ['default', ...new Set(ordered)].slice(0, 12)
+  const effectiveDefaultModel = meta.configuredModel || modelSlugs[0] || 'grok-4.7'
+  const accountLabel = meta.loggedIn
+    ? (process.env.XAI_API_KEY ? 'xAI API Key' : 'xAI / Grok 账号')
+    : undefined
+
+  return {
+    id: 'grok',
+    name: 'Grok CLI',
+    installed: true,
+    loggedIn: meta.loggedIn,
+    accountLabel,
+    path: bin,
+    version: version || undefined,
+    models,
+    effectiveDefaultModel,
+    loginHint: meta.loggedIn ? undefined : '点击「一键网页登录」在浏览器确认授权即可使用 Grok',
+  }
+}
+
+function workbuddyChildEnv(extra = {}) {
+  ensureDir(WORKBUDDY_HOME)
+  const env = childEnv({
+    HOME: WORKBUDDY_HOME,
+    CODEBUDDY_FORCE_LITE_WB_BUNDLE: '1',
+    CODEBUDDY_DISABLE_PROXY_CONFIG_FILE: '1',
+    ...extra,
+  })
+  // WorkBuddy's bundled Axios proxy helper throws TypeError when HTTP_PROXY/ALL_PROXY is set on Node 22+
+  for (const key of ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy', 'ALL_PROXY', 'all_proxy']) {
+    delete env[key]
+  }
+  return env
+}
+
+export function findWorkBuddyBinaryInfo() {
+  if (workbuddyBinaryCache.bin && (Date.now() - workbuddyBinaryCache.fetchedAt) < 5 * 60 * 1000 && existsSync(workbuddyBinaryCache.bin)) {
+    return { bin: workbuddyBinaryCache.bin, version: workbuddyBinaryCache.version, isNodeScript: workbuddyBinaryCache.isNodeScript }
+  }
+
+  const readPkgVersion = (binPath) => {
+    try {
+      const pkgPath = resolve(dirname(binPath), '..', 'package.json')
+      if (existsSync(pkgPath)) {
+        const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
+        const ver = pkg?.publishConfig?.customPackage?.version || pkg?.version
+        if (ver) return String(ver).trim()
+      }
+    }
+    catch {}
+    try {
+      const isJs = /\.(?:m?js|cjs)$/i.test(binPath) || binPath.includes('/WorkBuddy.app/')
+      const out = isJs
+        ? spawnSync(process.execPath, [binPath, '--version'], { encoding: 'utf8', timeout: 4000, env: workbuddyChildEnv() })
+        : spawnSync(binPath, ['--version'], { encoding: 'utf8', timeout: 4000, env: workbuddyChildEnv() })
+      return `${out.stdout || ''}\n${out.stderr || ''}`.split(/\r?\n/).find(l => /^\d+\.\d+\.\d+/.test(l.trim()))?.trim() || ''
+    }
+    catch {
+      return ''
+    }
+  }
+
+  const envPath = process.env.WORKBUDDY_BIN
+  if (envPath && existsSync(envPath)) {
+    const isNodeScript = /\.(?:m?js|cjs)$/i.test(envPath) || envPath.includes('/WorkBuddy.app/')
+    const ver = readPkgVersion(envPath)
+    workbuddyBinaryCache = { fetchedAt: Date.now(), bin: envPath, version: ver, isNodeScript }
+    return { bin: envPath, version: ver, isNodeScript }
+  }
+
+  const appCliBin = '/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy'
+  const appCliLite = '/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/dist/codebuddy-lite-wb.mjs'
+  const pathCandidates = [
+    ...buildSearchPaths().map(dir => join(dir, 'workbuddy')),
+    ...buildSearchPaths().map(dir => join(dir, 'codebuddy')),
+    ...buildSearchPaths().map(dir => join(dir, 'cbc')),
+  ]
+
+  const orderedCandidates = [
+    { path: appCliBin, isNodeScript: true },
+    { path: appCliLite, isNodeScript: true },
+    ...pathCandidates.map(p => ({ path: p, isNodeScript: false })),
+  ]
+
+  for (const cand of orderedCandidates) {
+    if (cand.isNodeScript ? existsSync(cand.path) : isExecutable(cand.path)) {
+      const ver = readPkgVersion(cand.path)
+      workbuddyBinaryCache = { fetchedAt: Date.now(), bin: cand.path, version: ver, isNodeScript: cand.isNodeScript }
+      return { bin: cand.path, version: ver, isNodeScript: cand.isNodeScript }
+    }
+  }
+
+  workbuddyBinaryCache = { fetchedAt: Date.now(), bin: null, version: '', isNodeScript: false }
+  return { bin: null, version: '', isNodeScript: false }
+}
+
+function getWorkBuddyAuthDir() {
+  return join(WORKBUDDY_HOME, 'Library', 'Application Support', 'CodeBuddyExtension', 'Data', 'Public', 'auth')
+}
+
+function readWorkBuddyMeta() {
+  try {
+    if (existsSync(WORKBUDDY_META_PATH)) {
+      return JSON.parse(readFileSync(WORKBUDDY_META_PATH, 'utf8'))
+    }
+  }
+  catch {}
+  return {}
+}
+
+function saveWorkBuddyMeta(patch) {
+  try {
+    ensureDir(DATA_DIR)
+    const next = { ...readWorkBuddyMeta(), ...patch }
+    writeFileSync(WORKBUDDY_META_PATH, JSON.stringify(next, null, 2), 'utf8')
+  }
+  catch {}
+}
+
+function isWorkBuddyLoggedIn() {
+  const authDir = getWorkBuddyAuthDir()
+  try {
+    if (!existsSync(authDir)) return false
+    const files = readdirSync(authDir).filter(f => f.endsWith('.info'))
+    for (const file of files) {
+      const full = join(authDir, file)
+      const logoutMarker = `${full}.logout`
+      if (existsSync(logoutMarker)) continue
+      const stat = statSync(full)
+      if (stat.isFile() && stat.size > 20) return true
+    }
+  }
+  catch {}
+  return false
+}
+
+function spawnWorkBuddyProcess(args, options = {}) {
+  const info = findWorkBuddyBinaryInfo()
+  if (!info.bin) return null
+  const cmd = info.isNodeScript ? process.execPath : info.bin
+  const finalArgs = info.isNodeScript ? [info.bin, ...args] : args
+  return spawn(cmd, finalArgs, {
+    cwd: options.cwd || REPO_ROOT,
+    env: workbuddyChildEnv(options.env),
+    stdio: options.stdio || ['pipe', 'pipe', 'pipe'],
+  })
+}
+
+async function detectWorkBuddy() {
+  const info = findWorkBuddyBinaryInfo()
+  if (!info.bin) {
+    return {
+      id: 'workbuddy',
+      name: 'WorkBuddy',
+      installed: false,
+      loggedIn: false,
+      path: null,
+      version: null,
+      models: ['default', ...WORKBUDDY_DEFAULT_MODELS],
+      installHint: '请先安装腾讯 WorkBuddy 桌面客户端（/Applications/WorkBuddy.app），安装后即可在本页一键网页登录',
+    }
+  }
+
+  const loggedIn = isWorkBuddyLoggedIn()
+  const meta = readWorkBuddyMeta()
+  return {
+    id: 'workbuddy',
+    name: 'WorkBuddy',
+    installed: true,
+    loggedIn,
+    accountLabel: loggedIn ? (meta.accountLabel || 'WorkBuddy 账号') : undefined,
+    path: info.bin,
+    version: info.version || undefined,
+    models: ['default', ...WORKBUDDY_DEFAULT_MODELS],
+    effectiveDefaultModel: 'auto',
+    loginHint: loggedIn ? undefined : '点击「一键网页登录」在浏览器扫码或确认即可连接 WorkBuddy 模型',
   }
 }
 
@@ -628,13 +955,14 @@ export async function detectAllEngines(forceRefresh = false) {
     return await enginesInflightPromise
   }
   enginesInflightPromise = (async () => {
-    const [agy, codex, dreamina, ollama] = await Promise.all([
+    const [agy, codex, dreamina, grok, workbuddy] = await Promise.all([
       detectAgy(),
       detectCodex(),
       detectDreamina(),
-      detectOllama(),
+      detectGrok(),
+      detectWorkBuddy(),
     ])
-    const result = { agy, codex, dreamina, ollama }
+    const result = { agy, codex, dreamina, grok, workbuddy }
     enginesSnapshotCache = { fetchedAt: Date.now(), data: result }
     return result
   })()
@@ -779,8 +1107,13 @@ export function parseLocalModelTarget(modelName) {
     const sub = raw.replace(/^codex[:/]?/i, '').trim()
     return { engine: 'codex', model: (!sub || sub === 'default') ? undefined : sub }
   }
-  if (/^ollama[:/]/i.test(raw)) {
-    return { engine: 'ollama', model: raw.replace(/^ollama[:/]/i, '').trim() }
+  if (/^grok(?:[:/]|$)/i.test(raw)) {
+    const sub = raw.replace(/^grok[:/]?/i, '').trim()
+    return { engine: 'grok', model: (!sub || sub === 'default') ? undefined : sub }
+  }
+  if (/^workbuddy(?:[:/]|$)/i.test(raw)) {
+    const sub = raw.replace(/^workbuddy[:/]?/i, '').trim()
+    return { engine: 'workbuddy', model: (!sub || sub === 'default') ? undefined : sub }
   }
   return { engine: 'unknown', model: raw }
 }
@@ -1118,6 +1451,181 @@ export function parseCodexEventLine(line) {
   return events
 }
 
+export function parseGrokEventLine(line) {
+  const trimmed = (line || '').trim()
+  if (!trimmed || trimmed === 'Finishing session…' || trimmed === 'Finishing session...') return []
+  let obj
+  try {
+    obj = JSON.parse(trimmed)
+  }
+  catch {
+    return []
+  }
+
+  const events = []
+  const kind = obj.type || obj.event
+  if (kind === 'text') {
+    const text = typeof obj.data === 'string' ? obj.data : (typeof obj.text === 'string' ? obj.text : '')
+    if (text) events.push({ type: 'text_delta', text })
+  }
+  else if (kind === 'tool_use' || kind === 'tool_call') {
+    events.push({
+      type: 'tool_use',
+      id: String(obj.id || obj.tool_call_id || `grok-tool-${Date.now()}`),
+      name: String(obj.name || obj.tool || obj.tool_name || 'tool'),
+      input: obj.input || obj.arguments || obj.args || {},
+    })
+  }
+  else if (kind === 'tool_result') {
+    const content = obj.content ?? obj.output ?? obj.result ?? ''
+    events.push({
+      type: 'tool_result',
+      toolUseId: String(obj.tool_call_id || obj.tool_use_id || obj.id || ''),
+      name: String(obj.name || obj.tool || obj.tool_name || 'tool'),
+      content: typeof content === 'string' ? content : JSON.stringify(content),
+      isError: Boolean(obj.is_error || obj.error),
+    })
+  }
+  else if (kind === 'usage' && obj.usage) {
+    events.push({ type: 'usage', usage: normalizeUsage(obj.usage) })
+  }
+  else if (kind === 'end' || kind === 'result') {
+    const structured = obj.structuredOutput ?? obj.structured_output
+    const text = structured !== undefined
+      ? (typeof structured === 'string' ? structured : JSON.stringify(structured))
+      : (typeof obj.text === 'string' ? obj.text : typeof obj.result === 'string' ? obj.result : '')
+    if (obj.sessionId || obj.session_id) {
+      events.push({ type: 'session', sessionId: String(obj.sessionId || obj.session_id) })
+    }
+    events.push({
+      type: 'result',
+      text,
+      sessionId: obj.sessionId || obj.session_id ? String(obj.sessionId || obj.session_id) : undefined,
+      usage: normalizeUsage(obj.usage),
+      costUsd: typeof obj.total_cost_usd === 'number' ? obj.total_cost_usd : undefined,
+      isError: Boolean(obj.is_error || obj.error),
+      error: typeof obj.error === 'string' ? obj.error : obj.error?.message,
+    })
+  }
+  else if (kind === 'error') {
+    events.push({
+      type: 'error',
+      message: typeof obj.error === 'string' ? obj.error : obj.error?.message || obj.message || 'Grok execution failed',
+    })
+  }
+  else if (!kind && (obj.stopReason !== undefined || obj.structuredOutput !== undefined || typeof obj.text === 'string')) {
+    // Single-JSON response from `grok --output-format json` or `--json-schema`
+    const structured = obj.structuredOutput ?? obj.structured_output
+    const text = structured !== undefined
+      ? (typeof structured === 'string' ? structured : JSON.stringify(structured))
+      : String(obj.text || '')
+    if (obj.sessionId) {
+      events.push({ type: 'session', sessionId: String(obj.sessionId) })
+    }
+    events.push({
+      type: 'result',
+      text,
+      sessionId: obj.sessionId ? String(obj.sessionId) : undefined,
+      usage: normalizeUsage(obj.usage),
+      costUsd: typeof obj.total_cost_usd === 'number' ? obj.total_cost_usd : undefined,
+      isError: Boolean(obj.error),
+      error: typeof obj.error === 'string' ? obj.error : obj.error?.message,
+    })
+  }
+
+  return events
+}
+
+export function parseWorkBuddyEventLine(line) {
+  const trimmed = (line || '').trim()
+  if (!trimmed) return []
+  if (/Authentication required\. Please use \/login/i.test(trimmed)) {
+    return [{ type: 'error', message: 'WorkBuddy 尚未登录，请在「模型接入」页面点击 WorkBuddy「一键网页登录」完成授权。' }]
+  }
+  let obj
+  try {
+    obj = JSON.parse(trimmed)
+  }
+  catch {
+    return []
+  }
+
+  const events = []
+  const kind = obj.type
+  if (kind === 'system' && obj.session_id) {
+    events.push({ type: 'session', sessionId: String(obj.session_id) })
+  }
+  else if (kind === 'stream_event' && obj.event) {
+    const ev = obj.event
+    if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta' && ev.delta.text) {
+      events.push({ type: 'text_delta', text: ev.delta.text })
+    }
+  }
+  else if (kind === 'assistant' && obj.message?.content) {
+    const blocks = Array.isArray(obj.message.content)
+      ? obj.message.content
+      : [{ type: 'text', text: String(obj.message.content) }]
+    for (const block of blocks) {
+      if (block?.type === 'text' && block.text) {
+        events.push({ type: 'text_delta', text: block.text })
+      }
+      else if (block?.type === 'tool_use') {
+        events.push({
+          type: 'tool_use',
+          id: String(block.id || `wb-tool-${Date.now()}`),
+          name: String(block.name || 'tool'),
+          input: block.input || {},
+        })
+      }
+    }
+  }
+  else if (kind === 'user' && Array.isArray(obj.message?.content)) {
+    for (const block of obj.message.content) {
+      if (block?.type === 'tool_result') {
+        const content = block.content ?? ''
+        events.push({
+          type: 'tool_result',
+          toolUseId: String(block.tool_use_id || ''),
+          name: String(block.name || 'tool'),
+          content: typeof content === 'string' ? content : JSON.stringify(content),
+          isError: Boolean(block.is_error),
+        })
+      }
+    }
+  }
+  else if (kind === 'result') {
+    const structured = obj.structured_output ?? obj.structuredOutput
+    const finalText = structured !== undefined
+      ? (typeof structured === 'string' ? structured : JSON.stringify(structured))
+      : (typeof obj.result === 'string' ? obj.result : typeof obj.text === 'string' ? obj.text : '')
+    events.push({
+      type: 'result',
+      text: finalText,
+      sessionId: obj.session_id ? String(obj.session_id) : undefined,
+      usage: normalizeUsage(obj.usage),
+      costUsd: typeof obj.total_cost_usd === 'number' ? obj.total_cost_usd : undefined,
+      isError: Boolean(obj.is_error || obj.subtype === 'error_during_execution'),
+      error: typeof obj.error === 'string' ? obj.error : obj.error?.message || (Array.isArray(obj.errors) ? obj.errors.join('; ') : undefined),
+    })
+  }
+  else if (kind === 'error') {
+    events.push({
+      type: 'error',
+      message: typeof obj.error === 'string' ? obj.error : obj.error?.message || obj.message || 'WorkBuddy execution failed',
+    })
+  }
+
+  return events
+}
+
+function parseEngineStreamLine(engine, line) {
+  if (engine === 'agy') return parseAgyEventLine(line)
+  if (engine === 'codex') return parseCodexEventLine(line)
+  if (engine === 'grok') return parseGrokEventLine(line)
+  if (engine === 'workbuddy') return parseWorkBuddyEventLine(line)
+  return []
+}
+
 function normalizeUsage(raw) {
   if (!raw || typeof raw !== 'object') return undefined
   const input = raw.input_tokens ?? raw.prompt_tokens ?? raw.inputTokens ?? 0
@@ -1171,36 +1679,18 @@ async function handleChatCompletions(body, res) {
   const { engine, model } = parseLocalModelTarget(requestedModel)
   const stream = Boolean(body.stream)
 
-  if (engine === 'ollama') {
-    const upstream = await fetch(`${OLLAMA_URL}/v1/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...body, model }),
-      signal: AbortSignal.timeout(300000),
-    })
-    res.writeHead(upstream.status, {
-      'Content-Type': upstream.headers.get('content-type') || (stream ? 'text/event-stream' : 'application/json'),
-      ...(stream ? { 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' } : {}),
-    })
-    if (!upstream.body) {
-      res.end()
-      return
-    }
-    for await (const chunk of upstream.body) {
-      res.write(chunk)
-    }
-    res.end()
-    return
-  }
-
-  if (engine !== 'agy' && engine !== 'codex') {
-    sendJson(res, 400, { error: { message: `Unsupported local model target: ${requestedModel}. Use agy:<model>, codex:<model>, or ollama:<model>.` } })
+  if (!['agy', 'codex', 'grok', 'workbuddy'].includes(engine)) {
+    sendJson(res, 400, { error: { message: `Unsupported local model target: ${requestedModel}. Use agy:<model>, codex:<model>, grok:<model>, or workbuddy:<model>.` } })
     return
   }
 
   const bin = engine === 'agy'
     ? findAgyBinary()
-    : findCodexBinary()
+    : engine === 'codex'
+      ? findCodexBinary()
+      : engine === 'grok'
+        ? findGrokBinary()
+        : findWorkBuddyBinaryInfo().bin
 
   if (!bin) {
     sendJson(res, 503, { error: { message: `本机未检测到 ${engine} CLI，请先安装并登录后重试。` } })
@@ -1233,7 +1723,7 @@ async function handleChatCompletions(body, res) {
       catch {}
     }
 
-    if (engine === 'agy' && downloadedImages.length > 0) {
+    if ((engine === 'agy' || engine === 'grok' || engine === 'workbuddy') && downloadedImages.length > 0) {
       promptText += `\n\nLocal reference image files:\n${downloadedImages.map((p, idx) => `- Image ${idx + 1}: ${p}`).join('\n')}`
     }
 
@@ -1242,36 +1732,64 @@ async function handleChatCompletions(body, res) {
     ensureDir(workdir)
 
     const codexSpec = engine === 'codex' ? resolveCodexInvocationOptions(model) : null
-    const args = engine === 'agy'
-      ? [
-          '--output-format', 'stream-json',
-          '--disable-slash-commands',
-          ...(model ? ['--model', model] : []),
-          ...(schemaFile ? ['--json-schema', schemaFile] : []),
-          '-p', promptText,
-        ]
-      : [
-          '--ask-for-approval', 'never',
-          'exec',
-          '--ephemeral',
-          '--skip-git-repo-check',
-          '--sandbox', 'read-only',
-          '--disable', 'plugins',
-          '--disable', 'apps',
-          '--disable', 'computer_use',
-          '--disable', 'multi_agent',
-          '--disable', 'hooks',
-          '--disable', 'memories',
-          '--disable', 'shell_tool',
-          '--disable', 'unified_exec',
-          '--json',
-          '--output-last-message', outLastFile,
-          ...(codexSpec?.effortArg ? ['-c', `model_reasoning_effort="${codexSpec.effortArg}"`] : []),
-          ...(codexSpec?.modelArg ? ['--model', codexSpec.modelArg] : []),
-          ...(schemaFile ? ['--output-schema', schemaFile] : []),
-          ...downloadedImages.flatMap(file => ['--image', file]),
-          '-',
-        ]
+    let args
+    if (engine === 'agy') {
+      args = [
+        '--output-format', 'stream-json',
+        '--disable-slash-commands',
+        ...(model ? ['--model', model] : []),
+        ...(schemaFile ? ['--json-schema', schemaFile] : []),
+        '-p', promptText,
+      ]
+    }
+    else if (engine === 'codex') {
+      args = [
+        '--ask-for-approval', 'never',
+        'exec',
+        '--ephemeral',
+        '--skip-git-repo-check',
+        '--sandbox', 'read-only',
+        '--disable', 'plugins',
+        '--disable', 'apps',
+        '--disable', 'computer_use',
+        '--disable', 'multi_agent',
+        '--disable', 'hooks',
+        '--disable', 'memories',
+        '--disable', 'shell_tool',
+        '--disable', 'unified_exec',
+        '--json',
+        '--output-last-message', outLastFile,
+        ...(codexSpec?.effortArg ? ['-c', `model_reasoning_effort="${codexSpec.effortArg}"`] : []),
+        ...(codexSpec?.modelArg ? ['--model', codexSpec.modelArg] : []),
+        ...(schemaFile ? ['--output-schema', schemaFile] : []),
+        ...downloadedImages.flatMap(file => ['--image', file]),
+        '-',
+      ]
+    }
+    else if (engine === 'grok') {
+      args = [
+        ...(schemaObj
+          ? ['--json-schema', JSON.stringify(schemaObj)]
+          : ['--output-format', 'streaming-json']),
+        '--no-memory',
+        '--no-subagents',
+        '--disable-web-search',
+        '--tools', '',
+        ...(model ? ['--model', model] : []),
+        '-p', promptText,
+      ]
+    }
+    else {
+      // workbuddy
+      args = [
+        '-p', promptText,
+        '--output-format', schemaObj ? 'json' : 'stream-json',
+        ...(!schemaObj ? ['--include-partial-messages'] : []),
+        '--tools', '',
+        ...(model && model !== 'auto' ? ['--model', model] : []),
+        ...(schemaObj ? ['--json-schema', JSON.stringify(schemaObj)] : []),
+      ]
+    }
 
     const completionId = `chatcmpl-${randomBytes(8).toString('hex')}`
     const created = Math.floor(Date.now() / 1000)
@@ -1284,11 +1802,13 @@ async function handleChatCompletions(body, res) {
       })
     }
 
-    const child = spawn(bin, args, {
-      cwd: workdir,
-      env: childEnv(),
-      stdio: ['pipe', 'pipe', 'pipe'],
-    })
+    const child = engine === 'workbuddy'
+      ? spawnWorkBuddyProcess(args, { cwd: workdir, stdio: ['pipe', 'pipe', 'pipe'] })
+      : spawn(bin, args, {
+          cwd: workdir,
+          env: childEnv(),
+          stdio: ['pipe', 'pipe', 'pipe'],
+        })
 
     if (engine === 'codex') {
       child.stdin.write(promptText)
@@ -1299,9 +1819,11 @@ async function handleChatCompletions(body, res) {
     }
 
     let stderr = ''
+    let rawStdout = ''
     let buffer = ''
     let fullText = ''
     let finalResultText = ''
+    let streamError = ''
     let usage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }
     let emittedAnyDelta = false
 
@@ -1321,20 +1843,29 @@ async function handleChatCompletions(body, res) {
       }
     }
 
+    const handleParsedEvent = (ev) => {
+      if (ev.type === 'text_delta') emitDelta(ev.text)
+      else if (ev.type === 'usage' && ev.usage) usage = ev.usage
+      else if (ev.type === 'result') {
+        if (ev.usage) usage = ev.usage
+        if (ev.text) finalResultText = ev.text
+        if (ev.isError && ev.error) streamError = ev.error
+      }
+      else if (ev.type === 'error' && ev.message) {
+        streamError = ev.message
+      }
+    }
+
     child.stderr.on('data', chunk => { stderr += chunk.toString('utf8') })
     child.stdout.on('data', (chunk) => {
-      buffer += chunk.toString('utf8')
+      const textChunk = chunk.toString('utf8')
+      rawStdout += textChunk
+      buffer += textChunk
       const lines = buffer.split(/\r?\n/)
       buffer = lines.pop() || ''
       for (const line of lines) {
-        const parsedEvents = engine === 'agy' ? parseAgyEventLine(line) : parseCodexEventLine(line)
-        for (const ev of parsedEvents) {
-          if (ev.type === 'text_delta') emitDelta(ev.text)
-          else if (ev.type === 'usage' && ev.usage) usage = ev.usage
-          else if (ev.type === 'result') {
-            if (ev.usage) usage = ev.usage
-            if (ev.text) finalResultText = ev.text
-          }
+        for (const ev of parseEngineStreamLine(engine, line)) {
+          handleParsedEvent(ev)
         }
       }
     })
@@ -1345,14 +1876,8 @@ async function handleChatCompletions(body, res) {
     })
 
     if (buffer.trim()) {
-      const parsedEvents = engine === 'agy' ? parseAgyEventLine(buffer) : parseCodexEventLine(buffer)
-      for (const ev of parsedEvents) {
-        if (ev.type === 'text_delta') emitDelta(ev.text)
-        else if (ev.type === 'usage' && ev.usage) usage = ev.usage
-        else if (ev.type === 'result') {
-          if (ev.usage) usage = ev.usage
-          if (ev.text) finalResultText = ev.text
-        }
+      for (const ev of parseEngineStreamLine(engine, buffer)) {
+        handleParsedEvent(ev)
       }
     }
 
@@ -1361,9 +1886,32 @@ async function handleChatCompletions(body, res) {
       if (last) finalResultText = last
     }
 
+    // Multi-line JSON fallback (e.g. grok --json-schema or workbuddy --output-format json)
+    if (!finalResultText && !fullText && rawStdout.trim()) {
+      if (/Authentication required\. Please use \/login/i.test(rawStdout)) {
+        streamError = 'WorkBuddy 尚未登录，请在「模型接入」页面点击 WorkBuddy「一键网页登录」完成授权。'
+      }
+      else {
+        const parsedJson = extractJsonFromOutput(rawStdout)
+        if (parsedJson && typeof parsedJson === 'object') {
+          if (parsedJson.usage) usage = normalizeUsage(parsedJson.usage) || usage
+          const structured = parsedJson.structuredOutput ?? parsedJson.structured_output
+          if (structured !== undefined) {
+            finalResultText = typeof structured === 'string' ? structured : JSON.stringify(structured)
+          }
+          else if (typeof parsedJson.text === 'string' && parsedJson.text.trim()) {
+            finalResultText = parsedJson.text.trim()
+          }
+          else if (typeof parsedJson.result === 'string' && parsedJson.result.trim()) {
+            finalResultText = parsedJson.result.trim()
+          }
+        }
+      }
+    }
+
     const answer = (finalResultText || fullText).trim()
-    if (exitCode !== 0 && !answer) {
-      const errMsg = summarizeCliError(stderr, '', exitCode)
+    if ((exitCode !== 0 || streamError) && !answer) {
+      const errMsg = streamError || summarizeCliError(stderr, rawStdout, exitCode)
       if (stream) {
         if (!res.writableEnded) {
           res.write(`data: ${JSON.stringify({ error: { message: errMsg } })}\n\n`)
@@ -1461,12 +2009,37 @@ function prepareAgentWorkspace(runId, mcpUrl, skillsDir) {
     try { symlinkSync(skillsDir, codexSkills, 'dir') } catch {}
   }
 
+  // Grok workspace MCP project config (.grok/config.toml)
+  if (mcpUrl) {
+    const grokDir = join(workspace, '.grok')
+    ensureDir(grokDir)
+    const escapedUrl = mcpUrl.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+    writeFileSync(
+      join(grokDir, 'config.toml'),
+      `[mcp_servers.foldframe]\nurl = "${escapedUrl}"\nenabled = true\n`,
+      'utf8',
+    )
+    // WorkBuddy MCP JSON config
+    writeFileSync(
+      join(workspace, 'workbuddy-mcp.json'),
+      JSON.stringify({
+        mcpServers: {
+          foldframe: {
+            type: 'http',
+            url: mcpUrl,
+          },
+        },
+      }, null, 2),
+      'utf8',
+    )
+  }
+
   return workspace
 }
 
 async function handleAgentRun(body, req, res) {
   const runId = String(body.runId || randomBytes(8).toString('hex'))
-  const engine = body.engine === 'codex' ? 'codex' : 'agy'
+  const engine = ['agy', 'codex', 'grok', 'workbuddy'].includes(body.engine) ? body.engine : 'agy'
   const model = normalizeEngineModel(engine, body.model)
   const sessionId = body.sessionId ? String(body.sessionId) : undefined
   const mcpUrl = String(body.mcpUrl || '')
@@ -1474,7 +2047,11 @@ async function handleAgentRun(body, req, res) {
 
   const bin = engine === 'agy'
     ? findAgyBinary()
-    : findCodexBinary()
+    : engine === 'codex'
+      ? findCodexBinary()
+      : engine === 'grok'
+        ? findGrokBinary()
+        : findWorkBuddyBinaryInfo().bin
 
   if (!bin) {
     sendJson(res, 503, { error: { message: `本机未安装 ${engine} CLI，请先在宿主机安装并登录后重试。` } })
@@ -1497,7 +2074,7 @@ async function handleAgentRun(body, req, res) {
     combinedPrompt += `${body.systemPrompt}\n\n---\n\n`
   }
   combinedPrompt += String(body.prompt || '')
-  if (engine === 'agy' && downloadedImages.length > 0) {
+  if ((engine === 'agy' || engine === 'grok' || engine === 'workbuddy') && downloadedImages.length > 0) {
     combinedPrompt += `\n\nLocal reference media files:\n${downloadedImages.map((p, idx) => `- File ${idx + 1}: ${p}`).join('\n')}`
   }
 
@@ -1529,6 +2106,28 @@ async function handleAgentRun(body, req, res) {
       ...(model ? ['--model', model] : []),
       ...(sessionId ? ['--conversation', sessionId] : []),
       '-p', combinedPrompt,
+    ]
+  }
+  else if (engine === 'grok') {
+    args = [
+      '--output-format', 'streaming-json',
+      '--always-approve',
+      '--cwd', workspace,
+      ...(model ? ['--model', model] : []),
+      ...(sessionId ? ['--resume', sessionId] : []),
+      '-p', combinedPrompt,
+    ]
+  }
+  else if (engine === 'workbuddy') {
+    const wbMcpFile = join(workspace, 'workbuddy-mcp.json')
+    args = [
+      '-p', combinedPrompt,
+      '--output-format', 'stream-json',
+      '--include-partial-messages',
+      '-y',
+      ...(mcpUrl && existsSync(wbMcpFile) ? ['--mcp-config', wbMcpFile] : []),
+      ...(model && model !== 'auto' ? ['--model', model] : []),
+      ...(sessionId ? ['--resume', sessionId] : []),
     ]
   }
   else {
@@ -1583,11 +2182,13 @@ async function handleAgentRun(body, req, res) {
     }
   }
 
-  const child = spawn(bin, args, {
-    cwd: workspace,
-    env: childEnv(),
-    stdio: ['pipe', 'pipe', 'pipe'],
-  })
+  const child = engine === 'workbuddy'
+    ? spawnWorkBuddyProcess(args, { cwd: workspace, stdio: ['pipe', 'pipe', 'pipe'] })
+    : spawn(bin, args, {
+        cwd: workspace,
+        env: childEnv(),
+        stdio: ['pipe', 'pipe', 'pipe'],
+      })
   activeRuns.set(runId, child)
 
   req.on('close', () => {
@@ -1657,8 +2258,7 @@ async function handleAgentRun(body, req, res) {
     const lines = stdoutBuf.split(/\r?\n/)
     stdoutBuf = lines.pop() || ''
     for (const line of lines) {
-      const parsed = engine === 'agy' ? parseAgyEventLine(line) : parseCodexEventLine(line)
-      for (const ev of parsed) dispatchParsed(ev)
+      for (const ev of parseEngineStreamLine(engine, line)) dispatchParsed(ev)
     }
   })
 
@@ -1670,8 +2270,7 @@ async function handleAgentRun(body, req, res) {
   clearInterval(keepaliveTimer)
 
   if (stdoutBuf.trim()) {
-    const parsed = engine === 'agy' ? parseAgyEventLine(stdoutBuf) : parseCodexEventLine(stdoutBuf)
-    for (const ev of parsed) dispatchParsed(ev)
+    for (const ev of parseEngineStreamLine(engine, stdoutBuf)) dispatchParsed(ev)
   }
 
   if (engine === 'codex' && existsSync(outLastFile)) {
@@ -2532,6 +3131,488 @@ async function handleCodexAuthStatus(res) {
   })
 }
 
+export function parseGrokDeviceAuthOutput(rawText) {
+  const clean = String(rawText || '').replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+  const urlMatch = clean.match(/https:\/\/accounts\.x\.ai\/[^\s"'<>]+|https:\/\/auth\.x\.ai\/[^\s"'<>]+|https:\/\/[^\s"'<>]+/i)
+  const verificationUri = urlMatch?.[0] || ''
+  let userCode = ''
+  if (verificationUri) {
+    try {
+      const parsedUrl = new URL(verificationUri)
+      const qCode = parsedUrl.searchParams.get('user_code')
+      if (qCode) userCode = qCode.trim()
+    }
+    catch {}
+  }
+  if (!userCode) {
+    const codeMatch = clean.match(/\b([A-Z0-9]{4,5}-[A-Z0-9]{4,5})\b/)
+    if (codeMatch) userCode = codeMatch[1]
+  }
+  return { verificationUri, userCode }
+}
+
+async function handleGrokAuthStart(res) {
+  const bin = findGrokBinary()
+  if (!bin) {
+    sendJson(res, 200, { ok: false, status: 'not_installed', detail: '本机尚未安装 Grok CLI' })
+    return
+  }
+
+  const prev = activeAuthProcesses.get('grok')
+  if (prev) {
+    try { prev.kill('SIGTERM') } catch {}
+    activeAuthProcesses.delete('grok')
+  }
+
+  const state = {
+    startedAt: Date.now(),
+    status: 'pending',
+    error: '',
+    verificationUri: '',
+    userCode: '',
+  }
+  activeAuthStates.set('grok', state)
+
+  const child = spawn(bin, ['login', '--device-auth'], {
+    cwd: REPO_ROOT,
+    env: childEnv(),
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  activeAuthProcesses.set('grok', child)
+
+  const killTimer = setTimeout(() => {
+    if (activeAuthProcesses.get('grok') === child) {
+      try { child.kill('SIGTERM') } catch {}
+      activeAuthProcesses.delete('grok')
+      if (activeAuthStates.get('grok') === state && state.status === 'pending') {
+        state.status = 'expired'
+        state.error = 'Grok 网页授权已超时，请重新获取链接。'
+      }
+    }
+  }, 10 * 60 * 1000)
+  killTimer.unref?.()
+
+  let rawOutput = ''
+  const collected = await new Promise((resolveOut) => {
+    let settled = false
+    const tryResolve = (closed = false) => {
+      if (settled) return
+      const parsed = parseGrokDeviceAuthOutput(rawOutput)
+      if (parsed.verificationUri && (parsed.userCode || closed)) {
+        settled = true
+        clearTimeout(timer)
+        resolveOut({ ...parsed, raw: rawOutput, closed })
+      }
+      else if (closed) {
+        settled = true
+        clearTimeout(timer)
+        resolveOut({ ...parsed, raw: rawOutput, closed: true })
+      }
+    }
+    const timer = setTimeout(() => {
+      if (settled) return
+      settled = true
+      const parsed = parseGrokDeviceAuthOutput(rawOutput)
+      resolveOut({ ...parsed, raw: rawOutput, closed: false })
+    }, 10000)
+
+    child.stdout.on('data', (d) => {
+      rawOutput += d.toString('utf8')
+      tryResolve(false)
+    })
+    child.stderr.on('data', (d) => {
+      rawOutput += d.toString('utf8')
+      tryResolve(false)
+    })
+    child.on('error', (err) => {
+      rawOutput += `\n${err.message}`
+      if (activeAuthStates.get('grok') === state) {
+        state.status = 'error'
+        state.error = err.message
+      }
+      tryResolve(true)
+    })
+    child.on('close', (code) => {
+      clearTimeout(killTimer)
+      if (activeAuthProcesses.get('grok') === child) {
+        activeAuthProcesses.delete('grok')
+      }
+      if (activeAuthStates.get('grok') === state && state.status === 'pending') {
+        if (code === 0) {
+          state.status = 'authorized'
+          invalidateEnginesCache()
+        }
+        else {
+          state.status = /expired|timeout/i.test(rawOutput) ? 'expired' : 'error'
+          state.error = summarizeCliError(rawOutput, '', code ?? -1) || 'Grok 登录未完成，请重试。'
+        }
+      }
+      tryResolve(true)
+    })
+  })
+
+  if (collected.verificationUri) {
+    state.verificationUri = collected.verificationUri
+    state.userCode = collected.userCode
+    sendJson(res, 200, {
+      ok: true,
+      status: 'pending',
+      verificationUri: collected.verificationUri,
+      userCode: collected.userCode || undefined,
+      pollIntervalSec: 2,
+      detail: '已生成 Grok 网页授权链接，请在浏览器中完成登录确认。',
+    })
+    return
+  }
+
+  if (state.status === 'authorized') {
+    const engine = await detectGrok()
+    sendJson(res, 200, { ok: true, status: 'authorized', detail: 'Grok 已完成网页登录！', engine })
+    return
+  }
+
+  sendJson(res, 200, {
+    ok: false,
+    status: 'error',
+    detail: state.error || collected.raw.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').trim().slice(-240) || '未能获取 Grok 网页授权链接，请重试。',
+  })
+}
+
+async function handleGrokAuthStatus(res) {
+  const state = activeAuthStates.get('grok')
+  if (state) {
+    if (state.status === 'pending') {
+      sendJson(res, 200, {
+        ok: true,
+        status: 'pending',
+        detail: '等待在浏览器确认 Grok 登录授权...',
+      })
+      return
+    }
+    if (state.status === 'authorized') {
+      activeAuthStates.delete('grok')
+      invalidateEnginesCache()
+      const engine = await detectGrok()
+      sendJson(res, 200, {
+        ok: true,
+        status: 'authorized',
+        detail: `Grok 登录成功！当前默认模型 ${engine.effectiveDefaultModel || 'grok-4.7'}`,
+        engine,
+      })
+      return
+    }
+    if (state.status === 'expired' || state.status === 'error') {
+      const status = state.status
+      const detail = state.error || 'Grok 授权已失效，请重新获取链接。'
+      activeAuthStates.delete('grok')
+      sendJson(res, 200, { ok: false, status, detail })
+      return
+    }
+  }
+
+  const engine = await detectGrok()
+  sendJson(res, 200, {
+    ok: true,
+    status: engine.loggedIn ? 'authorized' : 'pending',
+    detail: engine.loggedIn ? `Grok 已登录（${engine.effectiveDefaultModel || 'grok-4.7'}）` : '等待在浏览器完成 Grok 授权...',
+    engine,
+  })
+}
+
+async function handleGrokAuthLogout(res) {
+  const prev = activeAuthProcesses.get('grok')
+  if (prev) {
+    try { prev.kill('SIGTERM') } catch {}
+    activeAuthProcesses.delete('grok')
+  }
+  activeAuthStates.delete('grok')
+  const bin = findGrokBinary()
+  if (!bin) {
+    sendJson(res, 200, { ok: false, detail: '未检测到 Grok CLI' })
+    return
+  }
+  await execCapture(bin, ['logout'], { timeoutMs: 10000 })
+  invalidateEnginesCache()
+  const engine = await detectGrok()
+  sendJson(res, 200, {
+    ok: true,
+    detail: '已退出当前 Grok 账号，可重新点击「一键网页登录」切换账号。',
+    engine,
+  })
+}
+
+async function handleWorkBuddyAuthStart(body, res) {
+  const info = findWorkBuddyBinaryInfo()
+  if (!info.bin) {
+    sendJson(res, 200, { ok: false, status: 'not_installed', detail: '本机尚未安装腾讯 WorkBuddy（/Applications/WorkBuddy.app）' })
+    return
+  }
+
+  const prev = activeAuthProcesses.get('workbuddy')
+  if (prev) {
+    try { prev.kill('SIGTERM') } catch {}
+    activeAuthProcesses.delete('workbuddy')
+  }
+
+  const methodId = body?.methodId === 'external' ? 'external' : 'internal'
+  const state = {
+    startedAt: Date.now(),
+    status: 'pending',
+    error: '',
+    verificationUri: '',
+    accountLabel: '',
+  }
+  activeAuthStates.set('workbuddy', state)
+
+  const child = spawnWorkBuddyProcess(
+    ['--serve', '--acp', '--acp-transport', 'stdio', '--auth', 'none', '--port', '0'],
+    {
+      cwd: REPO_ROOT,
+      env: { HEADLESS: '1', BROWSER: '/usr/bin/true' },
+      stdio: ['pipe', 'pipe', 'pipe'],
+    },
+  )
+  activeAuthProcesses.set('workbuddy', child)
+
+  const killTimer = setTimeout(() => {
+    if (activeAuthProcesses.get('workbuddy') === child) {
+      try { child.kill('SIGTERM') } catch {}
+      activeAuthProcesses.delete('workbuddy')
+      if (activeAuthStates.get('workbuddy') === state && state.status === 'pending') {
+        state.status = 'expired'
+        state.error = 'WorkBuddy 网页授权已超时，请重新获取链接。'
+      }
+    }
+  }, 10 * 60 * 1000)
+  killTimer.unref?.()
+
+  const sendRpc = (obj) => {
+    try {
+      if (child.stdin && !child.stdin.destroyed) {
+        child.stdin.write(`${JSON.stringify(obj)}\n`)
+      }
+    }
+    catch {}
+  }
+
+  let initSent = false
+  let authSent = false
+  let stdoutBuf = ''
+  let stderrBuf = ''
+
+  const triggerInit = () => {
+    if (initSent) return
+    initSent = true
+    sendRpc({
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: { protocolVersion: 1, clientCapabilities: {} },
+    })
+  }
+
+  // Kick off ACP handshake once HTTP server banner prints, or after 1.5s fallback
+  const initFallbackTimer = setTimeout(triggerInit, 1500)
+  initFallbackTimer.unref?.()
+
+  const collected = await new Promise((resolveOut) => {
+    let settled = false
+    const finishEarly = (result) => {
+      if (settled) return
+      settled = true
+      clearTimeout(startTimeout)
+      resolveOut(result)
+    }
+
+    const startTimeout = setTimeout(() => {
+      finishEarly({ verificationUri: state.verificationUri, error: state.error })
+    }, 15000)
+
+    const processLine = (line) => {
+      const trimmed = line.trim()
+      if (!trimmed) return
+      if (!initSent && /Press Ctrl\+C|Endpoint\s+http:\/\/127\.0\.0\.1:/i.test(trimmed)) {
+        setTimeout(triggerInit, 150)
+        return
+      }
+      if (!trimmed.startsWith('{')) return
+      let msg
+      try {
+        msg = JSON.parse(trimmed)
+      }
+      catch {
+        return
+      }
+
+      if (msg.id === 1 && msg.result && !authSent) {
+        authSent = true
+        sendRpc({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'authenticate',
+          params: { methodId },
+        })
+        return
+      }
+
+      if (msg.method === '_codebuddy.ai/authUrl' && msg.params?.authUrl) {
+        state.verificationUri = String(msg.params.authUrl)
+        finishEarly({ verificationUri: state.verificationUri })
+        return
+      }
+
+      if (msg.id === 2) {
+        if (msg.result) {
+          const userInfo = msg.result?._meta?.['codebuddy.ai/userinfo']
+          const nick = userInfo?.userNickname || userInfo?.userName || userInfo?.userId || ''
+          if (nick) {
+            state.accountLabel = String(nick)
+            saveWorkBuddyMeta({ accountLabel: String(nick), loggedInAt: new Date().toISOString() })
+          }
+          state.status = 'authorized'
+          invalidateEnginesCache()
+          finishEarly({ verificationUri: state.verificationUri, authorized: true })
+          setTimeout(() => {
+            if (activeAuthProcesses.get('workbuddy') === child) {
+              try { child.kill('SIGTERM') } catch {}
+              activeAuthProcesses.delete('workbuddy')
+            }
+          }, 500)
+        }
+        else if (msg.error) {
+          state.status = 'error'
+          state.error = msg.error?.message || 'WorkBuddy 认证失败'
+          finishEarly({ verificationUri: '', error: state.error })
+        }
+      }
+    }
+
+    child.stdout.on('data', (chunk) => {
+      stdoutBuf += chunk.toString('utf8')
+      const lines = stdoutBuf.split(/\r?\n/)
+      stdoutBuf = lines.pop() || ''
+      for (const line of lines) processLine(line)
+    })
+    child.stderr.on('data', (chunk) => {
+      stderrBuf += chunk.toString('utf8')
+    })
+    child.on('error', (err) => {
+      state.status = 'error'
+      state.error = err.message
+      finishEarly({ verificationUri: '', error: err.message })
+    })
+    child.on('close', (code) => {
+      clearTimeout(killTimer)
+      clearTimeout(initFallbackTimer)
+      if (activeAuthProcesses.get('workbuddy') === child) {
+        activeAuthProcesses.delete('workbuddy')
+      }
+      if (stdoutBuf.trim()) processLine(stdoutBuf)
+      if (activeAuthStates.get('workbuddy') === state && state.status === 'pending') {
+        if (isWorkBuddyLoggedIn()) {
+          state.status = 'authorized'
+          invalidateEnginesCache()
+        }
+        else {
+          state.status = 'error'
+          state.error = summarizeCliError(stderrBuf, stdoutBuf, code ?? -1) || 'WorkBuddy 授权进程意外退出，请重试。'
+        }
+      }
+      finishEarly({ verificationUri: state.verificationUri, error: state.error })
+    })
+  })
+
+  if (collected.authorized || state.status === 'authorized') {
+    const engine = await detectWorkBuddy()
+    sendJson(res, 200, { ok: true, status: 'authorized', detail: 'WorkBuddy 已完成网页登录！', engine })
+    return
+  }
+
+  if (collected.verificationUri) {
+    sendJson(res, 200, {
+      ok: true,
+      status: 'pending',
+      verificationUri: collected.verificationUri,
+      pollIntervalSec: 2,
+      detail: '已生成 WorkBuddy 网页授权链接，请在浏览器扫码或确认登录。',
+    })
+    return
+  }
+
+  sendJson(res, 200, {
+    ok: false,
+    status: 'error',
+    detail: collected.error || state.error || '未能获取 WorkBuddy 网页登录链接，请重试。',
+  })
+}
+
+async function handleWorkBuddyAuthStatus(res) {
+  const state = activeAuthStates.get('workbuddy')
+  if (state) {
+    if (state.status === 'pending') {
+      sendJson(res, 200, {
+        ok: true,
+        status: 'pending',
+        detail: '等待在 WorkBuddy 网页完成扫码或确认授权...',
+      })
+      return
+    }
+    if (state.status === 'authorized') {
+      activeAuthStates.delete('workbuddy')
+      invalidateEnginesCache()
+      const engine = await detectWorkBuddy()
+      sendJson(res, 200, {
+        ok: true,
+        status: 'authorized',
+        detail: `WorkBuddy 登录成功！${engine.accountLabel ? `（${engine.accountLabel}）` : ''}`,
+        engine,
+      })
+      return
+    }
+    if (state.status === 'expired' || state.status === 'error') {
+      const status = state.status
+      const detail = state.error || 'WorkBuddy 授权已失效，请重新获取链接。'
+      activeAuthStates.delete('workbuddy')
+      sendJson(res, 200, { ok: false, status, detail })
+      return
+    }
+  }
+
+  const engine = await detectWorkBuddy()
+  sendJson(res, 200, {
+    ok: true,
+    status: engine.loggedIn ? 'authorized' : 'pending',
+    detail: engine.loggedIn ? `WorkBuddy 已登录（${engine.accountLabel || '就绪'}）` : '等待在浏览器完成 WorkBuddy 授权...',
+    engine,
+  })
+}
+
+async function handleWorkBuddyAuthLogout(res) {
+  const prev = activeAuthProcesses.get('workbuddy')
+  if (prev) {
+    try { prev.kill('SIGTERM') } catch {}
+    activeAuthProcesses.delete('workbuddy')
+  }
+  activeAuthStates.delete('workbuddy')
+  const authDir = getWorkBuddyAuthDir()
+  try {
+    if (existsSync(authDir)) {
+      rmSync(authDir, { recursive: true, force: true })
+    }
+    if (existsSync(WORKBUDDY_META_PATH)) {
+      rmSync(WORKBUDDY_META_PATH, { force: true })
+    }
+  }
+  catch {}
+  invalidateEnginesCache()
+  const engine = await detectWorkBuddy()
+  sendJson(res, 200, {
+    ok: true,
+    detail: '已退出 Foldframe 的 WorkBuddy 登录态（不影响桌面端），可重新点击「一键网页登录」。',
+    engine,
+  })
+}
+
 // ==================== Connectivity Tests ====================
 
 async function handleConnectionTest(body, res) {
@@ -2660,14 +3741,92 @@ async function handleConnectionTest(body, res) {
     return
   }
 
-  if (kind === 'ollama') {
-    const status = await detectOllama()
-    sendJson(res, 200, {
-      ok: status.running,
-      latencyMs: Date.now() - startedAt,
-      detail: status.running ? `Ollama 运行中，已发现 ${status.models.length} 个模型` : '无法连接到本机 Ollama (127.0.0.1:11434)',
-      data: status,
-    })
+  if (kind === 'grok') {
+    const bin = findGrokBinary()
+    if (!bin) {
+      sendJson(res, 200, { ok: false, latencyMs: Date.now() - startedAt, detail: '本机未检测到 Grok CLI' })
+      return
+    }
+    const meta = readGrokLocalMetadata()
+    if (!meta.loggedIn) {
+      sendJson(res, 200, { ok: false, latencyMs: Date.now() - startedAt, detail: 'Grok 尚未登录，请点击「一键网页登录」完成授权后再测试连通' })
+      return
+    }
+    const model = normalizeEngineModel('grok', body.model)
+    const scratch = mkdtempSync(join(tmpdir(), 'foldframe-test-grok-'))
+    try {
+      const args = [
+        '--output-format', 'json',
+        '--no-memory',
+        '--no-subagents',
+        '--disable-web-search',
+        '--tools', '',
+        ...(model ? ['--model', model] : []),
+        '-p', 'Reply with exactly: OK',
+      ]
+      const run = await execCapture(bin, args, { cwd: scratch, timeoutMs: 45000 })
+      const grokJson = extractJsonFromOutput(run.stdout)
+      const reply = String(grokJson?.text ?? '').trim()
+      const ok = run.code === 0 && Boolean(reply)
+      const usedModel = model || Object.keys(grokJson?.modelUsage || {})[0] || meta.configuredModel || 'grok-4.7'
+      sendJson(res, 200, {
+        ok,
+        latencyMs: Date.now() - startedAt,
+        reply: reply.slice(0, 120),
+        detail: ok
+          ? `连接成功（${Date.now() - startedAt}ms，模型 ${usedModel}）：${reply.slice(0, 80)}`
+          : summarizeCliError(run.stderr, run.stdout, run.code),
+        data: { effectiveModel: usedModel },
+      })
+    }
+    finally {
+      try { rmSync(scratch, { recursive: true, force: true }) } catch {}
+    }
+    return
+  }
+
+  if (kind === 'workbuddy') {
+    const info = findWorkBuddyBinaryInfo()
+    if (!info.bin) {
+      sendJson(res, 200, { ok: false, latencyMs: Date.now() - startedAt, detail: '本机未检测到腾讯 WorkBuddy（/Applications/WorkBuddy.app）' })
+      return
+    }
+    if (!isWorkBuddyLoggedIn()) {
+      sendJson(res, 200, { ok: false, latencyMs: Date.now() - startedAt, detail: 'WorkBuddy 尚未登录，请点击「一键网页登录」扫码或确认授权后再测试连通' })
+      return
+    }
+    const model = normalizeEngineModel('workbuddy', body.model)
+    const scratch = mkdtempSync(join(tmpdir(), 'foldframe-test-workbuddy-'))
+    try {
+      const args = [
+        '-p', 'Reply with exactly: OK',
+        '--output-format', 'json',
+        '--tools', '',
+        ...(model && model !== 'auto' ? ['--model', model] : []),
+      ]
+      const cmd = info.isNodeScript ? process.execPath : info.bin
+      const finalArgs = info.isNodeScript ? [info.bin, ...args] : args
+      const run = await execCapture(cmd, finalArgs, { cwd: scratch, timeoutMs: 45000, rawEnv: workbuddyChildEnv() })
+      const combined = `${run.stdout}\n${run.stderr}`
+      if (/Authentication required\. Please use \/login/i.test(combined)) {
+        sendJson(res, 200, { ok: false, latencyMs: Date.now() - startedAt, detail: 'WorkBuddy 登录态已过期，请重新点击「一键网页登录」授权' })
+        return
+      }
+      const wbJson = extractJsonFromOutput(run.stdout)
+      const reply = String(wbJson?.result ?? wbJson?.text ?? run.stdout ?? '').trim()
+      const ok = run.code === 0 && Boolean(reply) && !wbJson?.is_error
+      sendJson(res, 200, {
+        ok,
+        latencyMs: Date.now() - startedAt,
+        reply: reply.slice(0, 120),
+        detail: ok
+          ? `连接成功（${Date.now() - startedAt}ms${model ? `，模型 ${model}` : ''}）：${reply.slice(0, 80)}`
+          : (wbJson?.error || summarizeCliError(run.stderr, run.stdout, run.code)),
+      })
+    }
+    finally {
+      try { rmSync(scratch, { recursive: true, force: true }) } catch {}
+    }
     return
   }
 
@@ -2742,8 +3901,11 @@ export function createBridgeServer() {
         if (engines.codex.installed) {
           for (const m of engines.codex.models) data.push({ id: `codex:${m}`, object: 'model', owned_by: 'codex-cli' })
         }
-        if (engines.ollama.running) {
-          for (const m of engines.ollama.models) data.push({ id: `ollama:${m}`, object: 'model', owned_by: 'ollama' })
+        if (engines.grok.installed) {
+          for (const m of engines.grok.models) data.push({ id: `grok:${m}`, object: 'model', owned_by: 'grok-cli' })
+        }
+        if (engines.workbuddy.installed) {
+          for (const m of engines.workbuddy.models) data.push({ id: `workbuddy:${m}`, object: 'model', owned_by: 'workbuddy' })
         }
         sendJson(res, 200, { object: 'list', data })
         return
@@ -2785,6 +3947,41 @@ export function createBridgeServer() {
       if (req.method === 'GET' && pathname === '/v1/codex/auth/status') {
         invalidateEnginesCache()
         await handleCodexAuthStatus(res)
+        return
+      }
+
+      if (req.method === 'POST' && pathname === '/v1/grok/auth/start') {
+        invalidateEnginesCache()
+        await handleGrokAuthStart(res)
+        return
+      }
+
+      if (req.method === 'GET' && pathname === '/v1/grok/auth/status') {
+        await handleGrokAuthStatus(res)
+        return
+      }
+
+      if (req.method === 'POST' && pathname === '/v1/grok/auth/logout') {
+        invalidateEnginesCache()
+        await handleGrokAuthLogout(res)
+        return
+      }
+
+      if (req.method === 'POST' && pathname === '/v1/workbuddy/auth/start') {
+        invalidateEnginesCache()
+        const body = await readJsonBody(req)
+        await handleWorkBuddyAuthStart(body, res)
+        return
+      }
+
+      if (req.method === 'GET' && pathname === '/v1/workbuddy/auth/status') {
+        await handleWorkBuddyAuthStatus(res)
+        return
+      }
+
+      if (req.method === 'POST' && pathname === '/v1/workbuddy/auth/logout') {
+        invalidateEnginesCache()
+        await handleWorkBuddyAuthLogout(res)
         return
       }
 

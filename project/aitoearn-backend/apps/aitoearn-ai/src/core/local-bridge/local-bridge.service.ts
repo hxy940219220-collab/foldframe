@@ -19,7 +19,7 @@ import { config } from '../../config'
 
 export function isLocalBridgeChatModel(model?: string): boolean {
   if (!model) return false
-  return /^(?:agy|codex|ollama)(?:[:/]|$)/i.test(model.trim())
+  return /^(?:agy|codex|grok|workbuddy)(?:[:/]|$)/i.test(model.trim())
 }
 
 export function isDreaminaModelName(model?: string): boolean {
@@ -400,6 +400,52 @@ export class LocalBridgeService {
     return await this.requestJson<LocalAuthPollResponse>('/v1/codex/auth/status', {
       method: 'GET',
       timeoutMs: 10000,
+    })
+  }
+
+  async startGrokAuth(): Promise<LocalAuthStartResponse> {
+    return await this.requestJson<LocalAuthStartResponse>('/v1/grok/auth/start', {
+      method: 'POST',
+      body: JSON.stringify({}),
+      timeoutMs: 20000,
+    })
+  }
+
+  async getGrokAuthStatus(): Promise<LocalAuthPollResponse> {
+    return await this.requestJson<LocalAuthPollResponse>('/v1/grok/auth/status', {
+      method: 'GET',
+      timeoutMs: 10000,
+    })
+  }
+
+  async logoutGrokAuth(): Promise<{ ok: boolean, detail: string, engine?: LocalEngineInfo }> {
+    return await this.requestJson('/v1/grok/auth/logout', {
+      method: 'POST',
+      body: JSON.stringify({}),
+      timeoutMs: 15000,
+    })
+  }
+
+  async startWorkBuddyAuth(methodId: 'internal' | 'external' = 'internal'): Promise<LocalAuthStartResponse> {
+    return await this.requestJson<LocalAuthStartResponse>('/v1/workbuddy/auth/start', {
+      method: 'POST',
+      body: JSON.stringify({ methodId }),
+      timeoutMs: 25000,
+    })
+  }
+
+  async getWorkBuddyAuthStatus(): Promise<LocalAuthPollResponse> {
+    return await this.requestJson<LocalAuthPollResponse>('/v1/workbuddy/auth/status', {
+      method: 'GET',
+      timeoutMs: 10000,
+    })
+  }
+
+  async logoutWorkBuddyAuth(): Promise<{ ok: boolean, detail: string, engine?: LocalEngineInfo }> {
+    return await this.requestJson('/v1/workbuddy/auth/logout', {
+      method: 'POST',
+      body: JSON.stringify({}),
+      timeoutMs: 15000,
     })
   }
 }

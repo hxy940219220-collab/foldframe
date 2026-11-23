@@ -6,7 +6,7 @@ import type {
   StudioModelsHubConfig,
   StudioModelsHubResponse,
 } from '@/api/studio-models'
-import type { WizardModalState } from './LocalAuthWizardDialog'
+import type { WizardAuthKind, WizardModalState } from './LocalAuthWizardDialog'
 import {
   AlertCircle,
   Bot,
@@ -145,7 +145,7 @@ function SegmentedTabs<T extends string>({
           type="button"
           onClick={() => onChange(opt.value)}
           className={cn(
-            'flex-1 whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-medium transition-all',
+            'flex-1 whitespace-nowrap rounded-md px-2 py-1.5 text-[11.5px] font-medium transition-all',
             value === opt.value
               ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground',
@@ -165,14 +165,13 @@ function LocalModelSelect({
   effectiveDefault,
   onChange,
 }: {
-  engine: 'agy' | 'codex' | 'ollama'
+  engine: 'agy' | 'codex' | 'grok' | 'workbuddy'
   value: string
   detectedModels?: string[]
   effectiveDefault?: string
   onChange: (next: string) => void
 }) {
-  const rawList = (detectedModels && detectedModels.length > 0 ? detectedModels : ['default'])
-    .filter(m => !(engine === 'ollama' && m === 'default'))
+  const rawList = detectedModels && detectedModels.length > 0 ? detectedModels : ['default']
   const options = rawList.map((m) => {
     const full = `${engine}:${m}`
     if (m === 'default') {
@@ -220,7 +219,15 @@ function LocalModelSelect({
           className="h-8 text-xs"
           value={value}
           onChange={e => onChange(e.target.value)}
-          placeholder={engine === 'agy' ? '如 agy:gemini-4-neon-high' : engine === 'codex' ? '如 codex:gpt-6.2-astra' : '如 ollama:qwen2.5:14b'}
+          placeholder={
+            engine === 'agy'
+              ? '如 agy:gemini-4-neon-high'
+              : engine === 'codex'
+                ? '如 codex:gpt-5.4'
+                : engine === 'grok'
+                  ? '如 grok:grok-4.7'
+                  : '如 workbuddy:glm-5.1'
+          }
         />
       )}
     </div>
@@ -335,7 +342,7 @@ export function ModelsHubView() {
     }
   }
 
-  const handleAuthSuccess = useCallback((kind: 'dreamina' | 'codex', engine?: LocalEngineInfo) => {
+  const handleAuthSuccess = useCallback((kind: WizardAuthKind, engine?: LocalEngineInfo) => {
     if (engine) {
       setHub(prev => prev
         ? {
@@ -394,9 +401,10 @@ export function ModelsHubView() {
 
   if (loading && !form) {
     return (
-      <div className="mx-auto max-w-5xl space-y-6 px-6 py-8">
+      <div className="mx-auto max-w-6xl space-y-6 px-6 py-8">
         <Skeleton className="h-10 w-64" />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <Skeleton className="h-36 rounded-xl" />
           <Skeleton className="h-36 rounded-xl" />
           <Skeleton className="h-36 rounded-xl" />
           <Skeleton className="h-36 rounded-xl" />
@@ -429,7 +437,7 @@ export function ModelsHubView() {
   const engines = bridge.engines
 
   return (
-    <div className="mx-auto max-w-5xl space-y-7 px-5 py-7 md:px-8">
+    <div className="mx-auto max-w-6xl space-y-7 px-5 py-7 md:px-8">
       {/* Header */}
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
@@ -465,7 +473,7 @@ export function ModelsHubView() {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>未连接到本机桥接服务</AlertTitle>
           <AlertDescription className="mt-1 text-xs">
-            请通过 <code className="rounded bg-muted px-1.5 py-0.5">启动本地版.command</code> 启动 Foldframe，以自动连接本机 Antigravity、Codex 与即梦引擎。
+            请通过 <code className="rounded bg-muted px-1.5 py-0.5">启动本地版.command</code> 启动 Foldframe，以自动连接本机 Antigravity、Codex、即梦、Grok 与 WorkBuddy 引擎。
           </AlertDescription>
         </Alert>
       )}
@@ -501,7 +509,7 @@ export function ModelsHubView() {
           <span className="text-xs text-muted-foreground">无需填 API Key，直接使用电脑已登录工具</span>
         </div>
 
-        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {/* Antigravity */}
           <div className="flex flex-col justify-between rounded-xl border border-border/80 bg-card p-4 transition-colors hover:border-border">
             <div className="space-y-2.5">
@@ -715,48 +723,155 @@ export function ModelsHubView() {
             </div>
           </div>
 
-          {/* Ollama */}
+          {/* Grok */}
           <div className="flex flex-col justify-between rounded-xl border border-border/80 bg-card p-4 transition-colors hover:border-border">
             <div className="space-y-2.5">
               <div className="flex items-center justify-between gap-2">
-                <span className="truncate text-sm font-semibold text-foreground">Ollama</span>
+                <span className="truncate text-sm font-semibold text-foreground">Grok</span>
                 <StatusPill
-                  tone={engines.ollama?.running ? 'ready' : 'muted'}
-                  label={engines.ollama?.running ? '运行中' : '未运行'}
+                  tone={!engines.grok?.installed ? 'muted' : engines.grok.loggedIn ? 'ready' : 'warn'}
+                  label={!engines.grok?.installed ? '未安装' : engines.grok.loggedIn ? '已就绪' : '待登录'}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">本机开源离线模型 · 可选</p>
-              <p className="truncate text-xs font-medium text-foreground/80">
-                {engines.ollama?.running
-                  ? `已加载 ${engines.ollama.models?.length || 0} 个本地模型`
-                  : '无需离线模型可忽略'}
+              <p className="text-xs text-muted-foreground">
+                {engines.grok?.accountLabel ? `${engines.grok.accountLabel} · Agent · 文案` : 'xAI Grok · 网页授权接入'}
               </p>
+              <p className="truncate text-xs font-medium text-foreground/80" title={engines.grok?.effectiveDefaultModel || ''}>
+                {engines.grok?.installed
+                  ? `${formatShortVersion(engines.grok.version)}${engines.grok.effectiveDefaultModel ? ` · ${engines.grok.effectiveDefaultModel}` : ''}`
+                  : '点击下方查看安装指引'}
+              </p>
+              {testResults.grok && (
+                <p
+                  title={testResults.grok.detail}
+                  className={cn(
+                    'truncate text-[11px]',
+                    testResults.grok.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive',
+                  )}
+                >
+                  {testResults.grok.ok ? `✓ 连通正常（${(testResults.grok.latencyMs / 1000).toFixed(1)}s）` : testResults.grok.detail}
+                </p>
+              )}
             </div>
             <div className="mt-4 pt-3 border-t border-border/50">
-              <div className="flex items-center gap-1.5">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 flex-1 text-xs"
-                  disabled={!bridge.reachable || testingKey === 'ollama'}
-                  onClick={() => void runTest('ollama', { kind: 'ollama' })}
-                >
-                  {testingKey === 'ollama' ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <PlugZap className="mr-1.5 h-3.5 w-3.5" />}
-                  探测服务
-                </Button>
-                {!engines.ollama?.running && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 shrink-0 px-2 text-xs text-muted-foreground"
-                    onClick={() => setWizardModal({ mode: 'setup-guide', engine: 'ollama' })}
-                  >
-                    指引
-                  </Button>
-                )}
+              {!engines.grok?.installed
+                ? (
+                    <Button type="button" variant="outline" size="sm" className="h-8 w-full text-xs" onClick={() => setWizardModal({ mode: 'setup-guide', engine: 'grok' })}>
+                      <HelpCircle className="mr-1.5 h-3.5 w-3.5" />
+                      安装指引
+                    </Button>
+                  )
+                : !engines.grok.loggedIn
+                  ? (
+                      <Button type="button" size="sm" className="h-8 w-full text-xs" disabled={!bridge.reachable} onClick={() => setWizardModal({ mode: 'grok-login' })}>
+                        <LogIn className="mr-1.5 h-3.5 w-3.5" />
+                        一键网页登录
+                      </Button>
+                    )
+                  : (
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 flex-1 text-xs"
+                          disabled={!bridge.reachable || testingKey === 'grok'}
+                          onClick={() => void runTest('grok', {
+                            kind: 'grok',
+                            model: form.agent.engine === 'grok' ? form.agent.model : form.planner.engine === 'grok' ? form.planner.model : undefined,
+                          })}
+                        >
+                          {testingKey === 'grok' ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <PlugZap className="mr-1 h-3.5 w-3.5" />}
+                          测试连通
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 shrink-0 px-2 text-xs text-muted-foreground"
+                          disabled={!bridge.reachable}
+                          onClick={() => setWizardModal({ mode: 'grok-login' })}
+                        >
+                          网页登录
+                        </Button>
+                      </div>
+                    )}
+            </div>
+          </div>
+
+          {/* WorkBuddy */}
+          <div className="flex flex-col justify-between rounded-xl border border-border/80 bg-card p-4 transition-colors hover:border-border">
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate text-sm font-semibold text-foreground">WorkBuddy</span>
+                <StatusPill
+                  tone={!engines.workbuddy?.installed ? 'muted' : engines.workbuddy.loggedIn ? 'ready' : 'warn'}
+                  label={!engines.workbuddy?.installed ? '未安装' : engines.workbuddy.loggedIn ? '已就绪' : '待登录'}
+                />
               </div>
+              <p className="text-xs text-muted-foreground">
+                {engines.workbuddy?.accountLabel ? `${engines.workbuddy.accountLabel} · 多模型引擎` : '腾讯 WorkBuddy · 国产多模型'}
+              </p>
+              <p className="truncate text-xs font-medium text-foreground/80">
+                {engines.workbuddy?.installed
+                  ? `${formatShortVersion(engines.workbuddy.version)} · ${Math.max(0, (engines.workbuddy.models?.length || 1) - 1)} 个模型`
+                  : '安装 WorkBuddy 客户端后可用'}
+              </p>
+              {testResults.workbuddy && (
+                <p
+                  title={testResults.workbuddy.detail}
+                  className={cn(
+                    'truncate text-[11px]',
+                    testResults.workbuddy.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive',
+                  )}
+                >
+                  {testResults.workbuddy.ok ? `✓ 连通正常（${(testResults.workbuddy.latencyMs / 1000).toFixed(1)}s）` : testResults.workbuddy.detail}
+                </p>
+              )}
+            </div>
+            <div className="mt-4 pt-3 border-t border-border/50">
+              {!engines.workbuddy?.installed
+                ? (
+                    <Button type="button" variant="outline" size="sm" className="h-8 w-full text-xs" onClick={() => setWizardModal({ mode: 'setup-guide', engine: 'workbuddy' })}>
+                      <HelpCircle className="mr-1.5 h-3.5 w-3.5" />
+                      安装指引
+                    </Button>
+                  )
+                : !engines.workbuddy.loggedIn
+                  ? (
+                      <Button type="button" size="sm" className="h-8 w-full text-xs" disabled={!bridge.reachable} onClick={() => setWizardModal({ mode: 'workbuddy-login' })}>
+                        <LogIn className="mr-1.5 h-3.5 w-3.5" />
+                        一键网页登录
+                      </Button>
+                    )
+                  : (
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 flex-1 text-xs"
+                          disabled={!bridge.reachable || testingKey === 'workbuddy'}
+                          onClick={() => void runTest('workbuddy', {
+                            kind: 'workbuddy',
+                            model: form.agent.engine === 'workbuddy' ? form.agent.model : form.planner.engine === 'workbuddy' ? form.planner.model : undefined,
+                          })}
+                        >
+                          {testingKey === 'workbuddy' ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <PlugZap className="mr-1 h-3.5 w-3.5" />}
+                          测试连通
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 shrink-0 px-2 text-xs text-muted-foreground"
+                          disabled={!bridge.reachable}
+                          onClick={() => setWizardModal({ mode: 'workbuddy-login' })}
+                        >
+                          切换
+                        </Button>
+                      </div>
+                    )}
             </div>
           </div>
         </div>
@@ -788,6 +903,8 @@ export function ModelsHubView() {
                 options={[
                   { value: 'agy', label: 'Antigravity' },
                   { value: 'codex', label: 'Codex' },
+                  { value: 'grok', label: 'Grok' },
+                  { value: 'workbuddy', label: 'WorkBuddy' },
                   { value: 'thirdParty', label: '第三方 API' },
                 ]}
                 onChange={next => setForm({
@@ -799,7 +916,11 @@ export function ModelsHubView() {
                       ? 'agy:default'
                       : next === 'codex'
                         ? 'codex:default'
-                        : (form.agent.model.startsWith('agy') || form.agent.model.startsWith('codex') ? 'claude-sonnet-4-6' : form.agent.model),
+                        : next === 'grok'
+                          ? 'grok:default'
+                          : next === 'workbuddy'
+                            ? 'workbuddy:default'
+                            : (/^(?:agy|codex|grok|workbuddy)(?:[:/]|$)/i.test(form.agent.model) ? 'claude-sonnet-4-6' : form.agent.model),
                   },
                 })}
               />
@@ -811,8 +932,24 @@ export function ModelsHubView() {
                       <LocalModelSelect
                         engine={form.agent.engine}
                         value={form.agent.model}
-                        detectedModels={form.agent.engine === 'agy' ? engines.agy?.models : engines.codex?.models}
-                        effectiveDefault={form.agent.engine === 'codex' ? engines.codex?.effectiveDefaultModel : undefined}
+                        detectedModels={
+                          form.agent.engine === 'agy'
+                            ? engines.agy?.models
+                            : form.agent.engine === 'codex'
+                              ? engines.codex?.models
+                              : form.agent.engine === 'grok'
+                                ? engines.grok?.models
+                                : engines.workbuddy?.models
+                        }
+                        effectiveDefault={
+                          form.agent.engine === 'codex'
+                            ? engines.codex?.effectiveDefaultModel
+                            : form.agent.engine === 'grok'
+                              ? engines.grok?.effectiveDefaultModel
+                              : form.agent.engine === 'workbuddy'
+                                ? engines.workbuddy?.effectiveDefaultModel
+                                : undefined
+                        }
                         onChange={next => setForm({ ...form, agent: { ...form.agent, model: next } })}
                       />
                     </div>
@@ -907,17 +1044,20 @@ export function ModelsHubView() {
                 options={[
                   { value: 'agy', label: 'Antigravity' },
                   { value: 'codex', label: 'Codex' },
+                  { value: 'grok', label: 'Grok' },
+                  { value: 'workbuddy', label: 'WorkBuddy' },
                   { value: 'thirdParty', label: '第三方 API' },
-                  { value: 'ollama', label: 'Ollama' },
                 ]}
                 onChange={(next) => {
                   const defaultModel = next === 'agy'
                     ? 'agy:default'
                     : next === 'codex'
                       ? 'codex:default'
-                      : next === 'ollama'
-                        ? `ollama:${engines.ollama?.models?.[0] || 'qwen2.5:14b'}`
-                        : 'gpt-4.1'
+                      : next === 'grok'
+                        ? 'grok:default'
+                        : next === 'workbuddy'
+                          ? 'workbuddy:default'
+                          : 'gpt-4.1'
                   setForm({
                     ...form,
                     planner: { ...form.planner, engine: next, model: defaultModel },
@@ -941,9 +1081,19 @@ export function ModelsHubView() {
                                     ? engines.agy?.models
                                     : form.planner.engine === 'codex'
                                       ? engines.codex?.models
-                                      : engines.ollama?.models
+                                      : form.planner.engine === 'grok'
+                                        ? engines.grok?.models
+                                        : engines.workbuddy?.models
                                 }
-                                effectiveDefault={form.planner.engine === 'codex' ? engines.codex?.effectiveDefaultModel : undefined}
+                                effectiveDefault={
+                                  form.planner.engine === 'codex'
+                                    ? engines.codex?.effectiveDefaultModel
+                                    : form.planner.engine === 'grok'
+                                      ? engines.grok?.effectiveDefaultModel
+                                      : form.planner.engine === 'workbuddy'
+                                        ? engines.workbuddy?.effectiveDefaultModel
+                                        : undefined
+                                }
                                 onChange={next => setForm({
                                   ...form,
                                   planner: { ...form.planner, model: next },
@@ -964,7 +1114,9 @@ export function ModelsHubView() {
                                       ? engines.agy?.models
                                       : form.planner.engine === 'codex'
                                         ? engines.codex?.models
-                                        : engines.ollama?.models
+                                        : form.planner.engine === 'grok'
+                                          ? engines.grok?.models
+                                          : engines.workbuddy?.models
                                   }
                                   onChange={next => setForm({ ...form, planner: { ...form.planner, model: next } })}
                                 />
@@ -979,7 +1131,9 @@ export function ModelsHubView() {
                                       ? engines.agy?.models
                                       : form.planner.engine === 'codex'
                                         ? engines.codex?.models
-                                        : engines.ollama?.models
+                                        : form.planner.engine === 'grok'
+                                          ? engines.grok?.models
+                                          : engines.workbuddy?.models
                                   }
                                   onChange={next => setForm({ ...form, chat: { ...form.chat, model: next } })}
                                 />

@@ -15,9 +15,13 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   getCodexAuthStatusApi,
+  getGrokAuthStatusApi,
+  getWorkBuddyAuthStatusApi,
   pollDreaminaAuthApi,
   startCodexAuthApi,
   startDreaminaAuthApi,
+  startGrokAuthApi,
+  startWorkBuddyAuthApi,
 } from '@/api/studio-models'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -32,16 +36,21 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from '@/utils/ui/toast'
 
+export type WizardLoginMode = 'dreamina-login' | 'codex-login' | 'grok-login' | 'workbuddy-login'
+export type WizardAuthKind = 'dreamina' | 'codex' | 'grok' | 'workbuddy'
+
 export type WizardModalState
   = | null
     | { mode: 'dreamina-login', force?: boolean }
     | { mode: 'codex-login' }
-    | { mode: 'setup-guide', engine: 'agy' | 'codex' | 'dreamina' | 'ollama' }
+    | { mode: 'grok-login' }
+    | { mode: 'workbuddy-login' }
+    | { mode: 'setup-guide', engine: 'agy' | 'codex' | 'dreamina' | 'grok' | 'workbuddy' }
 
 interface LocalAuthWizardDialogProps {
   state: WizardModalState
   onClose: () => void
-  onAuthSuccess: (kind: 'dreamina' | 'codex', engine?: LocalEngineInfo) => void
+  onAuthSuccess: (kind: WizardAuthKind, engine?: LocalEngineInfo) => void
   onRefreshEngines: () => void
 }
 
@@ -52,7 +61,7 @@ interface GuideStep {
   link?: { label: string, href: string }
 }
 
-const ENGINE_SETUP_GUIDES: Record<'agy' | 'codex' | 'dreamina' | 'ollama', {
+const ENGINE_SETUP_GUIDES: Record<'agy' | 'codex' | 'dreamina' | 'grok' | 'workbuddy', {
   title: string
   subtitle: string
   steps: GuideStep[]
@@ -83,7 +92,7 @@ const ENGINE_SETUP_GUIDES: Record<'agy' | 'codex' | 'dreamina' | 'ollama', {
       },
       {
         title: '2. 回到本页面一键网页登录',
-        desc: '装好后点击下方「重新检测」，再点 Codex 卡片上的「一键网页登录 Codex」完成授权即可使用。',
+        desc: '装好后点击下方「重新检测」，再点 Codex 卡片上的「一键网页登录」完成授权即可使用。',
       },
     ],
   },
@@ -102,19 +111,33 @@ const ENGINE_SETUP_GUIDES: Record<'agy' | 'codex' | 'dreamina' | 'ollama', {
       },
     ],
   },
-  ollama: {
-    title: 'Ollama 本机离线模型指引（可选）',
-    subtitle: '完全在本地电脑运行的免费开源大模型，适合离线文案与规划',
+  grok: {
+    title: 'Grok CLI 快速上手指南',
+    subtitle: '直接使用本机 Grok CLI 与 xAI 账号调用 Grok 4.7 等模型，支持网页一键登录',
     steps: [
       {
-        title: '1. 下载并启动 Ollama 客户端',
-        desc: '安装后打开 Ollama 应用（顶部菜单栏会出现小羊驼图标）。',
-        link: { label: '下载 Ollama', href: 'https://ollama.com/download' },
+        title: '1. 安装本机 Grok CLI',
+        desc: '确保电脑已安装 grok CLI（Foldframe 会自动识别 PATH 以及 Orca / OpenBot 内置的 grok 运行时）。',
+        link: { label: '前往 Grok 官网', href: 'https://grok.com/' },
       },
       {
-        title: '2. 拉取一个推荐中文模型',
-        desc: '打开终端复制运行下方命令即可下载：',
-        command: 'ollama pull qwen2.5:14b',
+        title: '2. 回到本页点击「一键网页登录」',
+        desc: '安装后点下方「重新检测」，再点击 Grok 卡片上的「一键网页登录」，跳转网页确认即可使用。',
+      },
+    ],
+  },
+  workbuddy: {
+    title: 'WorkBuddy 快速上手指南',
+    subtitle: '直连本机腾讯 WorkBuddy 客户端内置引擎，支持 GLM-5.1、Kimi K2.5、MiniMax M2.7、DeepSeek 等多模型',
+    steps: [
+      {
+        title: '1. 安装腾讯 WorkBuddy 桌面端',
+        desc: '前往 WorkBuddy 官网下载并安装到「应用程序（/Applications/WorkBuddy.app）」。',
+        link: { label: '打开 WorkBuddy 官网', href: 'https://www.workbuddy.cn/' },
+      },
+      {
+        title: '2. 回到本页点击「一键网页登录」',
+        desc: '装好后点击下方「重新检测」，再点击 WorkBuddy 卡片上的「一键网页登录」在浏览器扫码登录即可。',
       },
     ],
   },
@@ -157,6 +180,7 @@ export function LocalAuthWizardDialog({
   const [authorizedEngine, setAuthorizedEngine] = useState<LocalEngineInfo | undefined>()
   const [remainingSec, setRemainingSec] = useState<number | null>(null)
   const [copiedCode, setCopiedCode] = useState(false)
+  const [wbMethod, setWbMethod] = useState<'internal' | 'external'>('internal')
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const onAuthSuccessRef = useRef(onAuthSuccess)
@@ -173,7 +197,18 @@ export function LocalAuthWizardDialog({
     }
   }, [])
 
-  const startLoginFlow = useCallback(async (mode: 'dreamina-login' | 'codex-login', force = false) => {
+  const modeToKind = (mode: WizardLoginMode): WizardAuthKind => {
+    if (mode === 'dreamina-login') return 'dreamina'
+    if (mode === 'codex-login') return 'codex'
+    if (mode === 'grok-login') return 'grok'
+    return 'workbuddy'
+  }
+
+  const startLoginFlow = useCallback(async (
+    mode: WizardLoginMode,
+    force = false,
+    methodOverride?: 'internal' | 'external',
+  ) => {
     clearTimers()
     setLoading(true)
     setAuthData(null)
@@ -185,17 +220,22 @@ export function LocalAuthWizardDialog({
     try {
       const res = mode === 'dreamina-login'
         ? await startDreaminaAuthApi(force)
-        : await startCodexAuthApi()
+        : mode === 'codex-login'
+          ? await startCodexAuthApi()
+          : mode === 'grok-login'
+            ? await startGrokAuthApi()
+            : await startWorkBuddyAuthApi(methodOverride || wbMethod)
       const data = res?.data
       if (!res || res.code !== 0 || !data) {
         throw new Error(res?.message || '无法发起授权流程，请确认本机桥接服务正常运行')
       }
       setAuthData(data)
+      const kind = modeToKind(mode)
       if (data.status === 'authorized') {
         setPollStatus('authorized')
         setAuthorizedEngine(data.engine)
         setStatusMessage(data.detail || '登录成功！')
-        onAuthSuccessRef.current(mode === 'dreamina-login' ? 'dreamina' : 'codex', data.engine)
+        onAuthSuccessRef.current(kind, data.engine)
         return
       }
       if (!data.ok || data.status !== 'pending' || !data.verificationUri) {
@@ -229,7 +269,11 @@ export function LocalAuthWizardDialog({
         try {
           const pollRes = mode === 'dreamina-login'
             ? await pollDreaminaAuthApi(data.deviceCode || '')
-            : await getCodexAuthStatusApi()
+            : mode === 'codex-login'
+              ? await getCodexAuthStatusApi()
+              : mode === 'grok-login'
+                ? await getGrokAuthStatusApi()
+                : await getWorkBuddyAuthStatusApi()
           const pData = pollRes?.data
           if (!pData) return
           if (pData.status === 'authorized') {
@@ -237,8 +281,15 @@ export function LocalAuthWizardDialog({
             setPollStatus('authorized')
             setAuthorizedEngine(pData.engine)
             setStatusMessage(pData.detail || '授权成功！')
-            toast.success(mode === 'dreamina-login' ? '即梦登录成功！现在可以直接生图和生视频了' : 'Codex 登录成功！')
-            onAuthSuccessRef.current(mode === 'dreamina-login' ? 'dreamina' : 'codex', pData.engine)
+            const successToast = mode === 'dreamina-login'
+              ? '即梦登录成功！现在可以直接生图和生视频了'
+              : mode === 'codex-login'
+                ? 'Codex 登录成功！'
+                : mode === 'grok-login'
+                  ? 'Grok 网页登录成功！'
+                  : 'WorkBuddy 网页登录成功！'
+            toast.success(successToast)
+            onAuthSuccessRef.current(kind, pData.engine)
           }
           else if (pData.status === 'expired') {
             clearTimers()
@@ -259,7 +310,7 @@ export function LocalAuthWizardDialog({
     finally {
       setLoading(false)
     }
-  }, [clearTimers])
+  }, [clearTimers, wbMethod])
 
   const modalKey = state
     ? (state.mode === 'dreamina-login' ? `dreamina:${Boolean(state.force)}` : state.mode)
@@ -273,8 +324,8 @@ export function LocalAuthWizardDialog({
     if (state.mode === 'dreamina-login') {
       void startLoginFlow('dreamina-login', Boolean(state.force))
     }
-    else if (state.mode === 'codex-login') {
-      void startLoginFlow('codex-login', false)
+    else if (state.mode === 'codex-login' || state.mode === 'grok-login' || state.mode === 'workbuddy-login') {
+      void startLoginFlow(state.mode, false)
     }
     return () => clearTimers()
   }, [modalKey, startLoginFlow, clearTimers])
@@ -352,8 +403,51 @@ export function LocalAuthWizardDialog({
   }
 
   const isDreamina = state.mode === 'dreamina-login'
+  const isCodex = state.mode === 'codex-login'
+  const isGrok = state.mode === 'grok-login'
+  const isWorkBuddy = state.mode === 'workbuddy-login'
   const minutes = remainingSec != null ? Math.floor(remainingSec / 60) : null
   const seconds = remainingSec != null ? remainingSec % 60 : null
+
+  const dialogCopy = isDreamina
+    ? {
+        title: '一键网页登录即梦 AI（无需终端）',
+        desc: '点下方按钮在电脑浏览器打开即梦官方授权页，确认后本页会自动完成登录。',
+        successTitle: '即梦账号登录成功！',
+        step1: '点击下方按钮在当前电脑浏览器打开即梦授权页（已自动带好授权码，无需手动输入）。',
+        step2: '若电脑浏览器已登录即梦，直接点「确认授权」即可；若未登录，点登录框下方的抖音 / 剪映图标用手机扫码登录后再确认。',
+        openBtn: '在电脑浏览器打开即梦授权页',
+        showCode: false,
+      }
+    : isGrok
+      ? {
+          title: '一键网页登录 Grok（无需终端）',
+          desc: '点下方按钮在浏览器打开 xAI / Grok 官方授权页，核对授权码并确认即可自动完成登录。',
+          successTitle: 'Grok 账号登录成功！',
+          step1: '点击下方按钮在电脑浏览器打开 xAI / Grok 授权页（链接已自动带好确认码）。',
+          step2: '使用你的 X / Grok 账号登录并核对下方一次性确认码，点「确认授权」后切回本页即可自动生效。',
+          openBtn: '在电脑浏览器打开 Grok 授权页',
+          showCode: true,
+        }
+      : isWorkBuddy
+        ? {
+            title: '一键网页登录 WorkBuddy（无需终端）',
+            desc: '点下方按钮在浏览器打开腾讯 WorkBuddy 官方登录页，微信扫码或账号确认后本页会自动连接。',
+            successTitle: 'WorkBuddy 登录成功！',
+            step1: '点击下方按钮在电脑浏览器打开腾讯 WorkBuddy 官方网页授权页。',
+            step2: '在网页中使用微信扫码或账号登录并确认授权，本页会自动同步状态（不影响 WorkBuddy 桌面端）。',
+            openBtn: '在电脑浏览器打开 WorkBuddy 授权页',
+            showCode: false,
+          }
+        : {
+            title: '一键网页登录 Codex（无需终端）',
+            desc: '打开 OpenAI 授权页面并填入验证码即可完成登录，全程无需敲命令行。',
+            successTitle: 'Codex 登录成功！',
+            step1: '先复制下方验证码，再点击按钮打开 OpenAI 授权页面粘贴确认。',
+            step2: '在页面中点击确认授权，然后切回此窗口即可。',
+            openBtn: '打开 OpenAI 授权页',
+            showCode: true,
+          }
 
   return (
     <Dialog open onOpenChange={open => !open && onClose()}>
@@ -361,16 +455,43 @@ export function LocalAuthWizardDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
             <Sparkles className="h-5 w-5 text-primary" />
-            {isDreamina ? '一键网页登录即梦 AI（无需终端）' : '一键网页登录 Codex（无需终端）'}
+            {dialogCopy.title}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            {isDreamina
-              ? '点下方按钮在电脑浏览器打开即梦官方授权页，确认后本页会自动完成登录。'
-              : '打开 OpenAI 授权页面并填入验证码即可完成登录，全程无需敲命令行。'}
+            {dialogCopy.desc}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-1">
+          {isWorkBuddy && pollStatus !== 'authorized' && (
+            <div className="flex items-center gap-1.5 rounded-lg bg-muted/70 p-1 text-xs">
+              <button
+                type="button"
+                className={`flex-1 rounded-md px-2.5 py-1.5 font-medium transition-all ${wbMethod === 'internal' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                onClick={() => {
+                  if (wbMethod !== 'internal') {
+                    setWbMethod('internal')
+                    void startLoginFlow('workbuddy-login', true, 'internal')
+                  }
+                }}
+              >
+                国内版（微信扫码）
+              </button>
+              <button
+                type="button"
+                className={`flex-1 rounded-md px-2.5 py-1.5 font-medium transition-all ${wbMethod === 'external' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                onClick={() => {
+                  if (wbMethod !== 'external') {
+                    setWbMethod('external')
+                    void startLoginFlow('workbuddy-login', true, 'external')
+                  }
+                }}
+              >
+                国际版（Google / GitHub）
+              </button>
+            </div>
+          )}
+
           {loading && (
             <div className="flex flex-col items-center justify-center gap-3 py-8 text-sm text-muted-foreground">
               <Loader2 className="h-7 w-7 animate-spin text-primary" />
@@ -383,7 +504,7 @@ export function LocalAuthWizardDialog({
               <CheckCircle2 className="h-11 w-11 text-emerald-600 dark:text-emerald-400" />
               <div className="space-y-1">
                 <p className="text-base font-semibold text-foreground">
-                  {isDreamina ? '即梦账号登录成功！' : 'Codex 登录成功！'}
+                  {dialogCopy.successTitle}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {statusMessage}
@@ -395,7 +516,7 @@ export function LocalAuthWizardDialog({
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                现在可以直接回到工作台生成图片、Seedance 视频或使用 Agent 创作了。
+                现在可以直接回到工作台生成文案、图片、视频或使用 Agent 创作了。
               </p>
             </div>
           )}
@@ -417,25 +538,21 @@ export function LocalAuthWizardDialog({
                   <div className="flex items-start gap-2.5">
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary">1</span>
                     <p className="leading-5 text-foreground">
-                      {isDreamina
-                        ? '点击下方按钮在当前电脑浏览器打开即梦授权页（已自动带好授权码，无需手动输入）。'
-                        : '先复制下方验证码，再点击按钮打开 OpenAI 授权页面粘贴确认。'}
+                      {dialogCopy.step1}
                     </p>
                   </div>
                   <div className="flex items-start gap-2.5">
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary">2</span>
                     <p className="leading-5 text-foreground">
-                      {isDreamina
-                        ? '若电脑浏览器已登录即梦，直接点「确认授权」即可；若未登录，点登录框下方的抖音 / 剪映图标用手机扫码登录后再确认。'
-                        : '在页面中点击确认授权，然后切回此窗口即可。'}
+                      {dialogCopy.step2}
                     </p>
                   </div>
                 </div>
 
-                {!isDreamina && authData.userCode && (
+                {dialogCopy.showCode && authData.userCode && (
                   <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
                     <div>
-                      <p className="text-[11px] text-muted-foreground">一次性授权验证码</p>
+                      <p className="text-[11px] text-muted-foreground">{isCodex ? '一次性授权验证码' : '一次性确认码'}</p>
                       <p className="font-mono text-base font-bold tracking-widest text-primary">{authData.userCode}</p>
                     </div>
                     <Button type="button" variant="outline" size="sm" className="h-8 text-xs" onClick={() => void copyUserCode()}>
@@ -447,7 +564,7 @@ export function LocalAuthWizardDialog({
 
                 <Button type="button" size="default" className="w-full" onClick={openAuthPage}>
                   <ExternalLink className="mr-1.5 h-4 w-4" />
-                  {isDreamina ? '在电脑浏览器打开即梦授权页' : '打开 OpenAI 授权页'}
+                  {dialogCopy.openBtn}
                 </Button>
               </div>
 

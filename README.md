@@ -25,7 +25,7 @@
 ### 4. 本机多模型 CLI 桥接
 - 通过 `scripts/local-bridge.mjs` 统一编排本机已登录的多模态引擎：
   - **图像 / 视频**：即梦 CLI（`dreamina-5.0` / `dreamina-5.0-pro` / `dreamina-4.5` / `Seedance 2.0 & 2.5`）、Codex 本机 `GPT Image 2`
-  - **文本 / Agent**：Antigravity CLI、Codex CLI 及自定义 API 模型
+  - **文本 / Agent**：Antigravity CLI、Codex CLI、Grok CLI（支持网页一键授权）、WorkBuddy（腾讯多模型引擎）及自定义 API 模型
 
 ---
 

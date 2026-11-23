@@ -163,9 +163,27 @@ export class StudioModelsService implements OnModuleInit {
     let dirty = false
 
     const hasChat = (name: string) => Array.isArray(raw.ai?.models?.chat) && raw.ai.models.chat.some((m: any) => m.name === name)
-    if (!hasChat('agy:default') || !hasChat('codex:default')) {
+    if (!hasChat('agy:default') || !hasChat('codex:default') || !hasChat('grok:default') || !hasChat('workbuddy:default')) {
+      this.ensureChatModelEntry(raw.ai.models.chat, 'workbuddy:default', 'WorkBuddy (本机)', AiLogChannel.OpenAI, ['web', 'comment', 'draft-generation'])
+      this.ensureChatModelEntry(raw.ai.models.chat, 'grok:default', 'Grok CLI (本机)', AiLogChannel.OpenAI, ['web', 'comment', 'draft-generation'])
       this.ensureChatModelEntry(raw.ai.models.chat, 'codex:default', 'Codex CLI (本机)', AiLogChannel.OpenAI, ['web', 'comment', 'draft-generation'])
       this.ensureChatModelEntry(raw.ai.models.chat, 'agy:default', 'Antigravity CLI (本机)', AiLogChannel.OpenAI, ['web', 'comment', 'draft-generation'])
+      dirty = true
+    }
+
+    // Migrate away from removed ollama entries if present in existing config.yaml
+    if (Array.isArray(raw.ai?.models?.chat)) {
+      const beforeLen = raw.ai.models.chat.length
+      raw.ai.models.chat = raw.ai.models.chat.filter((m: any) => !/^ollama[:/]/i.test(String(m?.name || '')))
+      if (raw.ai.models.chat.length !== beforeLen) dirty = true
+    }
+    if (raw.studio?.chat?.engine === 'ollama') {
+      raw.studio.chat = { engine: 'agy', model: 'agy:default' }
+      dirty = true
+    }
+    if (raw.studio?.planner?.engine === 'ollama') {
+      raw.studio.planner = { engine: 'agy', model: 'agy:default' }
+      raw.ai.draftGeneration.planner.defaultModel = 'agy:default'
       dirty = true
     }
 
@@ -248,17 +266,20 @@ export class StudioModelsService implements OnModuleInit {
     this.logger.log('Updated config.yaml and hot-reloaded runtime AI configuration')
   }
 
-  private inferChatEngine(modelName: string): 'agy' | 'codex' | 'ollama' | 'thirdParty' {
+  private inferChatEngine(modelName: string): 'agy' | 'codex' | 'grok' | 'workbuddy' | 'thirdParty' {
     if (/^agy(?:[:/]|$)/i.test(modelName)) return 'agy'
     if (/^codex(?:[:/]|$)/i.test(modelName)) return 'codex'
-    if (/^ollama[:/]/i.test(modelName)) return 'ollama'
+    if (/^grok(?:[:/]|$)/i.test(modelName)) return 'grok'
+    if (/^workbuddy(?:[:/]|$)/i.test(modelName)) return 'workbuddy'
     return 'thirdParty'
   }
 
   async getHubState() {
     const bridge = await this.localBridgeService.getEngines()
     const currentAgentEngine = config.studio?.agent?.engine
-      || (config.agent.engine === 'agy' ? 'agy' : config.agent.engine === 'codex' ? 'codex' : 'thirdParty')
+      || (config.agent.engine === 'agy' || config.agent.engine === 'codex' || config.agent.engine === 'grok' || config.agent.engine === 'workbuddy'
+        ? config.agent.engine
+        : 'thirdParty')
     const plannerModel = config.studio?.planner?.model || config.ai.draftGeneration.planner.defaultModel
     const chatModel = config.studio?.chat?.model || config.ai.models.chat[0]?.name || plannerModel
     const imageModel = config.studio?.image?.model || config.ai.draftGeneration.imageModels[0]?.model || 'dreamina-5.0'
@@ -487,8 +508,8 @@ export class StudioModelsService implements OnModuleInit {
     const agentModel = (payload.agent.model || (agentEngine === 'claude-sdk' ? 'claude-opus-4-6' : `${agentEngine}:default`)).trim()
     raw.agent.engine = agentEngine
     raw.agent.protocol = payload.agent.protocol || 'anthropic'
-    if (agentEngine === 'agy' || agentEngine === 'codex') {
-      const bareLocal = agentModel.replace(/^(?:agy|codex)[:/]?/i, '').trim()
+    if (agentEngine === 'agy' || agentEngine === 'codex' || agentEngine === 'grok' || agentEngine === 'workbuddy') {
+      const bareLocal = agentModel.replace(/^(?:agy|codex|grok|workbuddy)[:/]?/i, '').trim()
       raw.agent.localModel = bareLocal || 'default'
     }
     else {
@@ -499,6 +520,8 @@ export class StudioModelsService implements OnModuleInit {
     const agentModels = new Set<string>(Array.isArray(raw.agent.models) ? raw.agent.models : [])
     agentModels.add('agy:default')
     agentModels.add('codex:default')
+    agentModels.add('grok:default')
+    agentModels.add('workbuddy:default')
     agentModels.add(agentModel)
     const bgModel = (payload.agent.backgroundModel || agentModel).trim()
     const thinkModel = (payload.agent.thinkModel || agentModel).trim()
@@ -531,9 +554,11 @@ export class StudioModelsService implements OnModuleInit {
     )
     raw.ai.draftGeneration.planner.defaultModel = plannerModel
 
-    // Always keep agy:default & codex:default available in chat catalog
-    this.ensureChatModelEntry(raw.ai.models.chat, 'agy:default', 'Antigravity CLI (本机)', AiLogChannel.OpenAI, ['web', 'comment', 'draft-generation'])
+    // Always keep local CLI defaults available in chat catalog
+    this.ensureChatModelEntry(raw.ai.models.chat, 'workbuddy:default', 'WorkBuddy (本机)', AiLogChannel.OpenAI, ['web', 'comment', 'draft-generation'])
+    this.ensureChatModelEntry(raw.ai.models.chat, 'grok:default', 'Grok CLI (本机)', AiLogChannel.OpenAI, ['web', 'comment', 'draft-generation'])
     this.ensureChatModelEntry(raw.ai.models.chat, 'codex:default', 'Codex CLI (本机)', AiLogChannel.OpenAI, ['web', 'comment', 'draft-generation'])
+    this.ensureChatModelEntry(raw.ai.models.chat, 'agy:default', 'Antigravity CLI (本机)', AiLogChannel.OpenAI, ['web', 'comment', 'draft-generation'])
 
     // 4. Sync Image & Video models (including Dreamina CLI catalog)
     const imageModel = (payload.image.model || 'dreamina-5.0').trim()
@@ -598,10 +623,10 @@ export class StudioModelsService implements OnModuleInit {
   }
 
   private resolveChannelForTextSlot(
-    engine: 'agy' | 'codex' | 'thirdParty' | 'ollama',
+    engine: 'agy' | 'codex' | 'grok' | 'workbuddy' | 'thirdParty',
     thirdPartyChannel?: 'openai' | 'anthropic' | 'gemini' | 'deepseek',
   ): AiLogChannel {
-    if (engine === 'agy' || engine === 'codex' || engine === 'ollama') {
+    if (engine === 'agy' || engine === 'codex' || engine === 'grok' || engine === 'workbuddy') {
       return AiLogChannel.OpenAI
     }
     switch (thirdPartyChannel) {
@@ -612,10 +637,11 @@ export class StudioModelsService implements OnModuleInit {
     }
   }
 
-  private describeTextModel(engine: 'agy' | 'codex' | 'thirdParty' | 'ollama', model: string): string {
+  private describeTextModel(engine: 'agy' | 'codex' | 'grok' | 'workbuddy' | 'thirdParty', model: string): string {
     if (engine === 'agy') return `Antigravity CLI (${model})`
     if (engine === 'codex') return `Codex CLI (${model})`
-    if (engine === 'ollama') return `Ollama (${model})`
+    if (engine === 'grok') return `Grok CLI (${model})`
+    if (engine === 'workbuddy') return `WorkBuddy (${model})`
     return model
   }
 }

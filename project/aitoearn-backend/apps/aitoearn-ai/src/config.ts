@@ -158,6 +158,8 @@ export const aiConfigSchema = z.object({
 const defaultAgentModels = [
   'agy:default',
   'codex:default',
+  'grok:default',
+  'workbuddy:default',
   'claude-opus-4-6',
   'claude-haiku-4-5-20251001-thinking',
   'claude-opus-4-5-20251101-thinking',
@@ -172,12 +174,12 @@ const defaultAgentModels = [
 
 const agentModelNameSchema = z.string().min(1).regex(/^[^,]+$/)
 
-export const agentEngineSchema = z.enum(['claude-sdk', 'agy', 'codex'])
+export const agentEngineSchema = z.enum(['claude-sdk', 'agy', 'codex', 'grok', 'workbuddy'])
 export const agentProtocolSchema = z.enum(['anthropic', 'openai', 'openrouter', 'deepseek', 'gemini'])
 
 // Agent 配置
 export const agentConfigSchema = z.object({
-  engine: agentEngineSchema.optional().default('claude-sdk').describe('Agent 运行引擎（agy / codex / claude-sdk）'),
+  engine: agentEngineSchema.optional().default('claude-sdk').describe('Agent 运行引擎（agy / codex / grok / workbuddy / claude-sdk）'),
   protocol: agentProtocolSchema.optional().default('anthropic').describe('第三方 API 协议（claude-sdk 模式）'),
   localModel: z.string().optional().describe('本机 CLI 默认模型（可选）'),
   baseUrl: z.string(),
@@ -214,16 +216,16 @@ export const localBridgeConfigSchema = z.object({
 
 export const studioConfigSchema = z.object({
   agent: z.object({
-    engine: z.enum(['agy', 'codex', 'thirdParty']).default('agy'),
+    engine: z.enum(['agy', 'codex', 'grok', 'workbuddy', 'thirdParty']).default('agy'),
     model: z.string().default('agy:default'),
     protocol: agentProtocolSchema.default('anthropic'),
   }).optional(),
   chat: z.object({
-    engine: z.enum(['agy', 'codex', 'thirdParty', 'ollama']).default('agy'),
+    engine: z.enum(['agy', 'codex', 'grok', 'workbuddy', 'thirdParty']).default('agy'),
     model: z.string().default('agy:default'),
   }).optional(),
   planner: z.object({
-    engine: z.enum(['agy', 'codex', 'thirdParty', 'ollama']).default('agy'),
+    engine: z.enum(['agy', 'codex', 'grok', 'workbuddy', 'thirdParty']).default('agy'),
     model: z.string().default('agy:default'),
   }).optional(),
   image: z.object({

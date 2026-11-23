@@ -6,15 +6,20 @@ process.env.LOCAL_WEB_PORT = '8080'
 
 const bridge = await import('./local-bridge.mjs')
 
-test('parseLocalModelTarget parses agy, codex, ollama prefixes', () => {
+test('parseLocalModelTarget parses agy, codex, grok, workbuddy prefixes', () => {
   assert.deepEqual(bridge.parseLocalModelTarget('agy:default'), { engine: 'agy', model: undefined })
   assert.deepEqual(bridge.parseLocalModelTarget('agy:gemini-3.1-pro-high'), { engine: 'agy', model: 'gemini-3.1-pro-high' })
   assert.deepEqual(bridge.parseLocalModelTarget('codex'), { engine: 'codex', model: undefined })
   assert.deepEqual(bridge.parseLocalModelTarget('codex:gpt-5.4'), { engine: 'codex', model: 'gpt-5.4' })
-  assert.deepEqual(bridge.parseLocalModelTarget('ollama:qwen2.5:14b'), { engine: 'ollama', model: 'qwen2.5:14b' })
+  assert.deepEqual(bridge.parseLocalModelTarget('grok:default'), { engine: 'grok', model: undefined })
+  assert.deepEqual(bridge.parseLocalModelTarget('grok:grok-4.7'), { engine: 'grok', model: 'grok-4.7' })
+  assert.deepEqual(bridge.parseLocalModelTarget('workbuddy:default'), { engine: 'workbuddy', model: undefined })
+  assert.deepEqual(bridge.parseLocalModelTarget('workbuddy:glm-5.1'), { engine: 'workbuddy', model: 'glm-5.1' })
   assert.equal(bridge.normalizeEngineModel('codex', 'codex:default'), undefined)
   assert.equal(bridge.normalizeEngineModel('codex', 'codex:gpt-5.4'), 'gpt-5.4')
   assert.equal(bridge.normalizeEngineModel('codex', 'gpt-5.4'), 'gpt-5.4')
+  assert.equal(bridge.normalizeEngineModel('grok', 'grok:grok-4.7'), 'grok-4.7')
+  assert.equal(bridge.normalizeEngineModel('workbuddy', 'workbuddy:glm-5.1'), 'glm-5.1')
   assert.equal(bridge.normalizeEngineModel('agy', 'agy:default'), undefined)
   assert.equal(bridge.normalizeEngineModel('agy', 'agy:gemini-3.1-pro-high'), 'gemini-3.1-pro-high')
 })
@@ -122,12 +127,49 @@ test('parseCodexEventLine normalizes thread, mcp_tool_call, agent_message, and u
   assert.equal(turnDone[0]?.usage?.total_tokens, 280)
 })
 
-test('detectAllEngines discovers installed host CLIs (codex & dreamina)', async () => {
+test('parseGrokEventLine and parseWorkBuddyEventLine normalize streaming & result events', () => {
+  const grokText = bridge.parseGrokEventLine(JSON.stringify({ type: 'text', data: 'OK' }))
+  assert.deepEqual(grokText, [{ type: 'text_delta', text: 'OK' }])
+  const grokEnd = bridge.parseGrokEventLine(JSON.stringify({
+    type: 'end',
+    sessionId: 'g-1',
+    usage: { input_tokens: 10, output_tokens: 5 },
+    total_cost_usd: 0.01,
+  }))
+  assert.equal(grokEnd[0]?.type, 'session')
+  assert.equal(grokEnd[1]?.type, 'result')
+  assert.equal(grokEnd[1]?.usage?.total_tokens, 15)
+
+  const grokAuth = bridge.parseGrokDeviceAuthOutput('To sign in, open this URL:\n  https://accounts.x.ai/oauth2/device?user_code=G6KD-CJKG\nConfirm: G6KD-CJKG')
+  assert.equal(grokAuth.verificationUri, 'https://accounts.x.ai/oauth2/device?user_code=G6KD-CJKG')
+  assert.equal(grokAuth.userCode, 'G6KD-CJKG')
+
+  const wbDelta = bridge.parseWorkBuddyEventLine(JSON.stringify({
+    type: 'stream_event',
+    event: { type: 'content_block_delta', delta: { type: 'text_delta', text: 'Hi' } },
+  }))
+  assert.deepEqual(wbDelta, [{ type: 'text_delta', text: 'Hi' }])
+  const wbResult = bridge.parseWorkBuddyEventLine(JSON.stringify({
+    type: 'result',
+    subtype: 'success',
+    is_error: false,
+    result: 'Done',
+    session_id: 'wb-1',
+    usage: { input_tokens: 30, output_tokens: 12 },
+  }))
+  assert.equal(wbResult[0]?.type, 'result')
+  assert.equal(wbResult[0]?.text, 'Done')
+  assert.equal(wbResult[0]?.usage?.total_tokens, 42)
+})
+
+test('detectAllEngines discovers installed host CLIs (codex, dreamina, grok, workbuddy)', async () => {
   const engines = await bridge.detectAllEngines()
   assert.equal(engines.codex.installed, true)
   assert.equal(engines.dreamina.installed, true)
+  assert.equal(engines.grok.installed, true)
+  assert.equal(engines.workbuddy.installed, true)
   assert.equal(typeof engines.agy.installed, 'boolean')
-  assert.equal(typeof engines.ollama.running, 'boolean')
+  assert.equal('ollama' in engines, false)
 })
 
 test('HTTP bridge enforces Bearer token auth when loopback sockets are permitted', async (t) => {

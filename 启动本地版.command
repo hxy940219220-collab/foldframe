@@ -234,11 +234,11 @@ def main():
             print(f"本机模型桥接：运行中 (http://127.0.0.1:{port}, pid {health.get('pid')})")
             engines = bridge_engines(port, env["LOCAL_BRIDGE_TOKEN"])
             if engines:
-                for key in ("agy", "codex", "dreamina", "ollama"):
+                for key in ("agy", "codex", "dreamina", "grok", "workbuddy"):
                     item = engines.get(key, {})
                     state = "已就绪" if item.get("installed") or item.get("running") else "未安装"
                     extra = ""
-                    if key == "dreamina" and item.get("installed"):
+                    if key in ("dreamina", "grok", "workbuddy") and item.get("installed"):
                         extra = f" / {'已登录' if item.get('loggedIn') else '未登录'}"
                     print(f"  - {item.get('name', key)}: {state}{extra}")
         else:

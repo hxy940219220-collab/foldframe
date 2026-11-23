@@ -429,20 +429,24 @@ export class AgentRuntimeService {
   }
 
   private isLocalSessionId(sessionId?: string): boolean {
-    return Boolean(sessionId && (/^agy:/i.test(sessionId) || /^codex:/i.test(sessionId)))
+    return Boolean(sessionId && /^(?:agy|codex|grok|workbuddy):/i.test(sessionId))
   }
 
   private resolveAgentEngine(requestedModel?: string, existingSessionId?: string): 'claude-sdk' | LocalAgentEngineName {
     if (existingSessionId) {
       if (/^agy:/i.test(existingSessionId)) return 'agy'
       if (/^codex:/i.test(existingSessionId)) return 'codex'
+      if (/^grok:/i.test(existingSessionId)) return 'grok'
+      if (/^workbuddy:/i.test(existingSessionId)) return 'workbuddy'
     }
     if (requestedModel) {
       if (/^agy(?:[:/]|$)/i.test(requestedModel)) return 'agy'
       if (/^codex(?:[:/]|$)/i.test(requestedModel)) return 'codex'
+      if (/^grok(?:[:/]|$)/i.test(requestedModel)) return 'grok'
+      if (/^workbuddy(?:[:/]|$)/i.test(requestedModel)) return 'workbuddy'
     }
     const configured = config.agent.engine || 'claude-sdk'
-    if (configured === 'agy' || configured === 'codex') {
+    if (configured === 'agy' || configured === 'codex' || configured === 'grok' || configured === 'workbuddy') {
       return configured
     }
     return 'claude-sdk'
@@ -894,7 +898,7 @@ You have native MCP tools exposed by the "foldframe" MCP server (setTitle, outpu
 
             void this.contentGenerateRepository.updateMessage(taskId, userMessage)
 
-            if (resolvedEngine === 'agy' || resolvedEngine === 'codex') {
+            if (resolvedEngine === 'agy' || resolvedEngine === 'codex' || resolvedEngine === 'grok' || resolvedEngine === 'workbuddy') {
               const localRun = this.runLocalNativeAgentTask({
                 engine: resolvedEngine,
                 taskId,

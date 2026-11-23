@@ -1,4 +1,4 @@
-export type LocalAgentEngineName = 'agy' | 'codex'
+export type LocalAgentEngineName = 'agy' | 'codex' | 'grok' | 'workbuddy'
 
 export interface LocalEngineInfo {
   id: string
@@ -47,7 +47,8 @@ export interface LocalEnginesResponse {
     agy?: LocalEngineInfo
     codex?: LocalEngineInfo
     dreamina?: LocalEngineInfo
-    ollama?: LocalEngineInfo
+    grok?: LocalEngineInfo
+    workbuddy?: LocalEngineInfo
   }
 }
 
@@ -155,7 +156,7 @@ export interface DreaminaVideoStatusResponse {
 
 export interface StudioModelsHubPayload {
   agent: {
-    engine: 'agy' | 'codex' | 'thirdParty'
+    engine: 'agy' | 'codex' | 'grok' | 'workbuddy' | 'thirdParty'
     model: string
     protocol: 'anthropic' | 'openai' | 'openrouter' | 'deepseek' | 'gemini'
     baseUrl?: string
@@ -164,12 +165,12 @@ export interface StudioModelsHubPayload {
     thinkModel?: string
   }
   chat: {
-    engine: 'agy' | 'codex' | 'thirdParty' | 'ollama'
+    engine: 'agy' | 'codex' | 'grok' | 'workbuddy' | 'thirdParty'
     model: string
     thirdPartyChannel?: 'openai' | 'anthropic' | 'gemini' | 'deepseek'
   }
   planner: {
-    engine: 'agy' | 'codex' | 'thirdParty' | 'ollama'
+    engine: 'agy' | 'codex' | 'grok' | 'workbuddy' | 'thirdParty'
     model: string
     thirdPartyChannel?: 'openai' | 'gemini' | 'deepseek' | 'anthropic'
   }
@@ -194,7 +195,7 @@ export interface StudioModelsHubPayload {
 }
 
 export interface ConnectionTestRequest {
-  kind: 'agy' | 'codex' | 'dreamina' | 'ollama' | 'thirdParty'
+  kind: 'agy' | 'codex' | 'dreamina' | 'grok' | 'workbuddy' | 'thirdParty'
   model?: string
   protocol?: 'openai' | 'anthropic' | 'openrouter' | 'deepseek' | 'gemini'
   baseUrl?: string

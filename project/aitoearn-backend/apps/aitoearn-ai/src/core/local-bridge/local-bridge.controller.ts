@@ -5,6 +5,7 @@ import {
   DreaminaAuthStartDto,
   SaveStudioModelsHubDto,
   TestStudioModelConnectionDto,
+  WorkBuddyAuthStartDto,
 } from './local-bridge.dto'
 import { LocalBridgeService } from './local-bridge.service'
 import { StudioModelsService } from './studio-models.service'
@@ -55,5 +56,35 @@ export class LocalBridgeController {
   @Get('auth/codex/status')
   async getCodexAuthStatus() {
     return await this.localBridgeService.getCodexAuthStatus()
+  }
+
+  @Post('auth/grok/start')
+  async startGrokAuth() {
+    return await this.localBridgeService.startGrokAuth()
+  }
+
+  @Get('auth/grok/status')
+  async getGrokAuthStatus() {
+    return await this.localBridgeService.getGrokAuthStatus()
+  }
+
+  @Post('auth/grok/logout')
+  async logoutGrokAuth() {
+    return await this.localBridgeService.logoutGrokAuth()
+  }
+
+  @Post('auth/workbuddy/start')
+  async startWorkBuddyAuth(@Body() body: WorkBuddyAuthStartDto) {
+    return await this.localBridgeService.startWorkBuddyAuth(body?.methodId || 'internal')
+  }
+
+  @Get('auth/workbuddy/status')
+  async getWorkBuddyAuthStatus() {
+    return await this.localBridgeService.getWorkBuddyAuthStatus()
+  }
+
+  @Post('auth/workbuddy/logout')
+  async logoutWorkBuddyAuth() {
+    return await this.localBridgeService.logoutWorkBuddyAuth()
   }
 }

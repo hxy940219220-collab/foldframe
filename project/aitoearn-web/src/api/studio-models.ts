@@ -41,7 +41,7 @@ export interface LocalAuthPollResponse {
 
 export interface StudioModelsHubConfig {
   agent: {
-    engine: 'agy' | 'codex' | 'thirdParty'
+    engine: 'agy' | 'codex' | 'grok' | 'workbuddy' | 'thirdParty'
     model: string
     protocol: 'anthropic' | 'openai' | 'openrouter' | 'deepseek' | 'gemini'
     baseUrl?: string
@@ -50,12 +50,12 @@ export interface StudioModelsHubConfig {
     thinkModel?: string
   }
   chat: {
-    engine: 'agy' | 'codex' | 'thirdParty' | 'ollama'
+    engine: 'agy' | 'codex' | 'grok' | 'workbuddy' | 'thirdParty'
     model: string
     thirdPartyChannel?: 'openai' | 'anthropic' | 'gemini' | 'deepseek'
   }
   planner: {
-    engine: 'agy' | 'codex' | 'thirdParty' | 'ollama'
+    engine: 'agy' | 'codex' | 'grok' | 'workbuddy' | 'thirdParty'
     model: string
     thirdPartyChannel?: 'openai' | 'gemini' | 'deepseek' | 'anthropic'
   }
@@ -88,7 +88,8 @@ export interface StudioModelsHubResponse {
       agy?: LocalEngineInfo
       codex?: LocalEngineInfo
       dreamina?: LocalEngineInfo
-      ollama?: LocalEngineInfo
+      grok?: LocalEngineInfo
+      workbuddy?: LocalEngineInfo
     }
   }
   config: StudioModelsHubConfig
@@ -100,7 +101,7 @@ export interface StudioModelsHubResponse {
 }
 
 export interface ConnectionTestRequest {
-  kind: 'agy' | 'codex' | 'dreamina' | 'ollama' | 'thirdParty'
+  kind: 'agy' | 'codex' | 'dreamina' | 'grok' | 'workbuddy' | 'thirdParty'
   model?: string
   protocol?: 'openai' | 'anthropic' | 'openrouter' | 'deepseek' | 'gemini'
   baseUrl?: string
@@ -145,4 +146,28 @@ export function startCodexAuthApi() {
 
 export function getCodexAuthStatusApi() {
   return http.get<LocalAuthPollResponse>('ai/studio/auth/codex/status', undefined, true)
+}
+
+export function startGrokAuthApi() {
+  return http.post<LocalAuthStartResponse>('ai/studio/auth/grok/start', {}, true)
+}
+
+export function getGrokAuthStatusApi() {
+  return http.get<LocalAuthPollResponse>('ai/studio/auth/grok/status', undefined, true)
+}
+
+export function logoutGrokAuthApi() {
+  return http.post<{ ok: boolean, detail: string, engine?: LocalEngineInfo }>('ai/studio/auth/grok/logout', {}, true)
+}
+
+export function startWorkBuddyAuthApi(methodId: 'internal' | 'external' = 'internal') {
+  return http.post<LocalAuthStartResponse>('ai/studio/auth/workbuddy/start', { methodId }, true)
+}
+
+export function getWorkBuddyAuthStatusApi() {
+  return http.get<LocalAuthPollResponse>('ai/studio/auth/workbuddy/status', undefined, true)
+}
+
+export function logoutWorkBuddyAuthApi() {
+  return http.post<{ ok: boolean, detail: string, engine?: LocalEngineInfo }>('ai/studio/auth/workbuddy/logout', {}, true)
 }
