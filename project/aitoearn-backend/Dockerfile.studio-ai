@@ -1,0 +1,42 @@
+# The base supplies the complete, matching Nest runtime. Compile the locally changed
+# modules with the same decorator metadata and CommonJS layout as the release.
+FROM node:22-alpine AS compiler
+WORKDIR /src
+RUN npm install --prefix /opt/compiler typescript@5.9.3
+COPY apps/aitoearn-ai/src/config.ts apps/aitoearn-ai/src/
+COPY apps/aitoearn-ai/src/app.module.ts apps/aitoearn-ai/src/
+COPY apps/aitoearn-ai/src/core/local-bridge/ apps/aitoearn-ai/src/core/local-bridge/
+COPY apps/aitoearn-ai/src/core/agent/agent.controller.ts apps/aitoearn-ai/src/core/agent/agent.dto.ts apps/aitoearn-ai/src/core/agent/agent.module.ts apps/aitoearn-ai/src/core/agent/
+COPY apps/aitoearn-ai/src/core/agent/claude-code-router/claude-code-router.service.ts apps/aitoearn-ai/src/core/agent/claude-code-router/
+COPY apps/aitoearn-ai/src/core/agent/mcp/media.mcp.ts apps/aitoearn-ai/src/core/agent/mcp/task-mcp-http.service.ts apps/aitoearn-ai/src/core/agent/mcp/
+COPY apps/aitoearn-ai/src/core/agent/services/agent-runtime.service.ts apps/aitoearn-ai/src/core/agent/services/
+COPY apps/aitoearn-ai/src/core/ai/logs/ apps/aitoearn-ai/src/core/ai/logs/
+COPY apps/aitoearn-ai/src/core/ai/models-config/models-config.service.ts apps/aitoearn-ai/src/core/ai/models-config/
+COPY apps/aitoearn-ai/src/core/ai/image/image.service.ts apps/aitoearn-ai/src/core/ai/image/
+COPY apps/aitoearn-ai/src/core/ai/chat/chat.service.ts apps/aitoearn-ai/src/core/ai/chat/
+COPY apps/aitoearn-ai/src/core/ai/video/video.service.ts apps/aitoearn-ai/src/core/ai/video/video-task-status.scheduler.ts apps/aitoearn-ai/src/core/ai/video/
+COPY apps/aitoearn-ai/src/core/ai/video/grok/grok.service.ts apps/aitoearn-ai/src/core/ai/video/grok/
+COPY apps/aitoearn-ai/src/core/ai/libs/openai/openai.service.ts apps/aitoearn-ai/src/core/ai/libs/openai/
+COPY apps/aitoearn-ai/src/core/ai/libs/gemini/gemini.service.ts apps/aitoearn-ai/src/core/ai/libs/gemini/
+COPY apps/aitoearn-ai/src/core/draft-generation/draft-generation.controller.ts apps/aitoearn-ai/src/core/draft-generation/draft-generation.service.ts apps/aitoearn-ai/src/core/draft-generation/draft-generation-planner.service.ts apps/aitoearn-ai/src/core/draft-generation/draft-generation-memory.service.ts apps/aitoearn-ai/src/core/draft-generation/
+COPY libs/mongodb/src/repositories/ai-log.repository.ts libs/mongodb/src/repositories/
+RUN node <<'NODE'
+const fs = require('node:fs')
+const path = require('node:path')
+const ts = require('/opt/compiler/node_modules/typescript')
+for (const file of fs.readdirSync('.', { recursive: true }).filter(file => file.endsWith('.ts') && !file.endsWith('.spec.ts'))) {
+  const { outputText, diagnostics } = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
+    fileName: file,
+    reportDiagnostics: true,
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS,
+      experimentalDecorators: true, emitDecoratorMetadata: true, esModuleInterop: true, useDefineForClassFields: false },
+  })
+  if (diagnostics.length) throw new Error(ts.formatDiagnosticsWithColorAndContext(diagnostics, ts.sys))
+  const destination = path.join('/out', file.replace(/\.ts$/, '.js'))
+  fs.mkdirSync(path.dirname(destination), { recursive: true })
+  fs.writeFileSync(destination, outputText)
+}
+NODE
+
+FROM aitoearn/aitoearn-ai@sha256:b18f6c878f4f9ce6a639e609efac3e958eb08b25a1f54fe823a03ed7675ed5f7
+COPY --from=compiler /out /app

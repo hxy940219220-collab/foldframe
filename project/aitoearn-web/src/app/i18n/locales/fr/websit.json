@@ -1,0 +1,32 @@
+{
+  "privacyPolicy": {
+    "title": "Politique de confidentialité",
+    "description": "Consultez la politique du prestataire sur la collecte, l’utilisation et la conservation des données personnelles.",
+    "keywords": "politique de confidentialité, protection des données, informations personnelles, conformité RGPD, sécurité des données"
+  },
+  "termsOfService": {
+    "title": "Conditions d’utilisation",
+    "description": "Consultez les conditions du prestataire relatives aux comptes, aux contenus et aux paiements.",
+    "keywords": "conditions d'utilisation, accord utilisateur, règles de la plateforme, directives de contenu, conditions de paiement"
+  },
+  "dataDeletion": {
+    "title": "Suppression du compte et des données",
+    "description": "Consultez la procédure du prestataire pour supprimer votre compte et vos données personnelles.",
+    "keywords": "suppression des données, suppression de compte, droits à la vie privée, effacement des données, supprimer compte"
+  },
+  "dataProtection": {
+    "title": "Accord sur la protection des données",
+    "description": "Consultez l’accord du prestataire sur le traitement des données, la sécurité et les droits des utilisateurs.",
+    "keywords": "protection des données, conformité RGPD, traitement des données, sécurité des données, droits à la vie privée"
+  },
+  "extensionPrivacy": {
+    "title": "Confidentialité de l’extension",
+    "description": "Consultez la politique de l’éditeur de l’extension sur les autorisations et l’utilisation des données.",
+    "keywords": "confidentialité extension, extension navigateur, extension Chrome, permissions données"
+  },
+  "providerDocument": {
+    "heading": "Documents du prestataire",
+    "current": "Lire sur le site du prestataire",
+    "bundled": "Voir l’original inclus dans cette version (en anglais)"
+  }
+}

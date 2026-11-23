@@ -1,0 +1,32 @@
+{
+  "privacyPolicy": {
+    "title": "隐私政策",
+    "description": "查阅服务提供方关于个人数据收集、使用和存储的政策。",
+    "keywords": "隐私政策, 数据保护, 个人信息, GDPR合规, 数据安全, 用户隐私"
+  },
+  "termsOfService": {
+    "title": "服务条款",
+    "description": "查阅服务提供方的账户、内容使用和支付条款。",
+    "keywords": "服务条款, 用户协议, 平台规则, 内容规范, 付款条款"
+  },
+  "dataDeletion": {
+    "title": "账户与数据删除",
+    "description": "查阅服务提供方的账户注销和个人数据删除流程。",
+    "keywords": "数据删除, 账号注销, 隐私权利, 数据擦除, 删除账号, 被遗忘权"
+  },
+  "dataProtection": {
+    "title": "数据保护协议",
+    "description": "查阅服务提供方关于数据处理、安全措施和用户权利的协议。",
+    "keywords": "数据保护协议, GDPR合规, 数据处理, 数据安全, 隐私权利, 数据控制者"
+  },
+  "extensionPrivacy": {
+    "title": "浏览器扩展隐私",
+    "description": "查阅浏览器扩展提供方的权限说明和数据使用政策。",
+    "keywords": "扩展隐私, 浏览器扩展, Chrome扩展, 数据权限, 扩展数据收集"
+  },
+  "providerDocument": {
+    "heading": "服务提供方文档",
+    "current": "在服务提供方网站阅读",
+    "bundled": "查看此版本附带的原文（英文）"
+  }
+}

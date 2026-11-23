@@ -1,0 +1,166 @@
+Data Protection Agreement
+
+Last Updated: 2024-12-26
+
+This Data Protection Agreement outlines how we handle, protect, and process your personal data in compliance with applicable data protection laws, including the General Data Protection Regulation (GDPR) and other relevant privacy regulations.
+
+1. Data Controller Information
+
+Aitoearn, Inc. acts as the data controller for personal data collected through our services. We are responsible for determining the purposes and means of processing your personal data.
+
+Contact Information
+
+Email: privacy@aiearn.ai
+Address: [Company Address]
+Data Protection Officer: dpo@aiearn.ai
+
+2. Types of Data We Collect
+
+We collect and process the following categories of personal data:
+
+Account Information: Name, email address, username, password
+
+Profile Data: Profile pictures, bio information, social media links
+
+Content Data: Posts, comments, media files, scheduling information
+
+Usage Data: Platform interactions, feature usage, analytics data
+
+Technical Data: IP address, device information, browser type, session data
+
+Communication Data: Support tickets, feedback, correspondence
+
+3. Legal Basis for Processing
+
+We process your personal data based on the following legal grounds:
+
+Contract Performance: To provide our services and fulfill our contractual obligations
+
+Legitimate Interest: To improve our services, prevent fraud, and ensure security
+
+Consent: For marketing communications and optional features (where required)
+
+Legal Obligation: To comply with applicable laws and regulations
+
+4. Data Sharing and Third Parties
+
+We may share your personal data with:
+
+Service Providers: Cloud hosting, analytics, payment processing, customer support
+
+Social Media Platforms: When you connect and publish content to external platforms
+
+Legal Authorities: When required by law or to protect our legal rights
+
+Business Partners: With your explicit consent for specific integrations
+
+We ensure all third parties maintain appropriate data protection standards through contractual agreements.
+
+5. International Data Transfers
+
+Your personal data may be transferred to and processed in countries outside your residence. We ensure adequate protection through:
+
+European Commission adequacy decisions
+
+Standard Contractual Clauses (SCCs)
+
+Data Processing Agreements with appropriate safeguards
+
+Certification schemes and codes of conduct
+
+6. Your Rights Under Data Protection Laws
+
+You have the following rights regarding your personal data:
+
+Right of Access: Request copies of your personal data
+
+Right to Rectification: Correct inaccurate or incomplete data
+
+Right to Erasure: Request deletion of your personal data
+
+Right to Restrict Processing: Limit how we use your data
+
+Right to Data Portability: Receive your data in a portable format
+
+Right to Object: Object to certain types of processing
+
+Right to Withdraw Consent: Withdraw consent for consent-based processing
+
+7. Data Retention
+
+We retain your personal data for different periods depending on the purpose:
+
+Account Data: Until account deletion plus 30 days for backup recovery
+
+Content Data: Until deletion by user or account termination
+
+Usage Analytics: Aggregated data retained for 2 years
+
+Legal/Compliance Data: As required by applicable laws
+
+Marketing Data: Until consent withdrawal or 3 years of inactivity
+
+8. Data Security Measures
+
+We implement comprehensive security measures to protect your personal data:
+
+End-to-end encryption for data transmission
+
+Advanced encryption standards (AES-256) for data storage
+
+Multi-factor authentication and access controls
+
+Regular security audits and penetration testing
+
+Employee training on data protection practices
+
+Incident response and breach notification procedures
+
+9. Data Breach Notification
+
+In the event of a personal data breach that is likely to result in a high risk to your rights and freedoms, we will:
+
+Notify relevant supervisory authorities within 72 hours
+
+Inform affected individuals without undue delay
+
+Provide clear information about the breach and our response
+
+Take immediate measures to contain and mitigate the breach
+
+10. Data Subject Requests
+
+To exercise your data protection rights, please contact us at:
+
+Data Protection Requests
+
+Email: privacy@aiearn.ai
+Subject Line: Data Protection Request - [Type of Request]
+Response Time: Within 30 days of receipt
+
+We may require additional information to verify your identity before processing your request.
+
+11. Children's Privacy
+
+Our services are not intended for children under 13 years of age (or 16 in the EU). We do not knowingly collect personal data from children. If we become aware that we have collected personal data from a child, we will take immediate steps to delete such information.
+
+12. Supervisory Authority
+
+You have the right to lodge a complaint with a supervisory authority if you believe our processing of your personal data violates applicable data protection laws. You can contact your local data protection authority or the authority in the country where the alleged violation occurred.
+
+13. Updates to This Agreement
+
+We may update this Data Protection Agreement from time to time to reflect changes in our practices or applicable laws. We will notify you of material changes through our platform or via email. Continued use of our services after such changes constitutes acceptance of the updated agreement.
+
+14. Contact Information
+
+Data Protection Inquiries
+
+For any questions about this Data Protection Agreement or our data processing practices:
+
+Email: privacy@aiearn.ai
+Data Protection Officer: dpo@aiearn.ai
+General Contact: hello@aiearn.ai
+
+Source for this edition
+https://github.com/yikart/AiToEarn/blob/11dd1957d0c69ae2b27a0b8a47acdf6675715558/project/aitoearn-web/src/app/%5Blng%5D/websit/data-protection-agreement/DataProtectionContent.tsx

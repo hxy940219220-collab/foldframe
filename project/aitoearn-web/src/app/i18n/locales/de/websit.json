@@ -1,0 +1,32 @@
+{
+  "privacyPolicy": {
+    "title": "Datenschutzerklärung",
+    "description": "Lesen Sie, wie der Dienstanbieter personenbezogene Daten erhebt, verwendet und speichert.",
+    "keywords": "Datenschutzrichtlinie, Datenschutz, persönliche Daten, DSGVO-konform, Datensicherheit"
+  },
+  "termsOfService": {
+    "title": "Nutzungsbedingungen",
+    "description": "Hier finden Sie die Bedingungen des Anbieters für Konten, Inhalte und Zahlungen.",
+    "keywords": "Nutzungsbedingungen, Benutzervereinbarung, Plattformregeln, Inhaltsrichtlinien, Zahlungsbedingungen"
+  },
+  "dataDeletion": {
+    "title": "Konto und Daten löschen",
+    "description": "Der Anbieter erläutert die Schritte zum Löschen Ihres Kontos und Ihrer personenbezogenen Daten.",
+    "keywords": "Datenlöschung, Kontoentfernung, Datenschutzrechte, Datenlöschung, Konto löschen"
+  },
+  "dataProtection": {
+    "title": "Datenschutzvereinbarung",
+    "description": "Hier finden Sie die Vereinbarung des Anbieters zu Datenverarbeitung, Sicherheit und Nutzerrechten.",
+    "keywords": "Datenschutz, DSGVO-Konformität, Datenverarbeitung, Datensicherheit, Datenschutzrechte"
+  },
+  "extensionPrivacy": {
+    "title": "Datenschutz der Browser-Erweiterung",
+    "description": "Lesen Sie die Informationen des Anbieters zu Berechtigungen und Datennutzung der Erweiterung.",
+    "keywords": "Erweiterung Datenschutz, Browser-Erweiterung, Chrome-Erweiterung, Datenberechtigungen"
+  },
+  "providerDocument": {
+    "heading": "Dokumentation des Dienstanbieters",
+    "current": "Auf der Website des Anbieters lesen",
+    "bundled": "Mitgeliefertes Original anzeigen (Englisch)"
+  }
+}

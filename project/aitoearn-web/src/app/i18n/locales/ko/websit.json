@@ -1,0 +1,32 @@
+{
+  "privacyPolicy": {
+    "title": "개인정보 처리방침",
+    "description": "서비스 제공사의 개인정보 수집, 이용 및 보관 방침을 확인하세요.",
+    "keywords": "개인정보 처리방침, 데이터 보호, 개인정보, GDPR 준수, 데이터 보안"
+  },
+  "termsOfService": {
+    "title": "서비스 이용약관",
+    "description": "계정, 콘텐츠, 결제에 관한 서비스 제공사의 약관을 확인하세요.",
+    "keywords": "이용약관, 사용자 동의, 플랫폼 규칙, 콘텐츠 가이드라인, 결제 조건"
+  },
+  "dataDeletion": {
+    "title": "계정 및 데이터 삭제",
+    "description": "서비스 제공사의 계정 및 개인정보 삭제 절차를 확인하세요.",
+    "keywords": "데이터 삭제, 계정 삭제, 개인정보 권리, 데이터 소거, 계정 탈퇴"
+  },
+  "dataProtection": {
+    "title": "데이터 보호 계약",
+    "description": "데이터 처리, 보안 및 이용자 권리에 관한 서비스 제공사의 계약을 확인하세요.",
+    "keywords": "데이터 보호, GDPR 준수, 데이터 처리, 데이터 보안, 개인정보 권리"
+  },
+  "extensionPrivacy": {
+    "title": "브라우저 확장 프로그램 개인정보 처리방침",
+    "description": "확장 프로그램 제공사의 권한 및 데이터 이용 방침을 확인하세요.",
+    "keywords": "확장 프로그램 개인정보, 브라우저 확장, Chrome 확장, 데이터 권한"
+  },
+  "providerDocument": {
+    "heading": "서비스 제공사 문서",
+    "current": "서비스 제공사 사이트에서 읽기",
+    "bundled": "이 버전에 포함된 원문 보기(영어)"
+  }
+}

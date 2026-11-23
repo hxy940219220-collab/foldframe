@@ -1,0 +1,13 @@
+# Foldframe
+
+Foldframe is a local AI content workspace for planning drafts, managing generated images and videos, and publishing through connected channels. Model availability depends on the services and credentials configured for the instance.
+
+## Workspace
+
+- [Content workspace](/en): Write prompts, attach references, create drafts, and browse media.
+- [AI publishing](/en/ai-social): Work with the content agent and its creative skills.
+- [Publishing](/en/accounts): Manage channels and schedule posts.
+- [Agent assets](/en/agent-assets): Browse generated media.
+- [Skills](/en/skills): Search, filter, and read installed agent skills.
+- [Usage](/en/usage): View reported tokens, costs, and media usage by date, model, and generation type.
+- [Task history](/en/tasks-history): Check the status of current and past tasks.

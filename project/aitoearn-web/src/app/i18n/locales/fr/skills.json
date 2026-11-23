@@ -1,0 +1,48 @@
+{
+  "title": "Bibliothèque de compétences",
+  "count": "{{count}} compétences intégrées",
+  "type": "Filtrer par usage",
+  "search": "Rechercher une compétence",
+  "clear": "Effacer la recherche",
+  "loadError": "Impossible de charger les compétences.",
+  "retry": "Réessayer",
+  "noMatch": "Aucune compétence correspondante.",
+  "empty": "Aucune compétence intégrée.",
+  "reset": "Effacer les filtres",
+  "categories": {
+    "all": "Tout",
+    "creation": "Création",
+    "editing": "Édition",
+    "library": "Analyse et médias"
+  },
+  "names": {
+    "generating-images": "Génération d’images",
+    "generating-videos": "Génération vidéo",
+    "generating-drama-recaps": "Résumés de séries courtes",
+    "editing-images": "Retouche d’images",
+    "editing-videos": "Montage vidéo",
+    "transferring-video-styles": "Transfert de style vidéo",
+    "composing-videos": "Assemblage vidéo",
+    "translating-videos": "Traduction vidéo",
+    "removing-subtitles": "Suppression des sous-titres",
+    "analyzing-videos": "Analyse vidéo",
+    "extracting-thumbnails": "Extraction de miniatures",
+    "managing-content": "Gestion des contenus",
+    "crawling-social-media": "Collecte de médias sociaux"
+  },
+  "summaries": {
+    "generating-images": "Générer des images à partir de texte ou de références.",
+    "generating-videos": "Créer des vidéos à partir de texte ou d’images.",
+    "generating-drama-recaps": "Produire des résumés narrés de courtes séries.",
+    "editing-images": "Recadrer, redimensionner ou filigraner les images.",
+    "editing-videos": "Couper des clips et ajouter du son, des transitions et des filtres.",
+    "transferring-video-styles": "Transformer des prises de vues en illustrations ou en animations.",
+    "composing-videos": "Assembler des images et des vidéos avec une bande-son.",
+    "translating-videos": "Traduire les sous-titres et le doublage avec clonage vocal et synchronisation labiale.",
+    "removing-subtitles": "Effacer les sous-titres incrustés en reconstruisant l’image.",
+    "analyzing-videos": "Résumer des vidéos et extraire les moments forts et les mots-clés.",
+    "extracting-thumbnails": "Extraire une image de couverture depuis un lien vidéo.",
+    "managing-content": "Importer des médias, créer des brouillons et classer les contenus.",
+    "crawling-social-media": "Extraire des contenus depuis les liens de réseaux sociaux pris en charge."
+  }
+}

@@ -1,0 +1,34 @@
+/* AiBatchGenerateBar - 内联输入栏样式 */
+
+.container {
+  position: relative;
+  overflow: hidden; /* 阻止 ImageStack expandContainer 引发页面横向滚动 */
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 8px 30px rgb(15 23 42 / 5%);
+  transition: box-shadow .18s, border-color .18s;
+
+  &:focus-within, &.dragging {
+    border-color: color-mix(in oklch, var(--brand-cyan) 65%, var(--border));
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--brand-cyan) 11%, transparent),
+      0 8px 30px rgb(15 23 42 / 5%);
+  }
+  &.videoEditMode { border-color: color-mix(in oklch, var(--brand-cyan) 42%, var(--border)); }
+  &.dragging { border-style: dashed; }
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  background: color-mix(in oklch, var(--card) 92%, var(--brand-cyan));
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: none;
+}

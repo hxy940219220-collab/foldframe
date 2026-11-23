@@ -1,0 +1,48 @@
+{
+  "title": "技能管理",
+  "count": "{{count}} 项内置技能",
+  "type": "按用途筛选",
+  "search": "搜索技能或用途",
+  "clear": "清空搜索",
+  "loadError": "暂时无法读取技能目录。",
+  "retry": "重试",
+  "noMatch": "没有匹配的技能。",
+  "empty": "当前没有内置技能。",
+  "reset": "清除筛选",
+  "categories": {
+    "all": "全部",
+    "creation": "内容生成",
+    "editing": "编辑处理",
+    "library": "分析与素材"
+  },
+  "names": {
+    "generating-images": "图像生成",
+    "generating-videos": "视频生成",
+    "generating-drama-recaps": "短剧解说",
+    "editing-images": "图片编辑",
+    "editing-videos": "视频剪辑",
+    "transferring-video-styles": "视频风格转换",
+    "composing-videos": "视频合成",
+    "translating-videos": "视频翻译",
+    "removing-subtitles": "字幕移除",
+    "analyzing-videos": "视频分析",
+    "extracting-thumbnails": "封面提取",
+    "managing-content": "内容管理",
+    "crawling-social-media": "社交媒体素材采集"
+  },
+  "summaries": {
+    "generating-images": "根据描述或参考图生成新图像。",
+    "generating-videos": "从文本或参考图像生成视频。",
+    "generating-drama-recaps": "为短剧片段撰写并合成解说配音。",
+    "editing-images": "裁剪、缩放图片，调整色彩或添加水印。",
+    "editing-videos": "剪切片段，处理音轨、转场、滤镜与叠加元素。",
+    "transferring-video-styles": "将实拍视频转换为漫画、动画等视觉风格。",
+    "composing-videos": "拼接图片与视频，并添加背景音轨。",
+    "translating-videos": "翻译字幕与配音，支持声音克隆和口型同步。",
+    "removing-subtitles": "利用画面修复技术移除视频中的硬字幕。",
+    "analyzing-videos": "概括视频内容，识别亮点片段并提取关键词。",
+    "extracting-thumbnails": "从视频链接提取用于发布的封面。",
+    "managing-content": "上传素材、建立草稿和管理媒体分组。",
+    "crawling-social-media": "从受支持的社交媒体链接提取内容和媒体。"
+  }
+}

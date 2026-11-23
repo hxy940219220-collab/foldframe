@@ -1,0 +1,32 @@
+{
+  "privacyPolicy": {
+    "title": "Privacy policy",
+    "description": "Read the service provider’s policy on the collection, use and storage of personal data.",
+    "keywords": "privacy policy, data protection, personal information, GDPR compliance, data security, user privacy"
+  },
+  "termsOfService": {
+    "title": "Terms of service",
+    "description": "Read the provider’s terms for accounts, content and payments.",
+    "keywords": "terms of service, user agreement, platform rules, content guidelines, payment terms"
+  },
+  "dataDeletion": {
+    "title": "Account and data deletion",
+    "description": "Read the provider’s instructions for deleting your account and personal data.",
+    "keywords": "data deletion, account removal, privacy rights, data erasure, delete account, right to be forgotten"
+  },
+  "dataProtection": {
+    "title": "Data protection agreement",
+    "description": "Review the provider’s agreement on data processing, security and user rights.",
+    "keywords": "data protection, GDPR compliance, data processing, data security, privacy rights, data controller"
+  },
+  "extensionPrivacy": {
+    "title": "Browser extension privacy",
+    "description": "Read the extension provider’s policy on browser permissions and data use.",
+    "keywords": "extension privacy, browser extension, Chrome extension, data permissions, extension data collection"
+  },
+  "providerDocument": {
+    "heading": "Service provider documentation",
+    "current": "Read on the provider’s website",
+    "bundled": "View the original included with this version (English)"
+  }
+}

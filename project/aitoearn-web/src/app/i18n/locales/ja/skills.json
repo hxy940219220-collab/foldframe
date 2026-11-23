@@ -1,0 +1,48 @@
+{
+  "title": "スキル管理",
+  "count": "内蔵スキル {{count}} 件",
+  "type": "用途で絞り込む",
+  "search": "スキル名や用途を検索",
+  "clear": "検索をクリア",
+  "loadError": "スキルを読み込めませんでした。",
+  "retry": "再試行",
+  "noMatch": "一致するスキルがありません。",
+  "empty": "内蔵スキルがありません。",
+  "reset": "絞り込みを解除",
+  "categories": {
+    "all": "すべて",
+    "creation": "生成",
+    "editing": "編集",
+    "library": "分析・素材"
+  },
+  "names": {
+    "generating-images": "画像生成",
+    "generating-videos": "動画生成",
+    "generating-drama-recaps": "ショートドラマ解説",
+    "editing-images": "画像編集",
+    "editing-videos": "動画編集",
+    "transferring-video-styles": "動画スタイル変換",
+    "composing-videos": "動画合成",
+    "translating-videos": "動画翻訳",
+    "removing-subtitles": "字幕除去",
+    "analyzing-videos": "動画分析",
+    "extracting-thumbnails": "サムネイル抽出",
+    "managing-content": "コンテンツ管理",
+    "crawling-social-media": "ソーシャル素材収集"
+  },
+  "summaries": {
+    "generating-images": "説明文や参考画像から画像を生成します。",
+    "generating-videos": "テキストや参考画像から動画を作ります。",
+    "generating-drama-recaps": "ドラマの短い場面からナレーション付きの解説を作ります。",
+    "editing-images": "画像の切り抜き、リサイズ、色調整、透かし追加を行います。",
+    "editing-videos": "映像をカットし、音声、トランジションやフィルターを加えます。",
+    "transferring-video-styles": "実写映像をイラストやアニメ風に変換します。",
+    "composing-videos": "画像や動画をつなぎ合わせ、BGMを追加します。",
+    "translating-videos": "字幕と吹き替えを翻訳し、音声クローンやリップシンクに対応します。",
+    "removing-subtitles": "画面修復で焼き付け字幕を取り除きます。",
+    "analyzing-videos": "動画を要約し、見どころやキーワードを抽出します。",
+    "extracting-thumbnails": "動画リンクから表紙画像を取り出します。",
+    "managing-content": "素材をアップロードし、下書きやグループを管理します。",
+    "crawling-social-media": "対応するソーシャルメディアのリンクから素材を取得します。"
+  }
+}

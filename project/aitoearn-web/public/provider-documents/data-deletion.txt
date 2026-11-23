@@ -1,0 +1,38 @@
+Data Deletion Instructions
+
+Last Updated: 2025.6.27
+
+For Pre-Launch Users:
+
+Our application is currently in pre-launch phase and does not store real user data. If you have interacted with our test systems, contact us for data removal.
+
+Standard Procedure (Post-Launch):
+
+1
+
+Log in to your AiToEarn account
+
+2
+
+Navigate to Settings > Privacy
+
+3
+
+Click "Request Account Deletion"
+
+4
+
+Confirmation will be sent to your registered email
+
+Contact for Assistance:
+
+Pre-launch inquiries only
+
+Email: metat@aitoearning.com
+
+Important Note:
+
+This page will be automatically updated upon app launch
+
+Source for this edition
+https://github.com/yikart/AiToEarn/blob/11dd1957d0c69ae2b27a0b8a47acdf6675715558/project/aitoearn-web/src/app/%5Blng%5D/websit/data-deletion/page.tsx

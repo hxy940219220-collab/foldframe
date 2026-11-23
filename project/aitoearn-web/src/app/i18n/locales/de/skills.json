@@ -1,0 +1,48 @@
+{
+  "title": "Skill-Bibliothek",
+  "count": "{{count}} integrierte Skills",
+  "type": "Nach Zweck filtern",
+  "search": "Skills oder Aufgaben suchen",
+  "clear": "Suche leeren",
+  "loadError": "Die Skill-Bibliothek konnte nicht geladen werden.",
+  "retry": "Erneut versuchen",
+  "noMatch": "Keine passenden Skills.",
+  "empty": "Keine integrierten Skills gefunden.",
+  "reset": "Filter löschen",
+  "categories": {
+    "all": "Alle",
+    "creation": "Erstellung",
+    "editing": "Bearbeitung",
+    "library": "Analyse und Medien"
+  },
+  "names": {
+    "generating-images": "Bilder generieren",
+    "generating-videos": "Videos generieren",
+    "generating-drama-recaps": "Kurzdramen zusammenfassen",
+    "editing-images": "Bilder bearbeiten",
+    "editing-videos": "Videos schneiden",
+    "transferring-video-styles": "Videostil ändern",
+    "composing-videos": "Videos kombinieren",
+    "translating-videos": "Videos übersetzen",
+    "removing-subtitles": "Untertitel entfernen",
+    "analyzing-videos": "Videos analysieren",
+    "extracting-thumbnails": "Vorschaubilder extrahieren",
+    "managing-content": "Inhalte verwalten",
+    "crawling-social-media": "Social-Media-Inhalte erfassen"
+  },
+  "summaries": {
+    "generating-images": "Bilder aus Text oder Vorlagen generieren.",
+    "generating-videos": "Videos aus Text oder Referenzbildern erstellen.",
+    "generating-drama-recaps": "Kommentierte Zusammenfassungen von Kurzdramen produzieren.",
+    "editing-images": "Bilder zuschneiden, skalieren und mit Wasserzeichen versehen.",
+    "editing-videos": "Videoclips schneiden und mit Audio, Übergängen oder Filtern bearbeiten.",
+    "transferring-video-styles": "Realaufnahmen in Illustrations- oder Animationsstile umwandeln.",
+    "composing-videos": "Bilder und Clips mit Hintergrundmusik zusammenführen.",
+    "translating-videos": "Untertitel und Vertonung übersetzen, inklusive Stimmenklonen und Lippensynchronisation.",
+    "removing-subtitles": "Fest eingebrannte Untertitel durch Bildrekonstruktion entfernen.",
+    "analyzing-videos": "Inhalte zusammenfassen und Höhepunkte sowie Stichwörter ermitteln.",
+    "extracting-thumbnails": "Titelbilder aus einem Videolink extrahieren.",
+    "managing-content": "Medien hochladen, Entwürfe erstellen und Material gruppieren.",
+    "crawling-social-media": "Inhalte von unterstützten Social-Media-Links abrufen."
+  }
+}
