@@ -1,14 +1,14 @@
 {
   "dropToUpload": "Déposez pour télécharger",
   "announcement": {
-    "text": "Foldframe utilise Agent pour répondre à tous vos besoins en contenu. Il appelle de nombreux outils pendant l'exécution, ce qui peut prendre du temps. Vous pouvez quitter à tout moment et vérifier la progression de la tâche plus tard."
+    "text": "PostPilot utilise Agent pour répondre à tous vos besoins en contenu. Il appelle de nombreux outils pendant l'exécution, ce qui peut prendre du temps. Vous pouvez quitter à tout moment et vérifier la progression de la tâche plus tard."
   },
   "releaseBanner": {
     "tag": "Version v0.8.0",
     "text": "Construisez et étendez les workflows IA avec des plugins et un marché florissant."
   },
   "header": {
-    "logo": "Foldframe",
+    "logo": "PostPilot",
     "nav": {
       "home": "Accueil",
       "marketplace": "Marché",
@@ -27,14 +27,14 @@
     "starsText": "étoiles sur",
     "github": "GitHub",
     "title": "Le meilleur agent IA\npour le marketing de contenu",
-    "subtitle": "À partir d'aujourd'hui, gérez facilement vos réseaux sociaux avec l'IA. Foldframe fournit des capacités complètes allant de l'inspiration créative, à la création de contenu, à la distribution de contenu jusqu'à la gestion des interactions de contenu, rendant l'IA accessible à tous.",
+    "subtitle": "À partir d'aujourd'hui, gérez facilement vos réseaux sociaux avec l'IA. PostPilot fournit des capacités complètes allant de l'inspiration créative, à la création de contenu, à la distribution de contenu jusqu'à la gestion des interactions de contenu, rendant l'IA accessible à tous.",
     "getStarted": "Commencer",
     "useMobilePhone": "utiliser sur mobile"
   },
   "seo": {
     "title": "Création de vidéos et contenus IA pour 15+ plateformes sociales",
-    "description": "Foldframe est votre opérateur de croissance IA pour les réseaux sociaux. Générez des vidéos, images et textes avec l'IA, puis publiez en un clic sur plus de 15 plateformes dont TikTok, YouTube, Instagram, Facebook et X. Création de contenu IA, montage vidéo intelligent, transfert de style, traduction vidéo, découverte de tendances, surveillance de marque et tableau de bord d'engagement unifié.",
-    "keywords": "marketing de contenu IA, gestion réseaux sociaux IA, génération vidéo IA, publication multiplateforme, création de contenu IA, automatisation réseaux sociaux, marketing TikTok, marketing YouTube, Agent IA, distribution de contenu, rédaction IA, montage vidéo IA, surveillance de marque, Foldframe"
+    "description": "PostPilot est votre opérateur de croissance IA pour les réseaux sociaux. Générez des vidéos, images et textes avec l'IA, puis publiez en un clic sur plus de 15 plateformes dont TikTok, YouTube, Instagram, Facebook et X. Création de contenu IA, montage vidéo intelligent, transfert de style, traduction vidéo, découverte de tendances, surveillance de marque et tableau de bord d'engagement unifié.",
+    "keywords": "marketing de contenu IA, gestion réseaux sociaux IA, génération vidéo IA, publication multiplateforme, création de contenu IA, automatisation réseaux sociaux, marketing TikTok, marketing YouTube, Agent IA, distribution de contenu, rédaction IA, montage vidéo IA, surveillance de marque, PostPilot"
   },
   "agentGenerator": {
     "title": "Comment puis-je vous aider ?",
@@ -303,7 +303,7 @@
     "badge": "Service entreprise",
     "title": "Solutions professionnelles IA pour les réseaux sociaux",
     "titleBlue": "Propulser le succès marketing des entreprises",
-    "subtitle": "La transformation marketing IA des entreprises nécessite non seulement des outils, mais aussi une infrastructure solide. Foldframe fournit une plateforme fiable pour distribuer les capacités de création de contenu IA à plusieurs départements pour une efficacité marketing inégalée."
+    "subtitle": "La transformation marketing IA des entreprises nécessite non seulement des outils, mais aussi une infrastructure solide. PostPilot fournit une plateforme fiable pour distribuer les capacités de création de contenu IA à plusieurs départements pour une efficacité marketing inégalée."
   },
   "statsSection": {
     "stats": {
@@ -343,7 +343,7 @@
     "badge": "Écosystème communautaire",
     "title": "Rejoignez notre",
     "titleBlue": "communauté active de créateurs",
-    "subtitle": "Foldframe est propulsé par une communauté mondiale de créateurs de contenu IA. Rejoignez-nous pour explorer les frontières infinies du marketing de contenu IA.",
+    "subtitle": "PostPilot est propulsé par une communauté mondiale de créateurs de contenu IA. Rejoignez-nous pour explorer les frontières infinies du marketing de contenu IA.",
     "buttons": {
       "wechat": "Groupe WeChat",
       "community": "Communauté de créateurs"
@@ -390,7 +390,7 @@
         "brand": "Directives de la marque"
       }
     },
-    "description": "Foldframe solution de gestion des réseaux sociaux tout-en-un, de l'inspiration créative à la création de contenu, de la distribution de contenu à la gestion des interactions de contenu",
+    "description": "PostPilot solution de gestion des réseaux sociaux tout-en-un, de l'inspiration créative à la création de contenu, de la distribution de contenu à la gestion des interactions de contenu",
     "social": {
       "github": "GitHub",
       "discord": "Discord",
@@ -399,14 +399,14 @@
       "twitter": "Twitter"
     },
     "bigText": "Utilisons l'IA pour",
-    "copyright": "Foldframe",
+    "copyright": "PostPilot",
     "tagline": "",
     "dataDeletion": {
       "title": "Instructions de suppression des données",
       "prelaunch": "Notre application est actuellement en phase de pré-lancement et ne stocke pas de vraies données utilisateur. Si vous avez interagi avec nos systèmes de test, contactez-nous pour la suppression des données.",
       "standardTitle": "Procédure standard (post-lancement) :",
       "standardSteps": [
-        "Connectez-vous à votre compte Foldframe",
+        "Connectez-vous à votre compte PostPilot",
         "Allez dans Paramètres > Confidentialité",
         "Cliquez sur \"Demander la suppression du compte\"",
         "La confirmation sera envoyée à votre e-mail enregistré"

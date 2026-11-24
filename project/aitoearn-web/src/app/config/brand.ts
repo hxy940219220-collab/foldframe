@@ -1,1 +1,1 @@
-export const BRAND_TITLE = 'Foldframe'
+export const BRAND_TITLE = 'PostPilot'

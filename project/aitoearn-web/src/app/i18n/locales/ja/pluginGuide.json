@@ -1,13 +1,13 @@
 {
   "originalScreenshot": "拡張機能の元のスクリーンショットを見る",
   "seo": {
-    "title": "Browser Extension Guide - Install Foldframe Plugin",
-    "description": "Step-by-step guide to install and use the Foldframe browser extension for automated social media content publishing and management.",
-    "keywords": "browser extension, plugin guide, installation guide, Chrome extension, social media automation, Foldframe"
+    "title": "Browser Extension Guide - Install PostPilot Plugin",
+    "description": "Step-by-step guide to install and use the PostPilot browser extension for automated social media content publishing and management.",
+    "keywords": "browser extension, plugin guide, installation guide, Chrome extension, social media automation, PostPilot"
   },
   "title": "ブラウザプラグインガイド",
   "lastUpdated": "最終更新日",
-  "introduction": "このガイドでは、Foldframeブラウザプラグインのインストール方法と使用方法を説明します。プラグインを使用することで、ソーシャルメディアアカウントの管理やコンテンツの投稿がより便利になります。",
+  "introduction": "このガイドでは、PostPilotブラウザプラグインのインストール方法と使用方法を説明します。プラグインを使用することで、ソーシャルメディアアカウントの管理やコンテンツの投稿がより便利になります。",
   "tableOfContents": "目次",
   "sections": {
     "installation": "プラグインのインストール",
@@ -20,7 +20,7 @@
   "steps": {
     "step1": {
       "title": "ステップ1：プラグイン管理ダイアログを開く",
-      "content": "Foldframeプラットフォームのページで、右上のプラグインアイコンをクリックして、ブラウザプラグイン管理ダイアログを開きます。",
+      "content": "PostPilotプラットフォームのページで、右上のプラグインアイコンをクリックして、ブラウザプラグイン管理ダイアログを開きます。",
       "caption": "右上の拡張機能ボタンをクリック"
     },
     "step2": {
@@ -61,16 +61,16 @@
     },
     "step5": {
       "title": "ステップ5：プラグインを認証",
-      "notLoggedInContent": "Foldframeのホームページにログインしていない場合は、「Go to Home」をクリックしてFoldframeのホームページに移動し、ログインしてください。",
+      "notLoggedInContent": "PostPilotのホームページにログインしていない場合は、「Go to Home」をクリックしてPostPilotのホームページに移動し、ログインしてください。",
       "notLoggedInCaption": "「Go to Home」をクリックして先にログイン",
-      "loggedInContent": "Foldframeのホームページに既にログインしている場合は、「Authorize Now」をクリックして認証してください。",
+      "loggedInContent": "PostPilotのホームページに既にログインしている場合は、「Authorize Now」をクリックして認証してください。",
       "loggedInCaption": "「Authorize Now」をクリックしてプラグインを認証"
     },
     "step6": {
       "title": "ステップ6：プラグインの準備完了を確認",
-      "content": "認証が正常に完了しました。次に、Foldframeプラットフォームを開き、ページを更新すると、プラグインの準備が完了していることが確認できます。クリックして詳細を表示できます。",
+      "content": "認証が正常に完了しました。次に、PostPilotプラットフォームを開き、ページを更新すると、プラグインの準備が完了していることが確認できます。クリックして詳細を表示できます。",
       "caption1": "認証成功",
-      "caption2": "Foldframeプラットフォームに戻ってプラグインのステータスを確認"
+      "caption2": "PostPilotプラットフォームに戻ってプラグインのステータスを確認"
     },
     "step7": {
       "title": "ステップ7：アカウント情報を表示",
@@ -93,13 +93,13 @@
     },
     "step9": {
       "title": "同期結果を確認",
-      "content": "Foldframeホームページに戻り、「マイチャンネル」をクリックしてアカウント管理ページに入ります。",
+      "content": "PostPilotホームページに戻り、「マイチャンネル」をクリックしてアカウント管理ページに入ります。",
       "caption1": "「マイチャンネル」をクリックしてアカウント管理に入る",
       "caption2": "小紅書アカウントが正常に同期されたことが確認できます"
     },
     "complete": {
       "title": "完了",
-      "content": "これで、Foldframeプラットフォームを正常に使用できます！"
+      "content": "これで、PostPilotプラットフォームを正常に使用できます！"
     }
   },
   "manualInstall": {

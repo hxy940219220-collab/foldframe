@@ -1,13 +1,13 @@
 {
   "originalScreenshot": "View original extension screenshot",
   "seo": {
-    "title": "Browser Extension Guide - Install Foldframe Plugin",
-    "description": "Step-by-step guide to install and use the Foldframe browser extension for automated social media content publishing and management.",
-    "keywords": "browser extension, plugin guide, installation guide, Chrome extension, social media automation, Foldframe"
+    "title": "Browser Extension Guide - Install PostPilot Plugin",
+    "description": "Step-by-step guide to install and use the PostPilot browser extension for automated social media content publishing and management.",
+    "keywords": "browser extension, plugin guide, installation guide, Chrome extension, social media automation, PostPilot"
   },
   "title": "Browser Plugin Guide",
   "lastUpdated": "Last Updated",
-  "introduction": "This guide will walk you through how to install and use the Foldframe browser plugin, enabling you to manage your social media accounts and publish content more conveniently.",
+  "introduction": "This guide will walk you through how to install and use the PostPilot browser plugin, enabling you to manage your social media accounts and publish content more conveniently.",
   "recommendedBrowser": {
     "title": "Recommended Browsers",
     "content": "Edge and Google Chrome. The tutorial below uses Google Chrome for all examples."
@@ -24,7 +24,7 @@
   "steps": {
     "step1": {
       "title": "Step 1: Open Plugin Management Dialog",
-      "content": "On the Foldframe platform page, click the plugin icon in the upper right corner to open the browser plugin management dialog.",
+      "content": "On the PostPilot platform page, click the plugin icon in the upper right corner to open the browser plugin management dialog.",
       "caption": "Click the Extension button in the upper right corner"
     },
     "step2": {
@@ -63,16 +63,16 @@
     },
     "step5": {
       "title": "Step 5: Authorize the Plugin",
-      "notLoggedInContent": "If you are not logged in on the Foldframe homepage, click \"Go to Home\" to go to the Foldframe homepage and log in.",
+      "notLoggedInContent": "If you are not logged in on the PostPilot homepage, click \"Go to Home\" to go to the PostPilot homepage and log in.",
       "notLoggedInCaption": "Click 'Go to Home' to log in first",
-      "loggedInContent": "If you are already logged in on the Foldframe homepage, click \"Authorize Now\" to authorize.",
+      "loggedInContent": "If you are already logged in on the PostPilot homepage, click \"Authorize Now\" to authorize.",
       "loggedInCaption": "Click 'Authorize Now' to authorize the plugin"
     },
     "step6": {
       "title": "Step 6: Confirm Plugin is Ready",
-      "content": "Permission has been granted successfully. Next, open the Foldframe platform, refresh the page, and you will see the plugin is ready. Click on it to view details.",
+      "content": "Permission has been granted successfully. Next, open the PostPilot platform, refresh the page, and you will see the plugin is ready. Click on it to view details.",
       "caption1": "Authorization successful",
-      "caption2": "Return to Foldframe platform to check plugin status"
+      "caption2": "Return to PostPilot platform to check plugin status"
     },
     "step7": {
       "title": "Step 7: View Account Information",
@@ -95,13 +95,13 @@
     },
     "step9": {
       "title": "View Sync Results",
-      "content": "Return to the Foldframe homepage and click \"My Channels\" to enter the account management page.",
+      "content": "Return to the PostPilot homepage and click \"My Channels\" to enter the account management page.",
       "caption1": "Click 'My Channels' to enter account management",
       "caption2": "You can see the Xiaohongshu account has been successfully synced"
     },
     "complete": {
       "title": "Complete",
-      "content": "Now you can use the Foldframe platform normally!"
+      "content": "Now you can use the PostPilot platform normally!"
     }
   },
   "manualInstall": {

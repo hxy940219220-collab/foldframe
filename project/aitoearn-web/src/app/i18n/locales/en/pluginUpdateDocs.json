@@ -1,13 +1,13 @@
 {
   "seo": {
-    "title": "Plugin Update Guide - Upgrade the Foldframe Browser Extension",
-    "description": "Follow this illustrated guide to download the latest .crx package and update the Foldframe extension from the extensions management page.",
-    "keywords": "plugin update, browser extension upgrade, Foldframe extension, manual update, Chrome extension"
+    "title": "Plugin Update Guide - Upgrade the PostPilot Browser Extension",
+    "description": "Follow this illustrated guide to download the latest .crx package and update the PostPilot extension from the extensions management page.",
+    "keywords": "plugin update, browser extension upgrade, PostPilot extension, manual update, Chrome extension"
   },
   "hero": {
     "eyebrow": "Manual Update Workflow",
     "title": "Plugin Update Guide",
-    "description": "If Foldframe says your current extension version is outdated, follow this guide to update it with the latest .crx package.",
+    "description": "If PostPilot says your current extension version is outdated, follow this guide to update it with the latest .crx package.",
     "noticeTitle": "Chrome Web Store installs usually do not need manual updates",
     "noticeContent": "If you installed the extension from the Chrome Web Store, you normally only need to wait for store review and automatic rollout.",
     "summaryLabel": "Quick Facts"

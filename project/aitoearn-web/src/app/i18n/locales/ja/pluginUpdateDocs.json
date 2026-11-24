@@ -1,13 +1,13 @@
 {
   "seo": {
-    "title": "プラグイン更新ガイド - Foldframe ブラウザ拡張を更新",
-    "description": "この図解ガイドに従って最新の .crx パッケージをダウンロードし、拡張機能管理ページから Foldframe 拡張を更新します。",
-    "keywords": "plugin update, browser extension upgrade, Foldframe extension, manual update, Chrome extension"
+    "title": "プラグイン更新ガイド - PostPilot ブラウザ拡張を更新",
+    "description": "この図解ガイドに従って最新の .crx パッケージをダウンロードし、拡張機能管理ページから PostPilot 拡張を更新します。",
+    "keywords": "plugin update, browser extension upgrade, PostPilot extension, manual update, Chrome extension"
   },
   "hero": {
     "eyebrow": "手動アップデート手順",
     "title": "プラグイン更新ガイド",
-    "description": "Foldframe で現在の拡張機能バージョンが古いと表示された場合は、最新の .crx パッケージで更新してください。",
+    "description": "PostPilot で現在の拡張機能バージョンが古いと表示された場合は、最新の .crx パッケージで更新してください。",
     "noticeTitle": "Chrome ウェブストア版は通常手動更新が不要です",
     "noticeContent": "Chrome ウェブストアから拡張機能をインストールした場合は、通常ストア審査と自動配信を待つだけで十分です。",
     "summaryLabel": "クイック情報"

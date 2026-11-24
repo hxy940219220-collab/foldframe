@@ -1,29 +1,31 @@
 <div align="center">
 
-# Foldframe · AI 内容创作与多端发布工作台
+<img src="./showcase/logo.png" width="76" height="76" alt="PostPilot Logo" />
+
+# PostPilot · AI 内容创作与多端发布工作台
 
 **面向品牌营销、电商视觉与自媒体团队的一体化 AI 内容生产与分发工作台**  
 把**商业生图 / 短视频制作 → 无限画布二创 → 仿真手机排版 → 13+ 社媒平台发布待办 → 本机多模型接入**整合进同一套工作流。
 
-[![Live Showcase](https://img.shields.io/badge/在线展示页-Vercel-7c3aed?style=for-the-badge&logo=vercel&logoColor=white)](https://foldframe-studio.vercel.app)
-[![Portfolio](https://img.shields.io/badge/作品集详情页-huangxiyuan.net-111827?style=for-the-badge)](https://www.huangxiyuan.net/projects/foldframe)
+[![Live Showcase](https://img.shields.io/badge/在线展示页-Vercel-7c3aed?style=for-the-badge&logo=vercel&logoColor=white)](https://postpilot-studio.vercel.app)
+[![Portfolio](https://img.shields.io/badge/作品集详情页-huangxiyuan.net-111827?style=for-the-badge)](https://www.huangxiyuan.net/projects/postpilot)
 [![License](https://img.shields.io/badge/License-MIT-10b981?style=for-the-badge)](./LICENSE)
 
 <br />
 
-![Foldframe 快捷工作台主界面](./showcase/images/workspace.webp)
+![PostPilot 快捷工作台主界面](./showcase/images/workspace.webp)
 
 </div>
 
 ---
 
-## 核心作用：为什么做 Foldframe？
+## 核心作用：为什么做 PostPilot？
 
 市面上大多数 AIGC 工具只停留在「聊一句、出一张图」，真正要做品牌内容运营或自媒体矩阵时，团队往往要在 **生图工具、视频工具、修图软件、排版预览、多个社媒后台** 之间来回切换。
 
-**Foldframe** 基于开源项目 [AiToEarn](https://github.com/yikart/AiToEarn) 深度重构，核心解决三个实际问题：
+**PostPilot** 基于开源项目 [AiToEarn](https://github.com/yikart/AiToEarn) 深度重构，核心解决三个实际问题：
 
-| 核心价值 | 解决的痛点 | Foldframe 的做法 |
+| 核心价值 | 解决的痛点 | PostPilot 的做法 |
 | :--- | :--- | :--- |
 | **1. 从创作到发布全链路闭环** | 做好图和文案后，还要手动裁比例、看手机效果、逐个平台上传排期 | 把**内容创作 → 手机仿真排版 → 13 个主流平台发布待办**打通在同一个工作台，图文与视频严格分离流转 |
 | **2. 面向真实商业视觉生产** | 商业产品图、写实人物、品牌广告、宣传短视频需要反复改镜头、改光影、配多种比例 | 提供**快捷工作台 + 无限画布 + 多维改图**三种模式，保住主体不走样地高效出多版商用素材 |
@@ -79,7 +81,7 @@
 
 ### 5. 发布待办与 13 个主流平台连接：从做完内容到定时分发一步到位
 
-Foldframe 不止于内容生成，而是真正落地到多端分发执行。支持统一接入 **13 个国内外主流内容平台**：
+PostPilot 不止于内容生成，而是真正落地到多端分发执行。支持统一接入 **13 个国内外主流内容平台**：
 
 - **国内平台**：小红书、微信视频号、微信公众号、抖音、快手、Bilibili。
 - **海外平台**：YouTube、TikTok、Instagram、Facebook、Threads、LinkedIn、Pinterest。

@@ -1085,8 +1085,8 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
                           </div>
                           <div className="flex items-center justify-between text-[9px] text-muted-foreground">
                             <span className="flex items-center gap-1">
-                              <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary/15 text-[8px] font-bold text-primary">F</span>
-                              Foldframe
+                              <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary/15 text-[8px] font-bold text-primary">P</span>
+                              PostPilot
                             </span>
                             <span className="inline-flex items-center gap-0.5"><Heart className="h-2.5 w-2.5" /> 1.2k</span>
                           </div>
@@ -1170,7 +1170,7 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
 
                     <div className="relative z-10 mt-auto flex items-end justify-between bg-gradient-to-t from-black/80 via-black/30 to-transparent px-3.5 pb-4 pt-14 pointer-events-none">
                       <div className="max-w-[78%] space-y-1">
-                        <div className="text-xs font-bold">@Foldframe 创作者</div>
+                        <div className="text-xs font-bold">@PostPilot 创作者</div>
                         <div className="text-[11px] font-semibold leading-snug">{title.trim() || '短视频标题预览'}</div>
                         <div className="line-clamp-2 text-[10px] leading-relaxed text-white/85">
                           {caption.trim() || '短视频文案预览…'}
@@ -1182,7 +1182,7 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
                         )}
                       </div>
                       <div className="flex flex-col items-center gap-3 text-[9px]">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-primary text-[11px] font-bold">F</div>
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-primary text-[11px] font-bold">P</div>
                         <div className="flex flex-col items-center gap-0.5"><Heart className="h-5 w-5 fill-rose-500 text-rose-500" />1.2w</div>
                         <div className="flex flex-col items-center gap-0.5"><MessageCircle className="h-5 w-5" />326</div>
                         <div className="flex flex-col items-center gap-0.5"><Star className="h-5 w-5" />1.8k</div>
@@ -1197,10 +1197,10 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
                     <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/40">
                       <div className="flex items-center gap-2">
                         <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-[10px] font-bold text-white">
-                          F
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#14151a] text-[10px] font-bold text-white">
+                          P
                         </div>
-                        <span className="text-[11px] font-semibold">Foldframe 创作者</span>
+                        <span className="text-[11px] font-semibold">PostPilot 创作者</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         {platform === 'xhs' ? (

@@ -1,14 +1,14 @@
 {
   "dropToUpload": "松手上传文件",
   "announcement": {
-    "text": "Foldframe 使用 Agent 来完成你所有的内容需求，期间会调用大量工具，执行时间会稍久，您可以随时退出，稍后再来查看任务的完成情况。"
+    "text": "PostPilot 使用 Agent 来完成你所有的内容需求，期间会调用大量工具，执行时间会稍久，您可以随时退出，稍后再来查看任务的完成情况。"
   },
   "releaseBanner": {
     "tag": "Release v0.8.0",
     "text": "通过插件和繁荣的市场构建和扩展AI工作流程。"
   },
   "header": {
-    "logo": "Foldframe",
+    "logo": "PostPilot",
     "nav": {
       "home": "首页",
       "marketplace": "市场",
@@ -27,14 +27,14 @@
     "starsText": "stars on",
     "github": "GitHub",
     "title": "成为最好用的内容营销\nAI Agent",
-    "subtitle": "从今天起，使用AI轻松管理你的社交媒体。Foldframe 提供从灵感创意、内容制作，内容分发内容互动管理等一站式能力，让AI触手可及。",
+    "subtitle": "从今天起，使用AI轻松管理你的社交媒体。PostPilot 提供从灵感创意、内容制作，内容分发内容互动管理等一站式能力，让AI触手可及。",
     "getStarted": "立即开始",
     "useMobilePhone": "使用移动设备"
   },
   "seo": {
     "title": "AI视频与内容创作 - 一键发布15+社交平台",
-    "description": "Foldframe 是你的AI社交媒体运营员工。一句话AI生成视频、图片和文案，一键发布到抖音、小红书、B站、快手、TikTok、YouTube等15+主流平台。提供AI内容创作、智能剪辑、视频转绘、视频翻译、热点发现、品牌监控、统一互动管理等全链路功能，助力创作者和企业实现AI驱动的内容增长与变现。",
-    "keywords": "AI内容营销, AI社交媒体管理, AI视频生成, 多平台发布, AI创作, 自媒体运营, 抖音运营, 小红书运营, AI Agent, 内容分发, AI文案生成, 智能剪辑, 视频转绘, 品牌监控, Foldframe"
+    "description": "PostPilot 是你的AI社交媒体运营员工。一句话AI生成视频、图片和文案，一键发布到抖音、小红书、B站、快手、TikTok、YouTube等15+主流平台。提供AI内容创作、智能剪辑、视频转绘、视频翻译、热点发现、品牌监控、统一互动管理等全链路功能，助力创作者和企业实现AI驱动的内容增长与变现。",
+    "keywords": "AI内容营销, AI社交媒体管理, AI视频生成, 多平台发布, AI创作, 自媒体运营, 抖音运营, 小红书运营, AI Agent, 内容分发, AI文案生成, 智能剪辑, 视频转绘, 品牌监控, PostPilot"
   },
   "agentGenerator": {
     "title": "有什么可以帮你的？",
@@ -303,7 +303,7 @@
     "badge": "企业级服务",
     "title": "专业的AI自媒体解决方案",
     "titleBlue": "助力企业营销成功",
-    "subtitle": "企业级AI营销转型不仅需要工具，更需要稳固的基础设施。Foldframe 提供可靠的平台，将AI内容创作能力分发到多个部门，实现无与伦比的营销效率。"
+    "subtitle": "企业级AI营销转型不仅需要工具，更需要稳固的基础设施。PostPilot 提供可靠的平台，将AI内容创作能力分发到多个部门，实现无与伦比的营销效率。"
   },
   "statsSection": {
     "stats": {
@@ -343,7 +343,7 @@
     "badge": "社区生态",
     "title": "加入我们的",
     "titleBlue": "活跃创作者社区",
-    "subtitle": "Foldframe 由全球AI内容创作者社区共同推动。加入我们，一起探索AI内容营销的无限边界。",
+    "subtitle": "PostPilot 由全球AI内容创作者社区共同推动。加入我们，一起探索AI内容营销的无限边界。",
     "buttons": {
       "wechat": "微信群组",
       "community": "创作者交流群"
@@ -390,7 +390,7 @@
         "brand": "品牌指南"
       }
     },
-    "description": "Foldframe 自媒体运营平台一站式解决方案，从灵感创意到内容制作，从内容分发到内容互动管理",
+    "description": "PostPilot 自媒体运营平台一站式解决方案，从灵感创意到内容制作，从内容分发到内容互动管理",
     "social": {
       "github": "GitHub",
       "discord": "Discord",
@@ -399,14 +399,14 @@
       "twitter": "Twitter"
     },
     "bigText": "Let's Use AI To",
-    "copyright": "Foldframe",
+    "copyright": "PostPilot",
     "tagline": "",
     "dataDeletion": {
       "title": "Data Deletion Instructions",
       "prelaunch": "Our application is currently in pre-launch phase and does not store real user data. If you have interacted with our test systems, contact us for data removal.",
       "standardTitle": "Standard Procedure (Post-Launch):",
       "standardSteps": [
-        "Log in to your Foldframe account",
+        "Log in to your PostPilot account",
         "Navigate to Settings > Privacy",
         "Click \"Request Account Deletion\"",
         "Confirmation will be sent to your registered email"
@@ -416,7 +416,7 @@
     }
   },
   "ecosystem": {
-    "title": "一图解读 Foldframe",
+    "title": "一图解读 PostPilot",
     "subtitle": "AI驱动的内容创作与变现生态闭环",
     "creator": "内容创作者",
     "consumer": "内容需求者",

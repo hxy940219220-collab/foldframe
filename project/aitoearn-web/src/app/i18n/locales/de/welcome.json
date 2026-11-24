@@ -5,8 +5,8 @@
   },
   "seo": {
     "title": "KI-gestützte Content-Erstellung & Social-Media-Plattform",
-    "description": "Foldframe bietet den bequemsten KI-Videoerstellungsservice, hilft beim Traffic für Offline-Geschäfte und bietet Social-Media-Konto-Hosting für Content-Publishing und Kommentar-Interaktion.",
-    "keywords": "KI-Videoerstellung,Social-Media-Management,Multi-Plattform-Veröffentlichung,KI-Marketing,Content-Erstellung,Social-Media-Automatisierung,Foldframe,Markenwerbung"
+    "description": "PostPilot bietet den bequemsten KI-Videoerstellungsservice, hilft beim Traffic für Offline-Geschäfte und bietet Social-Media-Konto-Hosting für Content-Publishing und Kommentar-Interaktion.",
+    "keywords": "KI-Videoerstellung,Social-Media-Management,Multi-Plattform-Veröffentlichung,KI-Marketing,Content-Erstellung,Social-Media-Automatisierung,PostPilot,Markenwerbung"
   },
   "navbar": {
     "pricing": "Preise",
@@ -19,7 +19,7 @@
   "hero": {
     "badge": "KI-gestütztes Restaurant-Wachstum",
     "title": "KI-Wachstumsoperator für Solo-Unternehmen",
-    "subtitle": "Mit Foldframe können Sie einfach Traffic zu Ihren Offline-Geschäften lenken. Foldframe bietet Ihnen den bequemsten KI-Videoerstellungsservice. Sie können auch Ihre Social-Media-Konten auf Foldframe hosten, und wir helfen Ihnen bei der Content-Veröffentlichung und Kommentar-Interaktion.",
+    "subtitle": "Mit PostPilot können Sie einfach Traffic zu Ihren Offline-Geschäften lenken. PostPilot bietet Ihnen den bequemsten KI-Videoerstellungsservice. Sie können auch Ihre Social-Media-Konten auf PostPilot hosten, und wir helfen Ihnen bei der Content-Veröffentlichung und Kommentar-Interaktion.",
     "placeholder": "Finden Sie Ihr Restaurant",
     "cta": "Holen Sie sich meinen KI-Agenten",
     "selectFirst": "Bitte wählen Sie zuerst ein Restaurant aus",
@@ -52,7 +52,7 @@
   },
   "reviews": {
     "title": "Was unsere Nutzer sagen",
-    "subtitle": "Schließen Sie sich Tausenden von Einzelunternehmern an, die Foldframe vertrauen",
+    "subtitle": "Schließen Sie sich Tausenden von Einzelunternehmern an, die PostPilot vertrauen",
     "viewOnGithub": "Auf GitHub ansehen",
     "review1": {
       "content": "Endlich ein Open-Source-Tool, das Multi-Plattform-Publishing handhabt! Ein Klick zu Douyin, TikTok, YouTube - spart mir jede Woche Stunden."
@@ -96,7 +96,7 @@
     "watchVideo": "Video ansehen"
   },
   "beliefs": {
-    "title": "Warum Foldframe wählen",
+    "title": "Warum PostPilot wählen",
     "subtitle": "Entwickelt für Einzelunternehmer und kleine Unternehmen",
     "belief1": {
       "title": "Für Einzelunternehmer entwickelt",
@@ -133,7 +133,7 @@
     }
   },
   "experience": {
-    "title": "Mit Foldframe erhalten Sie mehr Traffic, mehr Umsatz, mehr Kunden",
+    "title": "Mit PostPilot erhalten Sie mehr Traffic, mehr Umsatz, mehr Kunden",
     "subtitle": "Von Offline-Marketing bis Multi-Plattform-Publishing, lassen Sie die KI die schwere Arbeit erledigen",
     "tab1": {
       "title": "Offline Check-in Marketing",
@@ -173,6 +173,6 @@
     "extensionPrivacy": "Erweiterungs-Datenschutzrichtlinie",
     "contact": "Kontaktieren Sie uns",
     "supportedPlatforms": "Unterstützte Plattformen",
-    "copyright": "Foldframe"
+    "copyright": "PostPilot"
   }
 }

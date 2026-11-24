@@ -5,8 +5,8 @@
   },
   "seo": {
     "title": "Création de contenu et gestion des réseaux sociaux propulsées par l'IA",
-    "description": "Foldframe fournit le service de création vidéo IA le plus pratique, aide à générer du trafic vers les magasins physiques et offre l'hébergement de comptes de médias sociaux pour la publication de contenu et l'interaction avec les commentaires.",
-    "keywords": "création vidéo IA,gestion des médias sociaux,publication multi-plateforme,marketing IA,création de contenu,automatisation des médias sociaux,Foldframe,promotion de marque"
+    "description": "PostPilot fournit le service de création vidéo IA le plus pratique, aide à générer du trafic vers les magasins physiques et offre l'hébergement de comptes de médias sociaux pour la publication de contenu et l'interaction avec les commentaires.",
+    "keywords": "création vidéo IA,gestion des médias sociaux,publication multi-plateforme,marketing IA,création de contenu,automatisation des médias sociaux,PostPilot,promotion de marque"
   },
   "navbar": {
     "pricing": "Tarifs",
@@ -19,7 +19,7 @@
   "hero": {
     "badge": "Croissance de restaurant alimentée par l'IA",
     "title": "Opérateur de croissance IA pour les entrepreneurs solo",
-    "subtitle": "Avec Foldframe, vous pouvez facilement générer du trafic vers vos magasins physiques. Foldframe vous fournit le service de création vidéo IA le plus pratique. Vous pouvez également héberger vos comptes de médias sociaux sur Foldframe, et nous vous aiderons pour la publication de contenu et l'interaction avec les commentaires.",
+    "subtitle": "Avec PostPilot, vous pouvez facilement générer du trafic vers vos magasins physiques. PostPilot vous fournit le service de création vidéo IA le plus pratique. Vous pouvez également héberger vos comptes de médias sociaux sur PostPilot, et nous vous aiderons pour la publication de contenu et l'interaction avec les commentaires.",
     "placeholder": "Trouvez votre restaurant",
     "cta": "Obtenir mon Agent IA",
     "selectFirst": "Veuillez d'abord sélectionner un restaurant",
@@ -52,7 +52,7 @@
   },
   "reviews": {
     "title": "Ce que disent nos utilisateurs",
-    "subtitle": "Rejoignez des milliers d'entrepreneurs individuels qui font confiance à Foldframe",
+    "subtitle": "Rejoignez des milliers d'entrepreneurs individuels qui font confiance à PostPilot",
     "viewOnGithub": "Voir sur GitHub",
     "review1": {
       "content": "Enfin un outil open source qui gère la publication multi-plateforme ! Un clic vers Douyin, TikTok, YouTube - me fait gagner des heures chaque semaine."
@@ -96,7 +96,7 @@
     "watchVideo": "Regarder la vidéo"
   },
   "beliefs": {
-    "title": "Pourquoi choisir Foldframe",
+    "title": "Pourquoi choisir PostPilot",
     "subtitle": "Conçu pour les entrepreneurs individuels et les petites entreprises",
     "belief1": {
       "title": "Conçu pour les entrepreneurs individuels",
@@ -133,7 +133,7 @@
     }
   },
   "experience": {
-    "title": "Avec Foldframe, obtenez plus de trafic, plus de ventes, plus de clients",
+    "title": "Avec PostPilot, obtenez plus de trafic, plus de ventes, plus de clients",
     "subtitle": "Du marketing hors ligne à la publication multi-plateforme, laissez l'IA faire le gros du travail",
     "tab1": {
       "title": "Marketing Check-in hors ligne",
@@ -173,6 +173,6 @@
     "extensionPrivacy": "Politique de confidentialité de l'extension",
     "contact": "Nous contacter",
     "supportedPlatforms": "Plateformes supportées",
-    "copyright": "Foldframe"
+    "copyright": "PostPilot"
   }
 }

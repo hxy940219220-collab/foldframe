@@ -1,13 +1,13 @@
 {
   "seo": {
     "title": "AI互动",
-    "description": "使用 Foldframe 插件完成发布、评论与 Agent 自动化互动。评论搜索维护中，暂不可用。",
-    "keywords": "AI互动, Foldframe 插件, 小红书互动, 评论任务, Agent自动化"
+    "description": "使用 PostPilot 插件完成发布、评论与 Agent 自动化互动。评论搜索维护中，暂不可用。",
+    "keywords": "AI互动, PostPilot 插件, 小红书互动, 评论任务, Agent自动化"
   },
   "page": {
     "breadcrumb": "AI互动",
     "title": "AI互动",
-    "description": "使用 Foldframe 插件完成发布、评论和 Agent 自动化。评论搜索维护期间，请优先使用 AI互动能力。",
+    "description": "使用 PostPilot 插件完成发布、评论和 Agent 自动化。评论搜索维护期间，请优先使用 AI互动能力。",
     "searchMode": "手动搜索模式",
     "searchDirty": "筛选已变更",
     "selectedFilters": "已选 {{count}} 个筛选",
@@ -213,8 +213,8 @@
   },
   "pluginGuide": {
     "trigger": "插件说明",
-    "title": "Foldframe 插件能做什么？",
-    "description": "配合 Foldframe Web 使用，插件负责在浏览器里完成发布、评论和 Agent 自动化。",
+    "title": "PostPilot 插件能做什么？",
+    "description": "配合 PostPilot Web 使用，插件负责在浏览器里完成发布、评论和 Agent 自动化。",
     "features": {
       "deepseek": {
         "title": "DeepSeek 底座，价格更有优势",
@@ -222,18 +222,18 @@
       },
       "publishing": {
         "title": "小红书、视频号发布",
-        "description": "在 Foldframe Web 发起任务，由插件完成小红书和视频号内容发布。"
+        "description": "在 PostPilot Web 发起任务，由插件完成小红书和视频号内容发布。"
       },
       "commentAction": {
         "title": "评论任务与一键操作",
-        "description": "Foldframe Web 的评论任务可一键完成，也支持点赞、收藏、关注等常见一键操作。"
+        "description": "PostPilot Web 的评论任务可一键完成，也支持点赞、收藏、关注等常见一键操作。"
       },
       "agentAssistant": {
         "title": "Agent 自动化助手",
         "description": "Agent 能读取代码、理解网页任务，并根据需求自己编写发布文案或评论内容。"
       }
     },
-    "footerTip": "所有能力通过 Foldframe Web 或教程触发，插件在浏览器中执行。",
+    "footerTip": "所有能力通过 PostPilot Web 或教程触发，插件在浏览器中执行。",
     "useNow": "立即使用",
     "confirm": "确认"
   },

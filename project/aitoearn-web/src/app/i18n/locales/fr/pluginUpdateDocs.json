@@ -1,13 +1,13 @@
 {
   "seo": {
-    "title": "Guide de mise à jour du plugin - Mettre à jour l'extension Foldframe",
-    "description": "Suivez ce guide illustré pour télécharger le dernier package .crx et mettre à jour l'extension Foldframe depuis la page de gestion des extensions.",
-    "keywords": "plugin update, browser extension upgrade, Foldframe extension, manual update, Chrome extension"
+    "title": "Guide de mise à jour du plugin - Mettre à jour l'extension PostPilot",
+    "description": "Suivez ce guide illustré pour télécharger le dernier package .crx et mettre à jour l'extension PostPilot depuis la page de gestion des extensions.",
+    "keywords": "plugin update, browser extension upgrade, PostPilot extension, manual update, Chrome extension"
   },
   "hero": {
     "eyebrow": "Flux de mise à jour manuelle",
     "title": "Guide de mise à jour du plugin",
-    "description": "Si Foldframe indique que la version actuelle de votre extension est obsolète, mettez-la à jour avec le dernier package .crx.",
+    "description": "Si PostPilot indique que la version actuelle de votre extension est obsolète, mettez-la à jour avec le dernier package .crx.",
     "noticeTitle": "Les installations depuis le Chrome Web Store n'ont généralement pas besoin de mise à jour manuelle",
     "noticeContent": "Si vous avez installé l'extension depuis le Chrome Web Store, il suffit généralement d'attendre la validation du store et le déploiement automatique.",
     "summaryLabel": "Informations rapides"

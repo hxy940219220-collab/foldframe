@@ -473,7 +473,7 @@ export function ModelsHubView() {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>未连接到本机桥接服务</AlertTitle>
           <AlertDescription className="mt-1 text-xs">
-            请通过 <code className="rounded bg-muted px-1.5 py-0.5">启动本地版.command</code> 启动 Foldframe，以自动连接本机 Antigravity、Codex、即梦、Grok 与 WorkBuddy 引擎。
+            请通过 <code className="rounded bg-muted px-1.5 py-0.5">启动本地版.command</code> 启动 PostPilot，以自动连接本机 Antigravity、Codex、即梦、Grok 与 WorkBuddy 引擎。
           </AlertDescription>
         </Alert>
       )}

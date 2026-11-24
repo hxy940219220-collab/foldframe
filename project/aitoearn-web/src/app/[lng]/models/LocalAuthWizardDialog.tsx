@@ -76,14 +76,14 @@ const ENGINE_SETUP_GUIDES: Record<'agy' | 'codex' | 'dreamina' | 'grok' | 'workb
         link: { label: '打开即梦官网', href: 'https://jimeng.jianying.com/' },
       },
       {
-        title: '2. 回到 Foldframe 一键网页登录（无需终端）',
+        title: '2. 回到 PostPilot 一键网页登录（无需终端）',
         desc: '安装完成后点下方「重新检测」，再点「一键网页登录即梦」，在电脑浏览器确认授权即可。',
       },
     ],
   },
   codex: {
     title: 'Codex CLI 快速上手指南',
-    subtitle: '使用你的 ChatGPT Plus / Pro 订阅或 OpenAI 账号驱动 Foldframe Agent',
+    subtitle: '使用你的 ChatGPT Plus / Pro 订阅或 OpenAI 账号驱动 PostPilot Agent',
     steps: [
       {
         title: '1. 在 Mac 上安装 Codex（推荐安装 ChatGPT 桌面端或 Homebrew）',
@@ -98,11 +98,11 @@ const ENGINE_SETUP_GUIDES: Record<'agy' | 'codex' | 'dreamina' | 'grok' | 'workb
   },
   agy: {
     title: 'Antigravity CLI (agy) 快速上手指南',
-    subtitle: 'Foldframe 默认原生 Agent 引擎，支持 Gemini / Claude 等多模型与 MCP 工具调用',
+    subtitle: 'PostPilot 默认原生 Agent 引擎，支持 Gemini / Claude 等多模型与 MCP 工具调用',
     steps: [
       {
         title: '1. 安装 Antigravity',
-        desc: '安装 Antigravity 应用或 agy CLI（如果你已使用 Orca / Antigravity，Foldframe 会自动扫描并识别）。',
+        desc: '安装 Antigravity 应用或 agy CLI（如果你已使用 Orca / Antigravity，PostPilot 会自动扫描并识别）。',
         link: { label: '查看 Antigravity 文档', href: 'https://antigravity.google/docs/cli/reference.md' },
       },
       {
@@ -117,7 +117,7 @@ const ENGINE_SETUP_GUIDES: Record<'agy' | 'codex' | 'dreamina' | 'grok' | 'workb
     steps: [
       {
         title: '1. 安装本机 Grok CLI',
-        desc: '确保电脑已安装 grok CLI（Foldframe 会自动识别 PATH 以及 Orca / OpenBot 内置的 grok 运行时）。',
+        desc: '确保电脑已安装 grok CLI（PostPilot 会自动识别 PATH 以及 Orca / OpenBot 内置的 grok 运行时）。',
         link: { label: '前往 Grok 官网', href: 'https://grok.com/' },
       },
       {

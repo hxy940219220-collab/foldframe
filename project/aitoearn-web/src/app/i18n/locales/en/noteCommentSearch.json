@@ -1,13 +1,13 @@
 {
   "seo": {
     "title": "AI Interaction",
-    "description": "Use the Foldframe plugin for publishing, comments, and Agent automation. Comment search is under maintenance and temporarily unavailable.",
-    "keywords": "AI interaction, Foldframe plugin, Rednote interaction, comment tasks, Agent automation"
+    "description": "Use the PostPilot plugin for publishing, comments, and Agent automation. Comment search is under maintenance and temporarily unavailable.",
+    "keywords": "AI interaction, PostPilot plugin, Rednote interaction, comment tasks, Agent automation"
   },
   "page": {
     "breadcrumb": "AI Interaction",
     "title": "AI Interaction",
-    "description": "Use the Foldframe plugin for publishing, comments, and Agent automation. During comment search maintenance, AI Interaction is the primary entry.",
+    "description": "Use the PostPilot plugin for publishing, comments, and Agent automation. During comment search maintenance, AI Interaction is the primary entry.",
     "searchMode": "Manual search mode",
     "searchDirty": "Filters changed",
     "selectedFilters": "{{count}} filters selected",
@@ -213,8 +213,8 @@
   },
   "pluginGuide": {
     "trigger": "Plugin Guide",
-    "title": "What can the Foldframe plugin do?",
-    "description": "Used with Foldframe Web, the plugin handles publishing, comments, and Agent automation directly in the browser.",
+    "title": "What can the PostPilot plugin do?",
+    "description": "Used with PostPilot Web, the plugin handles publishing, comments, and Agent automation directly in the browser.",
     "features": {
       "deepseek": {
         "title": "DeepSeek foundation with better pricing",
@@ -222,18 +222,18 @@
       },
       "publishing": {
         "title": "Rednote and WeChat Channels publishing",
-        "description": "Start tasks in Foldframe Web, then let the plugin publish content to Rednote and WeChat Channels."
+        "description": "Start tasks in PostPilot Web, then let the plugin publish content to Rednote and WeChat Channels."
       },
       "commentAction": {
         "title": "Comment tasks and one-click actions",
-        "description": "Foldframe Web comment tasks can be completed in one click, including likes, saves, follows, and other common actions."
+        "description": "PostPilot Web comment tasks can be completed in one click, including likes, saves, follows, and other common actions."
       },
       "agentAssistant": {
         "title": "Agent automation assistant",
         "description": "The Agent can read code, understand webpage tasks, and write publishing copy or comment content based on your request."
       }
     },
-    "footerTip": "All capabilities are triggered through Foldframe Web or tutorials, then executed by the plugin in the browser.",
+    "footerTip": "All capabilities are triggered through PostPilot Web or tutorials, then executed by the plugin in the browser.",
     "useNow": "Use now",
     "confirm": "Confirm"
   },

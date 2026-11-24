@@ -1,14 +1,14 @@
 {
   "dropToUpload": "Zum Hochladen ablegen",
   "announcement": {
-    "text": "Foldframe verwendet einen Agenten, um alle Ihre Inhaltsbedürfnisse zu erfüllen. Er ruft während der Ausführung viele Tools auf, was einige Zeit dauern kann. Sie können jederzeit beenden und den Aufgabenfortschritt später überprüfen."
+    "text": "PostPilot verwendet einen Agenten, um alle Ihre Inhaltsbedürfnisse zu erfüllen. Er ruft während der Ausführung viele Tools auf, was einige Zeit dauern kann. Sie können jederzeit beenden und den Aufgabenfortschritt später überprüfen."
   },
   "releaseBanner": {
     "tag": "Release v0.8.0",
     "text": "Erstellen und erweitern Sie KI-Workflows mit Plugins und einem wachsenden Marktplatz."
   },
   "header": {
-    "logo": "Foldframe",
+    "logo": "PostPilot",
     "nav": {
       "home": "Startseite",
       "marketplace": "Marktplatz",
@@ -27,14 +27,14 @@
     "starsText": "Sterne auf",
     "github": "GitHub",
     "title": "Der beste Content-Marketing\nKI-Agent",
-    "subtitle": "Ab heute verwalten Sie Ihre Social Media ganz einfach mit KI. Foldframe bietet Komplettlösungen von kreativer Inspiration, Inhaltserstellung, Inhaltsverteilung bis hin zur Interaktionsverwaltung und macht KI für jeden zugänglich.",
+    "subtitle": "Ab heute verwalten Sie Ihre Social Media ganz einfach mit KI. PostPilot bietet Komplettlösungen von kreativer Inspiration, Inhaltserstellung, Inhaltsverteilung bis hin zur Interaktionsverwaltung und macht KI für jeden zugänglich.",
     "getStarted": "Loslegen",
     "useMobilePhone": "Auf dem Handy nutzen"
   },
   "seo": {
     "title": "KI-Video- & Content-Erstellung für 15+ Social-Plattformen",
-    "description": "Foldframe ist Ihr KI-gestützter Social-Media-Wachstumsoperator. Generieren Sie Videos, Bilder und Texte mit KI und veröffentlichen Sie mit einem Klick auf über 15 Plattformen wie TikTok, YouTube, Instagram, Facebook und X. Mit KI-Content-Erstellung, Smart-Videobearbeitung, Stiltransfer, Videoübersetzung, Trendentdeckung, Markenüberwachung und einheitlichem Engagement-Dashboard.",
-    "keywords": "KI-Content-Marketing, KI-Social-Media-Management, KI-Videogenerierung, Multi-Plattform-Publishing, KI-Inhaltserstellung, Social-Media-Automatisierung, TikTok-Marketing, YouTube-Marketing, KI-Agent, Content-Distribution, KI-Texterstellung, Videobearbeitung KI, Markenüberwachung, Foldframe"
+    "description": "PostPilot ist Ihr KI-gestützter Social-Media-Wachstumsoperator. Generieren Sie Videos, Bilder und Texte mit KI und veröffentlichen Sie mit einem Klick auf über 15 Plattformen wie TikTok, YouTube, Instagram, Facebook und X. Mit KI-Content-Erstellung, Smart-Videobearbeitung, Stiltransfer, Videoübersetzung, Trendentdeckung, Markenüberwachung und einheitlichem Engagement-Dashboard.",
+    "keywords": "KI-Content-Marketing, KI-Social-Media-Management, KI-Videogenerierung, Multi-Plattform-Publishing, KI-Inhaltserstellung, Social-Media-Automatisierung, TikTok-Marketing, YouTube-Marketing, KI-Agent, Content-Distribution, KI-Texterstellung, Videobearbeitung KI, Markenüberwachung, PostPilot"
   },
   "agentGenerator": {
     "title": "Wie kann ich Ihnen helfen?",
@@ -303,7 +303,7 @@
     "badge": "Unternehmensservice",
     "title": "Professionelle KI-Social-Media-Lösungen",
     "titleBlue": "Powering Enterprise Marketing Success",
-    "subtitle": "Die KI-Marketing-Transformation von Unternehmen erfordert nicht nur Tools, sondern eine solide Infrastruktur. Foldframe bietet eine zuverlässige Plattform zur Verteilung von KI-Inhaltserstellungsfunktionen über mehrere Abteilungen für unübertroffene Marketing-Effizienz."
+    "subtitle": "Die KI-Marketing-Transformation von Unternehmen erfordert nicht nur Tools, sondern eine solide Infrastruktur. PostPilot bietet eine zuverlässige Plattform zur Verteilung von KI-Inhaltserstellungsfunktionen über mehrere Abteilungen für unübertroffene Marketing-Effizienz."
   },
   "statsSection": {
     "stats": {
@@ -343,7 +343,7 @@
     "badge": "Community-Ökosystem",
     "title": "Treten Sie unserer",
     "titleBlue": "aktiven Creator-Community bei",
-    "subtitle": "Foldframe wird von einer globalen Community von KI-Inhaltserstellern angetrieben. Treten Sie uns bei, um die unendlichen Grenzen des KI-Content-Marketings zu erkunden.",
+    "subtitle": "PostPilot wird von einer globalen Community von KI-Inhaltserstellern angetrieben. Treten Sie uns bei, um die unendlichen Grenzen des KI-Content-Marketings zu erkunden.",
     "buttons": {
       "wechat": "WeChat-Gruppe",
       "community": "Creator-Community"
@@ -390,7 +390,7 @@
         "brand": "Markenrichtlinien"
       }
     },
-    "description": "Foldframe All-in-One Social-Media-Management-Plattform-Lösung, von kreativer Inspiration bis Inhaltserstellung, von Inhaltsverteilung bis Interaktionsverwaltung",
+    "description": "PostPilot All-in-One Social-Media-Management-Plattform-Lösung, von kreativer Inspiration bis Inhaltserstellung, von Inhaltsverteilung bis Interaktionsverwaltung",
     "social": {
       "github": "GitHub",
       "discord": "Discord",
@@ -399,14 +399,14 @@
       "twitter": "Twitter"
     },
     "bigText": "Let's Use AI To",
-    "copyright": "Foldframe",
+    "copyright": "PostPilot",
     "tagline": "",
     "dataDeletion": {
       "title": "Anleitung zur Datenlöschung",
       "prelaunch": "Unsere Anwendung befindet sich derzeit in der Pre-Launch-Phase und speichert keine echten Benutzerdaten. Wenn Sie mit unseren Testsystemen interagiert haben, kontaktieren Sie uns zur Datenentfernung.",
       "standardTitle": "Standardverfahren (nach dem Launch):",
       "standardSteps": [
-        "Melden Sie sich bei Ihrem Foldframe-Konto an",
+        "Melden Sie sich bei Ihrem PostPilot-Konto an",
         "Navigieren Sie zu Einstellungen > Datenschutz",
         "Klicken Sie auf \"Kontolöschung anfordern\"",
         "Bestätigung wird an Ihre registrierte E-Mail gesendet"

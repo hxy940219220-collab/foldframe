@@ -15,7 +15,7 @@
     "error": "Error"
   },
   "error": {
-    "pluginNotInstalled": "Please install Foldframe browser plugin first",
+    "pluginNotInstalled": "Please install PostPilot browser plugin first",
     "publishingInProgress": "Publishing in progress, please try again later",
     "loginFailed": "Login failed",
     "publishFailed": "Publish failed"
@@ -105,7 +105,7 @@
     "pluginActive": "Plugin Active",
     "pluginInactive": "Plugin Inactive",
     "downloadPlugin": "Download Plugin",
-    "downloadDescription": "The Foldframe browser plugin is specifically designed for the intelligent operation of Xiaohongshu. Please click the button below to download and install.",
+    "downloadDescription": "The PostPilot browser plugin is specifically designed for the intelligent operation of Xiaohongshu. Please click the button below to download and install.",
     "downloadButton": "Download Now",
     "chromeWebStore": "Chrome Web Store",
     "chinaDownload": "China Download",
@@ -126,7 +126,7 @@
     "permissionRequired": "Permission Required",
     "permissionDescription": "Plugin is installed but requires necessary permissions to work properly. Please grant the required permissions in your browser extension settings.",
     "siteAccessRequiredTitle": "Site access permission is required",
-    "siteAccessRequiredDescription": "Site access is not granted, so the extension cannot work on Foldframe pages. You can fix it in either way:",
+    "siteAccessRequiredDescription": "Site access is not granted, so the extension cannot work on PostPilot pages. You can fix it in either way:",
     "siteAccessStepReauthorize": "Authorize the extension again.",
     "siteAccessStepExtensionSettings": "In your browser’s extension manager, open the installed extension’s details and set site access to “On all sites”.",
     "checkPermission": "Check Permission Again",
@@ -147,7 +147,7 @@
     "title": "Desktop Only",
     "description": "The browser extension is not available on mobile devices. Please use a desktop browser to install and use the extension.",
     "goToPC": "Please visit on PC",
-    "introduction": "Foldframe platform browser extension. Works with Foldframe web to automate interactions on Xiaohongshu, TikTok and other platforms — follow, like, bookmark, comment and more."
+    "introduction": "PostPilot platform browser extension. Works with PostPilot web to automate interactions on Xiaohongshu, TikTok and other platforms — follow, like, bookmark, comment and more."
   },
   "version": {
     "title": "Plugin Version",

@@ -87,8 +87,8 @@
     "draftBox": "コンテンツ管理",
     "agentAssets": "AI生成素材",
     "draftBoxSeoTitle": "コンテンツ管理 - AIバッチ作成と下書きエディタ",
-    "draftBoxSeoDescription": "すべてのコンテンツ下書きを一か所で管理。AIで一括生成、投稿前に編集、Foldframeでマルチプラットフォーム配信を整理。",
-    "draftBoxSeoKeywords": "コンテンツ管理, 下書きエディタ, AIコンテンツ生成, 一括作成, SNS下書き, コンテンツスケジュール, Foldframe"
+    "draftBoxSeoDescription": "すべてのコンテンツ下書きを一か所で管理。AIで一括生成、投稿前に編集、PostPilotでマルチプラットフォーム配信を整理。",
+    "draftBoxSeoKeywords": "コンテンツ管理, 下書きエディタ, AIコンテンツ生成, 一括作成, SNS下書き, コンテンツスケジュール, PostPilot"
   },
   "tasks": "マーケットプレイス",
   "signIn": {

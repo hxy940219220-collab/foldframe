@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Start Foldframe (AiToEarn stack + macOS Host Local Bridge for agy/codex/dreamina)."""
+"""Start PostPilot (AiToEarn stack + macOS Host Local Bridge for agy/codex/dreamina)."""
 import argparse
 import json
 import os
@@ -206,7 +206,7 @@ def start_engine():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="启动 Foldframe 本地工作台。首次配置可使用 AITO_WEB_PORT、AITO_UPLOAD_PORT 和 AITO_BRIDGE_PORT。")
+    parser = argparse.ArgumentParser(description="启动 PostPilot 本地工作台。首次配置可使用 AITO_WEB_PORT、AITO_UPLOAD_PORT 和 AITO_BRIDGE_PORT。")
     options = parser.add_mutually_exclusive_group()
     options.add_argument("--prepare", action="store_true", help="创建并校验配置")
     options.add_argument("--start", action="store_true", help="启动服务，跳过自动打开浏览器")
@@ -247,7 +247,7 @@ def main():
         return
     start_bridge(env)
     start_engine()
-    print("正在启动 Foldframe，首次运行需要下载镜像并构建工作台。", flush=True)
+    print("正在启动 PostPilot，首次运行需要下载镜像并构建工作台。", flush=True)
     subprocess.run([*COMPOSE, "up", "-d", "--build", "--pull", "missing", "--wait", "--wait-timeout", "600"], check=True)
     # Refresh nginx upstream DNS in case aitoearn-ai / aitoearn-web containers were recreated with new IPs.
     subprocess.run(
@@ -265,7 +265,7 @@ def main():
     with opener.open(entry, timeout=30) as response:
         if response.status != 200 or response.headers.get_content_type() != "text/html":
             raise RuntimeError("工作台尚未就绪。")
-    print(f"Foldframe 已启动：{entry}", flush=True)
+    print(f"PostPilot 已启动：{entry}", flush=True)
     if not args.start:
         subprocess.run(["open", entry], check=True)
 
@@ -274,5 +274,5 @@ if __name__ == "__main__":
     try:
         main()
     except (OSError, ValueError, RuntimeError, subprocess.CalledProcessError) as error:
-        print(f"Foldframe 操作失败：{error}", file=sys.stderr)
+        print(f"PostPilot 操作失败：{error}", file=sys.stderr)
         sys.exit(1)

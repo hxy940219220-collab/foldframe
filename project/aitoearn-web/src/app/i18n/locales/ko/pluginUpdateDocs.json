@@ -1,13 +1,13 @@
 {
   "seo": {
-    "title": "플러그인 업데이트 가이드 - Foldframe 브라우저 확장 업데이트",
-    "description": "이 가이드를 따라 최신 .crx 패키지를 다운로드하고 확장 관리 페이지에서 Foldframe 확장을 업데이트하세요.",
-    "keywords": "plugin update, browser extension upgrade, Foldframe extension, manual update, Chrome extension"
+    "title": "플러그인 업데이트 가이드 - PostPilot 브라우저 확장 업데이트",
+    "description": "이 가이드를 따라 최신 .crx 패키지를 다운로드하고 확장 관리 페이지에서 PostPilot 확장을 업데이트하세요.",
+    "keywords": "plugin update, browser extension upgrade, PostPilot extension, manual update, Chrome extension"
   },
   "hero": {
     "eyebrow": "수동 업데이트 흐름",
     "title": "플러그인 업데이트 가이드",
-    "description": "Foldframe에서 현재 확장 프로그램 버전이 오래되었다고 표시되면 최신 .crx 패키지로 업데이트하세요.",
+    "description": "PostPilot에서 현재 확장 프로그램 버전이 오래되었다고 표시되면 최신 .crx 패키지로 업데이트하세요.",
     "noticeTitle": "Chrome 웹 스토어 설치본은 보통 수동 업데이트가 필요하지 않습니다",
     "noticeContent": "Chrome 웹 스토어에서 확장 프로그램을 설치했다면 일반적으로 스토어 심사와 자동 배포를 기다리면 됩니다.",
     "summaryLabel": "빠른 정보"
