@@ -9,7 +9,7 @@
 'use client'
 
 import type { SocialAccount } from '@/api/accounts/account.types'
-import { Bot, SquarePen, UserPlus } from 'lucide-react'
+import { CalendarDays, Layers, LayoutTemplate, SquarePen, UserPlus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { memo, useCallback, useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
@@ -17,15 +17,27 @@ import { apiUpdateAccountGroupSortRank } from '@/api/accounts/account.api'
 import { useTransClient } from '@/app/i18n/client'
 import { Button } from '@/components/ui/button'
 import { useAccountStore } from '@/store/account'
+import { cn } from '@/utils/className'
 import { toast } from '@/utils/ui/toast'
 import AccountSelector from './components/AccountSelector'
+
+export type AccountsViewMode = 'calendar' | 'drafts'
 
 export interface IAccountsTopNavProps {
   onNewWork?: () => void
   onAddAccount?: () => void
+  activeView?: AccountsViewMode
+  onViewChange?: (view: AccountsViewMode) => void
+  draftCount?: number
 }
 
-const AccountsTopNav = memo<IAccountsTopNavProps>(({ onNewWork, onAddAccount }) => {
+const AccountsTopNav = memo<IAccountsTopNavProps>(({
+  onNewWork,
+  onAddAccount,
+  activeView = 'calendar',
+  onViewChange,
+  draftCount = 0,
+}) => {
   const { t } = useTransClient('account')
   const router = useRouter()
   const [accountSearchText, setAccountSearchText] = useState('')
@@ -159,48 +171,88 @@ const AccountsTopNav = memo<IAccountsTopNavProps>(({ onNewWork, onAddAccount }) 
     onNewWork?.()
   }, [onNewWork])
 
-  const handleAgentCreateClick = useCallback(() => {
-    router.push('/ai-social')
+  const handleOpenComposerClick = useCallback(() => {
+    router.push('/ai-social?tab=publisher')
   }, [router])
 
   return (
     <>
       <div className="h-14 md:h-16 flex items-center justify-between px-3 md:px-6 border-b bg-background shrink-0">
-        {/* 左侧: 操作按钮区域 */}
-        <div className="flex items-center gap-1 md:gap-2">
-          {/* 新建作品按钮 - 移动端显示文字，因为添加账号按钮移到下拉菜单了 */}
+        {/* 左侧: 视图切换 + 核心排期操作 */}
+        <div className="flex items-center gap-1.5 md:gap-2.5">
+          {/* 排期日历 / 排版草稿箱 分段切换 */}
+          {onViewChange && (
+            <div className="inline-flex items-center rounded-xl border border-border bg-muted/50 p-0.5">
+              <button
+                type="button"
+                data-testid="accounts-tab-calendar"
+                onClick={() => onViewChange('calendar')}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-lg px-2.5 md:px-3 py-1.5 text-xs font-medium transition-all cursor-pointer',
+                  activeView === 'calendar'
+                    ? 'bg-background text-foreground shadow-xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                <CalendarDays className="h-3.5 w-3.5 text-primary" />
+                <span>排期日历</span>
+              </button>
+              <button
+                type="button"
+                data-testid="accounts-tab-drafts"
+                onClick={() => onViewChange('drafts')}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-lg px-2.5 md:px-3 py-1.5 text-xs font-medium transition-all cursor-pointer',
+                  activeView === 'drafts'
+                    ? 'bg-background text-foreground shadow-xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                <Layers className="h-3.5 w-3.5 text-primary" />
+                <span>排版草稿箱</span>
+                <span className={cn(
+                  'rounded-full px-1.5 py-0 text-[10px] font-semibold tabular-nums leading-4',
+                  activeView === 'drafts'
+                    ? 'bg-primary/15 text-primary'
+                    : 'bg-background text-muted-foreground',
+                )}
+                >
+                  {draftCount}
+                </span>
+              </button>
+            </div>
+          )}
+
+          {/* 新建作品按钮 */}
           <Button
             data-testid="accounts-new-work-btn"
             onClick={handleNewWorkClick}
-            className="h-8 md:h-9 gap-1 md:gap-2 px-3 md:px-4 cursor-pointer"
+            className="h-8 md:h-9 gap-1 md:gap-1.5 px-3 md:px-3.5 cursor-pointer"
           >
             <SquarePen className="h-4 w-4" />
             <span>{t('newWork')}</span>
           </Button>
 
-          <div className="border-l border-border h-6 mx-1 md:mx-2 hidden md:block" />
-
-          {/* 添加账号按钮 - 只在PC端显示，移动端在下拉菜单中 */}
+          {/* 添加频道按钮 */}
           <Button
             data-testid="accounts-add-account-btn"
             variant="outline"
             onClick={onAddAccount}
-            className="h-8 md:h-9 gap-1 md:gap-2 px-2 md:px-4 cursor-pointer hidden md:flex"
+            className="h-8 md:h-9 gap-1 md:gap-1.5 px-2.5 md:px-3.5 cursor-pointer hidden md:flex"
           >
             <UserPlus className="h-4 w-4" />
             <span>{t('addAccount')}</span>
           </Button>
 
-          <div className="border-l border-border h-6 mx-1 md:mx-2" />
-
-          {/* Agent创建按钮 */}
+          {/* 去排版工坊按钮（直连排版工坊与草稿箱闭环） */}
           <Button
+            data-testid="accounts-open-composer-btn"
             variant="outline"
-            onClick={handleAgentCreateClick}
-            className="h-8 md:h-9 gap-1 md:gap-2 px-2 md:px-4 cursor-pointer"
+            onClick={handleOpenComposerClick}
+            className="h-8 md:h-9 gap-1 md:gap-1.5 px-2.5 md:px-3.5 cursor-pointer hidden sm:flex"
           >
-            <Bot className="h-4 w-4" />
-            <span>{t('agentCreate')}</span>
+            <LayoutTemplate className="h-4 w-4 text-primary" />
+            <span>排版工坊</span>
           </Button>
         </div>
 

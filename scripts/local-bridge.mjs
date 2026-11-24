@@ -26,17 +26,41 @@ const LOCAL_WEB_PORT = Number.parseInt(process.env.LOCAL_WEB_PORT || '8080', 10)
 const DATA_DIR = resolve(process.env.FOLDFRAME_DATA_DIR || join(REPO_ROOT, '.local-run', 'bridge'))
 const WORKBUDDY_HOME = resolve(process.env.FOLDFRAME_WORKBUDDY_HOME || join(DATA_DIR, 'workbuddy-home'))
 const WORKBUDDY_META_PATH = join(DATA_DIR, 'workbuddy-meta.json')
+const WORKBUDDY_MODELS_CACHE_PATH = join(DATA_DIR, 'workbuddy-models-cache.json')
+const WORKBUDDY_MODELS_TTL_MS = 10 * 60 * 1000
 const WORKBUDDY_DEFAULT_MODELS = [
-  'auto',
-  'glm-5v-turbo',
-  'glm-5.1',
-  'glm-5.0-turbo',
-  'glm-5.0',
-  'glm-4.7',
-  'kimi-k2.5',
-  'minimax-m2.7',
-  'deepseek-v3-2-volc',
+  'hy4std',
+  'hy4flash-free',
+  'deepseek-v4.1-flash',
+  'deepseek-v4-pro',
+  'glm-5.3',
+  'glm-5.3-flash',
+  'glm-5.2',
+  'kimi-k3.1-pro',
+  'kimi-k3-1',
+  'minimax-m3.1-flash',
+  'step-5-preview',
+  'mimo-v2.6-pro',
+  'space-bunny',
 ]
+const WORKBUDDY_DEFAULT_MODEL_LABELS = {
+  'hy4std': 'Hy4',
+  'hy4flash-free': 'Hy4 Flash (免费)',
+  'hy4flash': 'Hy4 Flash',
+  'deepseek-v4.1-flash': 'DeepSeek-V4.1-Flash',
+  'deepseek-v4-pro': 'DeepSeek-V4-Pro',
+  'glm-5.3': 'GLM-5.3',
+  'glm-5.3-flash': 'GLM-5.3-Flash',
+  'glm-5.2': 'GLM-5.2',
+  'kimi-k3.1-pro': 'Kimi-K3.1-Pro',
+  'kimi-k3-1': 'Kimi-K3',
+  'kimi-k2.8-preview': 'Kimi-K2.8-Preview',
+  'minimax-m3.1-flash': 'MiniMax-M3.1-Flash',
+  'minimax-m2.7': 'MiniMax-M2.7',
+  'step-5-preview': 'Step-5-Preview',
+  'mimo-v2.6-pro': 'Xiaomi MiMo-V2.6-Pro',
+  'space-bunny': 'Space-Bunny',
+}
 const GROK_FALLBACK_MODELS = ['grok-4.7', 'grok-4.7-build-fast', 'grok-4.6', 'grok-4.5']
 const DEFAULT_SKILLS_DIR = resolve(
   process.env.FOLDFRAME_SKILLS_DIR
@@ -909,7 +933,298 @@ function spawnWorkBuddyProcess(args, options = {}) {
   })
 }
 
-async function detectWorkBuddy() {
+let workbuddyModelsCache = { fetchedAt: 0, data: null }
+let workbuddyModelsInflight = null
+
+export function formatWorkBuddyModelLabel(id, name = '', desc = '') {
+  const cleanId = String(id || '').trim()
+  const cleanName = String(name || '').trim()
+  const cleanDesc = String(desc || '').trim()
+  const base = cleanName || WORKBUDDY_DEFAULT_MODEL_LABELS[cleanId] || cleanId
+  const isFree = /free$/i.test(cleanId) || /\bx0\.00\b/i.test(cleanDesc)
+  if (isFree && !/免费|free/i.test(base)) {
+    return `${base} (免费)`
+  }
+  return base
+}
+
+export function normalizeWorkBuddyCatalog(availableModels = [], currentModelId = '') {
+  const seen = new Set()
+  const models = []
+  const modelLabels = {}
+  const modelMeta = {}
+  for (const item of Array.isArray(availableModels) ? availableModels : []) {
+    const rawId = typeof item === 'string' ? item : item?.modelId || item?.id
+    const id = String(rawId || '').trim()
+    if (!id || id === 'default' || id === 'auto' || seen.has(id)) continue
+    seen.add(id)
+    models.push(id)
+    const rawName = typeof item === 'object' && item ? (item.name || item.displayName || '') : ''
+    const rawDesc = typeof item === 'object' && item ? (item.description || '') : ''
+    const metaObj = typeof item === 'object' && item && item._meta && typeof item._meta === 'object' ? item._meta : {}
+    const label = formatWorkBuddyModelLabel(id, rawName, rawDesc)
+    modelLabels[id] = label
+    const credits = String(metaObj.credits || rawDesc || '').trim()
+    const maxInputTokens = Number(metaObj.maxInputTokens || item?.maxInputTokens || 0) || undefined
+    const effortOptions = Array.isArray(metaObj.effortOptions)
+      ? metaObj.effortOptions
+          .map(o => String(typeof o === 'string' ? o : (o?.value || '')).trim().toLowerCase())
+          .filter(v => ['low', 'medium', 'high', 'xhigh'].includes(v))
+      : []
+    modelMeta[id] = {
+      label,
+      credits: credits || undefined,
+      maxInputTokens,
+      supportsImages: Boolean(metaObj.supportsImages),
+      supportsReasoning: metaObj.supportsReasoning !== false,
+      effortOptions: effortOptions.length > 0 ? effortOptions : undefined,
+    }
+  }
+
+  if (models.length === 0) {
+    for (const id of WORKBUDDY_DEFAULT_MODELS) {
+      modelMeta[id] = {
+        label: WORKBUDDY_DEFAULT_MODEL_LABELS[id] || id,
+        credits: id === 'hy4flash-free' ? 'x0.00' : undefined,
+        maxInputTokens: id.startsWith('hy4') ? 960000 : 1000000,
+        supportsImages: true,
+        supportsReasoning: true,
+      }
+    }
+    return {
+      models: [...WORKBUDDY_DEFAULT_MODELS],
+      modelLabels: { ...WORKBUDDY_DEFAULT_MODEL_LABELS },
+      modelMeta,
+      effectiveDefaultModel: 'Hy4',
+    }
+  }
+
+  const cleanCurrent = String(currentModelId || '').trim()
+  const effectiveDefaultModel = (cleanCurrent && cleanCurrent !== 'auto' && cleanCurrent !== 'default')
+    ? (modelLabels[cleanCurrent] || cleanCurrent)
+    : (modelLabels[models[0]] || models[0] || '自动路由')
+
+  return { models, modelLabels, modelMeta, effectiveDefaultModel }
+}
+
+function invalidateWorkBuddyModelsCache() {
+  workbuddyModelsCache = { fetchedAt: 0, data: null }
+  try {
+    if (existsSync(WORKBUDDY_MODELS_CACHE_PATH)) {
+      rmSync(WORKBUDDY_MODELS_CACHE_PATH, { force: true })
+    }
+  }
+  catch {}
+}
+
+function loadDiskWorkBuddyModelsCache() {
+  try {
+    if (!existsSync(WORKBUDDY_MODELS_CACHE_PATH)) return null
+    const parsed = JSON.parse(readFileSync(WORKBUDDY_MODELS_CACHE_PATH, 'utf8'))
+    if (parsed && Array.isArray(parsed.models) && parsed.models.length > 0) {
+      return {
+        fetchedAt: Number(parsed.fetchedAt || 0),
+        data: {
+          models: parsed.models,
+          modelLabels: parsed.modelLabels || {},
+          modelMeta: parsed.modelMeta || {},
+          effectiveDefaultModel: parsed.effectiveDefaultModel || '自动路由',
+        },
+      }
+    }
+  }
+  catch {}
+  return null
+}
+
+function saveDiskWorkBuddyModelsCache(data) {
+  try {
+    ensureDir(DATA_DIR)
+    writeFileSync(
+      WORKBUDDY_MODELS_CACHE_PATH,
+      JSON.stringify({ fetchedAt: Date.now(), ...data }, null, 2),
+      'utf8',
+    )
+  }
+  catch {}
+}
+
+function readWorkBuddyProductFallbackCatalog(binPath) {
+  try {
+    if (!binPath) return null
+    const cliRoot = resolve(dirname(binPath), '..')
+    const prodPath = join(cliRoot, 'product.json')
+    if (!existsSync(prodPath)) return null
+    const prod = JSON.parse(readFileSync(prodPath, 'utf8'))
+    const rawModels = Array.isArray(prod?.models) ? prod.models : []
+    const chatModels = rawModels.filter((m) => {
+      const id = String(m?.id || m?.modelId || '').trim()
+      if (!id || id === 'auto') return false
+      const tags = Array.isArray(m?.tags) ? m.tags.map(t => String(t).toLowerCase()) : []
+      if (tags.some(t => t.includes('image') || t.includes('video') || t.includes('audio') || t.includes('embed'))) {
+        return false
+      }
+      if (m?.deprecated || m?.hidden) return false
+      return true
+    })
+    if (chatModels.length > 0) {
+      return normalizeWorkBuddyCatalog(chatModels.slice(0, 20), chatModels[0]?.id || '')
+    }
+  }
+  catch {}
+  return null
+}
+
+async function queryWorkBuddyLiveModelsViaAcp() {
+  const child = spawnWorkBuddyProcess(
+    ['--serve', '--acp', '--acp-transport', 'stdio', '--auth', 'none', '--port', '0'],
+    {
+      cwd: REPO_ROOT,
+      env: { HEADLESS: '1', BROWSER: '/usr/bin/true' },
+      stdio: ['pipe', 'pipe', 'pipe'],
+    },
+  )
+  if (!child) return null
+
+  return await new Promise((resolveOut) => {
+    let settled = false
+    let initSent = false
+    let sessionSent = false
+    let stdoutBuf = ''
+
+    const finish = (catalog) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timeout)
+      clearTimeout(initTimer)
+      try { child.kill('SIGTERM') } catch {}
+      setTimeout(() => {
+        try { child.kill('SIGKILL') } catch {}
+      }, 600).unref?.()
+      resolveOut(catalog)
+    }
+
+    const sendRpc = (obj) => {
+      try {
+        if (child.stdin && !child.stdin.destroyed) {
+          child.stdin.write(`${JSON.stringify(obj)}\n`)
+        }
+      }
+      catch {}
+    }
+
+    const triggerInit = () => {
+      if (initSent || settled) return
+      initSent = true
+      sendRpc({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: { protocolVersion: 1, clientCapabilities: {} },
+      })
+    }
+
+    const timeout = setTimeout(() => finish(null), 12000)
+    timeout.unref?.()
+    const initTimer = setTimeout(triggerInit, 1200)
+    initTimer.unref?.()
+
+    const handleLine = (line) => {
+      const trimmed = line.trim()
+      if (!trimmed) return
+      if (!initSent && /Press Ctrl\+C|Endpoint\s+http:\/\/127\.0\.0\.1:/i.test(trimmed)) {
+        setTimeout(triggerInit, 80)
+        return
+      }
+      if (!trimmed.startsWith('{')) return
+      let msg
+      try {
+        msg = JSON.parse(trimmed)
+      }
+      catch {
+        return
+      }
+      if (msg.id === 1 && msg.result && !sessionSent) {
+        sessionSent = true
+        sendRpc({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'session/new',
+          params: { cwd: tmpdir(), mcpServers: [] },
+        })
+        return
+      }
+      if (msg.id === 2) {
+        const avail = msg.result?.models?.availableModels
+        const current = msg.result?.models?.currentModelId || ''
+        if (Array.isArray(avail) && avail.length > 0) {
+          finish(normalizeWorkBuddyCatalog(avail, current))
+        }
+        else {
+          finish(null)
+        }
+      }
+    }
+
+    child.stdout.on('data', (chunk) => {
+      stdoutBuf += chunk.toString('utf8')
+      const lines = stdoutBuf.split(/\r?\n/)
+      stdoutBuf = lines.pop() || ''
+      for (const line of lines) handleLine(line)
+    })
+    child.on('error', () => finish(null))
+    child.on('close', () => {
+      if (stdoutBuf.trim()) handleLine(stdoutBuf)
+      finish(null)
+    })
+  })
+}
+
+async function getWorkBuddyCatalog(loggedIn, binPath, forceRefresh = false) {
+  if (!loggedIn) {
+    return readWorkBuddyProductFallbackCatalog(binPath) || normalizeWorkBuddyCatalog([], '')
+  }
+
+  const now = Date.now()
+  if (!forceRefresh) {
+    if (workbuddyModelsCache.data && (now - workbuddyModelsCache.fetchedAt) < WORKBUDDY_MODELS_TTL_MS) {
+      return workbuddyModelsCache.data
+    }
+    const disk = loadDiskWorkBuddyModelsCache()
+    if (disk && disk.data && (now - disk.fetchedAt) < WORKBUDDY_MODELS_TTL_MS) {
+      workbuddyModelsCache = disk
+      return disk.data
+    }
+  }
+
+  if (workbuddyModelsInflight) {
+    return await workbuddyModelsInflight
+  }
+
+  workbuddyModelsInflight = (async () => {
+    const live = await queryWorkBuddyLiveModelsViaAcp()
+    if (live && live.models.length > 0) {
+      workbuddyModelsCache = { fetchedAt: Date.now(), data: live }
+      saveDiskWorkBuddyModelsCache(live)
+      return live
+    }
+    const disk = loadDiskWorkBuddyModelsCache()
+    if (disk?.data) {
+      workbuddyModelsCache = { fetchedAt: Date.now(), data: disk.data }
+      return disk.data
+    }
+    return readWorkBuddyProductFallbackCatalog(binPath) || normalizeWorkBuddyCatalog([], '')
+  })()
+
+  try {
+    return await workbuddyModelsInflight
+  }
+  finally {
+    workbuddyModelsInflight = null
+  }
+}
+
+async function detectWorkBuddy(forceRefresh = false) {
   const info = findWorkBuddyBinaryInfo()
   if (!info.bin) {
     return {
@@ -920,12 +1235,14 @@ async function detectWorkBuddy() {
       path: null,
       version: null,
       models: ['default', ...WORKBUDDY_DEFAULT_MODELS],
+      modelLabels: { ...WORKBUDDY_DEFAULT_MODEL_LABELS },
       installHint: '请先安装腾讯 WorkBuddy 桌面客户端（/Applications/WorkBuddy.app），安装后即可在本页一键网页登录',
     }
   }
 
   const loggedIn = isWorkBuddyLoggedIn()
   const meta = readWorkBuddyMeta()
+  const catalog = await getWorkBuddyCatalog(loggedIn, info.bin, forceRefresh)
   return {
     id: 'workbuddy',
     name: 'WorkBuddy',
@@ -934,8 +1251,10 @@ async function detectWorkBuddy() {
     accountLabel: loggedIn ? (meta.accountLabel || 'WorkBuddy 账号') : undefined,
     path: info.bin,
     version: info.version || undefined,
-    models: ['default', ...WORKBUDDY_DEFAULT_MODELS],
-    effectiveDefaultModel: 'auto',
+    models: ['default', ...catalog.models],
+    modelLabels: catalog.modelLabels,
+    modelMeta: catalog.modelMeta,
+    effectiveDefaultModel: catalog.effectiveDefaultModel || '自动路由',
     loginHint: loggedIn ? undefined : '点击「一键网页登录」在浏览器扫码或确认即可连接 WorkBuddy 模型',
   }
 }
@@ -943,16 +1262,16 @@ async function detectWorkBuddy() {
 let enginesSnapshotCache = { fetchedAt: 0, data: null }
 let enginesInflightPromise = null
 
+const ENGINES_FRESH_TTL_MS = 30_000
+
 function invalidateEnginesCache() {
-  enginesSnapshotCache = { fetchedAt: 0, data: null }
+  // Keep previous snapshot for instant stale-while-revalidate responses while marking it stale
+  enginesSnapshotCache = { fetchedAt: 0, data: enginesSnapshotCache.data }
 }
 
-export async function detectAllEngines(forceRefresh = false) {
-  if (!forceRefresh && enginesSnapshotCache.data && (Date.now() - enginesSnapshotCache.fetchedAt) < 10000) {
-    return enginesSnapshotCache.data
-  }
+function refreshEnginesSnapshot(forceRefresh = false) {
   if (enginesInflightPromise) {
-    return await enginesInflightPromise
+    return enginesInflightPromise
   }
   enginesInflightPromise = (async () => {
     const [agy, codex, dreamina, grok, workbuddy] = await Promise.all([
@@ -960,18 +1279,28 @@ export async function detectAllEngines(forceRefresh = false) {
       detectCodex(),
       detectDreamina(),
       detectGrok(),
-      detectWorkBuddy(),
+      detectWorkBuddy(forceRefresh),
     ])
     const result = { agy, codex, dreamina, grok, workbuddy }
     enginesSnapshotCache = { fetchedAt: Date.now(), data: result }
     return result
   })()
-  try {
-    return await enginesInflightPromise
-  }
-  finally {
+  enginesInflightPromise.finally(() => {
     enginesInflightPromise = null
+  })
+  return enginesInflightPromise
+}
+
+export async function detectAllEngines(forceRefresh = false) {
+  const age = Date.now() - enginesSnapshotCache.fetchedAt
+  if (!forceRefresh && enginesSnapshotCache.data) {
+    // Stale-while-revalidate: never block the UI for 2-5s waiting on CLI probes
+    if (age >= ENGINES_FRESH_TTL_MS && !enginesInflightPromise) {
+      refreshEnginesSnapshot(false).catch(() => {})
+    }
+    return enginesSnapshotCache.data
   }
+  return await refreshEnginesSnapshot(forceRefresh)
 }
 
 // ==================== Normalization & Mapping Helpers ====================
@@ -1097,23 +1426,37 @@ export function normalizeDreaminaVideoDuration(duration, modelVersion) {
   return Math.min(15, Math.max(4, value))
 }
 
+const VALID_EFFORT_LEVELS = new Set(['minimal', 'low', 'medium', 'high', 'xhigh', 'max'])
+
+function splitModelAndEffort(subRaw) {
+  const clean = String(subRaw || '').trim()
+  const atIdx = clean.lastIndexOf('@')
+  if (atIdx > 0) {
+    const maybeEffort = clean.slice(atIdx + 1).trim().toLowerCase()
+    if (VALID_EFFORT_LEVELS.has(maybeEffort)) {
+      const base = clean.slice(0, atIdx).trim()
+      return {
+        model: (!base || base === 'default') ? undefined : base,
+        effort: maybeEffort,
+      }
+    }
+  }
+  return {
+    model: (!clean || clean === 'default') ? undefined : clean,
+    effort: undefined,
+  }
+}
+
 export function parseLocalModelTarget(modelName) {
   const raw = String(modelName || '').trim()
-  if (/^agy(?:[:/]|$)/i.test(raw)) {
-    const sub = raw.replace(/^agy[:/]?/i, '').trim()
-    return { engine: 'agy', model: (!sub || sub === 'default') ? undefined : sub }
-  }
-  if (/^codex(?:[:/]|$)/i.test(raw)) {
-    const sub = raw.replace(/^codex[:/]?/i, '').trim()
-    return { engine: 'codex', model: (!sub || sub === 'default') ? undefined : sub }
-  }
-  if (/^grok(?:[:/]|$)/i.test(raw)) {
-    const sub = raw.replace(/^grok[:/]?/i, '').trim()
-    return { engine: 'grok', model: (!sub || sub === 'default') ? undefined : sub }
-  }
-  if (/^workbuddy(?:[:/]|$)/i.test(raw)) {
-    const sub = raw.replace(/^workbuddy[:/]?/i, '').trim()
-    return { engine: 'workbuddy', model: (!sub || sub === 'default') ? undefined : sub }
+  const engines = ['agy', 'codex', 'grok', 'workbuddy']
+  for (const eng of engines) {
+    const re = new RegExp(`^${eng}(?:[:/]|$)`, 'i')
+    if (re.test(raw)) {
+      const sub = raw.replace(new RegExp(`^${eng}[:/]?`, 'i'), '').trim()
+      const { model, effort } = splitModelAndEffort(sub)
+      return effort ? { engine: eng, model, effort } : { engine: eng, model }
+    }
   }
   return { engine: 'unknown', model: raw }
 }
@@ -1618,6 +1961,33 @@ export function parseWorkBuddyEventLine(line) {
   return events
 }
 
+export function extractWorkBuddyJsonResult(rawStdout) {
+  const raw = String(rawStdout || '').trim()
+  if (!raw) return null
+  const arrStart = raw.indexOf('[')
+  const arrEnd = raw.lastIndexOf(']')
+  if (arrStart !== -1 && arrEnd > arrStart) {
+    try {
+      const parsed = JSON.parse(raw.slice(arrStart, arrEnd + 1))
+      if (Array.isArray(parsed)) {
+        const resultItem = [...parsed].reverse().find(item => item && typeof item === 'object' && item.type === 'result')
+        if (resultItem) return resultItem
+        const assistantItem = [...parsed].reverse().find(item => item && typeof item === 'object' && item.type === 'message' && item.role === 'assistant')
+        if (assistantItem && Array.isArray(assistantItem.content)) {
+          const text = assistantItem.content
+            .map(b => (typeof b === 'string' ? b : (b?.text || '')))
+            .filter(Boolean)
+            .join('\n')
+            .trim()
+          if (text) return { result: text, text, usage: assistantItem.providerData?.rawUsage }
+        }
+      }
+    }
+    catch {}
+  }
+  return extractJsonFromOutput(raw)
+}
+
 function parseEngineStreamLine(engine, line) {
   if (engine === 'agy') return parseAgyEventLine(line)
   if (engine === 'codex') return parseCodexEventLine(line)
@@ -1676,7 +2046,7 @@ function formatOpenAIMessagesToPrompt(messages, imageCollector) {
 
 async function handleChatCompletions(body, res) {
   const requestedModel = body.model || 'agy:default'
-  const { engine, model } = parseLocalModelTarget(requestedModel)
+  const { engine, model, effort } = parseLocalModelTarget(requestedModel)
   const stream = Boolean(body.stream)
 
   if (!['agy', 'codex', 'grok', 'workbuddy'].includes(engine)) {
@@ -1759,7 +2129,9 @@ async function handleChatCompletions(body, res) {
         '--disable', 'unified_exec',
         '--json',
         '--output-last-message', outLastFile,
-        ...(codexSpec?.effortArg ? ['-c', `model_reasoning_effort="${codexSpec.effortArg}"`] : []),
+        ...(effort && ['low', 'medium', 'high', 'xhigh'].includes(effort)
+          ? ['-c', `model_reasoning_effort="${effort}"`]
+          : codexSpec?.effortArg ? ['-c', `model_reasoning_effort="${codexSpec.effortArg}"`] : []),
         ...(codexSpec?.modelArg ? ['--model', codexSpec.modelArg] : []),
         ...(schemaFile ? ['--output-schema', schemaFile] : []),
         ...downloadedImages.flatMap(file => ['--image', file]),
@@ -1787,6 +2159,7 @@ async function handleChatCompletions(body, res) {
         ...(!schemaObj ? ['--include-partial-messages'] : []),
         '--tools', '',
         ...(model && model !== 'auto' ? ['--model', model] : []),
+        ...(effort ? ['--effort', effort] : []),
         ...(schemaObj ? ['--json-schema', JSON.stringify(schemaObj)] : []),
       ]
     }
@@ -1892,7 +2265,9 @@ async function handleChatCompletions(body, res) {
         streamError = 'WorkBuddy 尚未登录，请在「模型接入」页面点击 WorkBuddy「一键网页登录」完成授权。'
       }
       else {
-        const parsedJson = extractJsonFromOutput(rawStdout)
+        const parsedJson = engine === 'workbuddy'
+          ? extractWorkBuddyJsonResult(rawStdout)
+          : extractJsonFromOutput(rawStdout)
         if (parsedJson && typeof parsedJson === 'object') {
           if (parsedJson.usage) usage = normalizeUsage(parsedJson.usage) || usage
           const structured = parsedJson.structuredOutput ?? parsedJson.structured_output
@@ -3240,6 +3615,7 @@ async function handleGrokAuthStart(res) {
       if (activeAuthStates.get('grok') === state && state.status === 'pending') {
         if (code === 0) {
           state.status = 'authorized'
+          invalidateWorkBuddyModelsCache()
           invalidateEnginesCache()
         }
         else {
@@ -3470,6 +3846,7 @@ async function handleWorkBuddyAuthStart(body, res) {
             saveWorkBuddyMeta({ accountLabel: String(nick), loggedInAt: new Date().toISOString() })
           }
           state.status = 'authorized'
+          invalidateWorkBuddyModelsCache()
           invalidateEnginesCache()
           finishEarly({ verificationUri: state.verificationUri, authorized: true })
           setTimeout(() => {
@@ -3511,6 +3888,7 @@ async function handleWorkBuddyAuthStart(body, res) {
       if (activeAuthStates.get('workbuddy') === state && state.status === 'pending') {
         if (isWorkBuddyLoggedIn()) {
           state.status = 'authorized'
+          invalidateWorkBuddyModelsCache()
           invalidateEnginesCache()
         }
         else {
@@ -3604,11 +3982,12 @@ async function handleWorkBuddyAuthLogout(res) {
     }
   }
   catch {}
+  invalidateWorkBuddyModelsCache()
   invalidateEnginesCache()
-  const engine = await detectWorkBuddy()
+  const engine = await detectWorkBuddy(true)
   sendJson(res, 200, {
     ok: true,
-    detail: '已退出 Foldframe 的 WorkBuddy 登录态（不影响桌面端），可重新点击「一键网页登录」。',
+    detail: '已退出 PostPilot 的 WorkBuddy 登录态（不影响桌面端），可重新点击「一键网页登录」。',
     engine,
   })
 }
@@ -3812,8 +4191,8 @@ async function handleConnectionTest(body, res) {
         sendJson(res, 200, { ok: false, latencyMs: Date.now() - startedAt, detail: 'WorkBuddy 登录态已过期，请重新点击「一键网页登录」授权' })
         return
       }
-      const wbJson = extractJsonFromOutput(run.stdout)
-      const reply = String(wbJson?.result ?? wbJson?.text ?? run.stdout ?? '').trim()
+      const wbJson = extractWorkBuddyJsonResult(run.stdout)
+      const reply = String(wbJson?.result ?? wbJson?.text ?? '').trim()
       const ok = run.code === 0 && Boolean(reply) && !wbJson?.is_error
       sendJson(res, 200, {
         ok,
@@ -4071,8 +4450,15 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const server = createBridgeServer()
   server.listen(PORT, HOST, () => {
     console.log(`[local-bridge] listening on http://${HOST}:${PORT}`)
+    // Pre-warm engine snapshot immediately on startup so first visit to /models is instant (<50ms)
+    refreshEnginesSnapshot(true).catch(() => {})
   })
+  const bgRefreshTimer = setInterval(() => {
+    refreshEnginesSnapshot(false).catch(() => {})
+  }, 60_000)
+  bgRefreshTimer.unref?.()
   const shutdown = () => {
+    clearInterval(bgRefreshTimer)
     for (const child of activeRuns.values()) {
       try { child.kill('SIGTERM') } catch {}
     }

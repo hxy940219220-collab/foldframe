@@ -62,7 +62,7 @@ export function buildAiBatchGenerateBarInitialState({
     imageCount: config.imageCount,
     imageSize: config.imageSize,
     quantity: config.quantity,
-    isDraftMode: forceDraftMode ? true : (config.isDraftMode ?? true),
+    isDraftMode: forceDraftMode,
     captionSystemPrompt: config.captionSystemPrompt ?? '',
     captionSystemPromptDefault: config.captionSystemPromptDefault ?? '',
     selectedPlatforms,

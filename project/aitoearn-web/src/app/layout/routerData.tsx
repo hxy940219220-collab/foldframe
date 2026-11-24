@@ -5,13 +5,13 @@
 
 import {
   BookOpen,
-  Bot,
+  CalendarClock,
   ChartColumnIncreasing,
   Cpu,
   History,
-  Home,
+  Images,
+  Palette,
   Sparkles,
-  Upload,
 } from 'lucide-react'
 
 export interface IRouterDataItem {
@@ -29,16 +29,16 @@ export interface IRouterDataItem {
 
 export const routerData: IRouterDataItem[] = [
   {
-    name: 'Content Management',
-    translationKey: 'header.draftBox',
-    path: '/',
-    icon: <Home size={20} />,
-  },
-  {
-    name: 'AI Publish',
+    name: 'Plan & Compose',
     translationKey: 'aiSocial',
     path: '/ai-social',
     icon: <Sparkles size={20} />,
+  },
+  {
+    name: 'Visual Studio',
+    translationKey: 'header.draftBox',
+    path: '/',
+    icon: <Palette size={20} />,
   },
   {
     name: 'Task History',
@@ -47,16 +47,16 @@ export const routerData: IRouterDataItem[] = [
     icon: <History size={20} />,
   },
   {
-    name: 'Publish',
+    name: 'Schedule',
     translationKey: 'accounts',
     path: '/accounts',
-    icon: <Upload size={20} />,
+    icon: <CalendarClock size={20} />,
   },
   {
-    name: 'Agent Assets',
+    name: 'Asset Library',
     translationKey: 'header.agentAssets',
     path: '/agent-assets',
-    icon: <Bot size={20} />,
+    icon: <Images size={20} />,
   },
   {
     name: 'Models',

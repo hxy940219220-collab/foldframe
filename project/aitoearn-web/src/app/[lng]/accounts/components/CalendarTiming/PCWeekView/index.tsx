@@ -143,20 +143,27 @@ const TimeCell = memo<ITimeCellProps>(
             drop(node)
           }
         }}
+        data-testid={`calendar-week-cell-${date.format('YYYY-MM-DD')}-${hour}`}
+        onClick={() => {
+          if (!isPast && !loading) {
+            handleAddClick()
+          }
+        }}
+        title={!isPast ? '点击该时间格直接排期发布' : undefined}
         className={cn(
           'group relative flex-1 min-w-0 overflow-visible border-r border-b last:border-r-0 p-2',
           'transition-colors',
           isPast && 'bg-muted/30',
           isOver && !isPast && 'bg-accent/50',
           isToday && !isPast && 'bg-primary/5',
-          !isPast && 'hover:bg-muted/10',
+          !isPast && 'cursor-pointer hover:bg-primary/[0.04]',
         )}
       >
         {loading ? (
           <Skeleton className="h-8 w-full rounded-md" />
         ) : (
           <>
-            {/* 添加按钮 - 右上角，悬停显示 */}
+            {/* 添加提示徽章 - 右上角，悬停显示 */}
             {!isPast && (
               <Button
                 variant="ghost"
@@ -167,7 +174,10 @@ const TimeCell = memo<ITimeCellProps>(
                   'opacity-0 group-hover:opacity-100',
                   'cursor-pointer transition-opacity',
                 )}
-                onClick={handleAddClick}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleAddClick()
+                }}
               >
                 <Plus className="h-3.5 w-3.5" />
               </Button>
@@ -175,7 +185,10 @@ const TimeCell = memo<ITimeCellProps>(
             {/* 任务列表 */}
             <div className="space-y-1.5">
               {displayRecords.map(record => (
-                <div key={record.id + record.title + record.uid + record.updatedAt}>
+                <div
+                  key={record.id + record.title + record.uid + record.updatedAt}
+                  onClick={e => e.stopPropagation()}
+                >
                   <CustomDragLayer publishRecord={record} snapToGrid={false} />
                   <CalendarRecord publishRecord={record} />
                 </div>
@@ -187,7 +200,10 @@ const TimeCell = memo<ITimeCellProps>(
                   data-testid="calendar-week-cell-show-more"
                   variant="ghost"
                   className="w-full h-auto py-2 px-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors justify-start cursor-pointer"
-                  onClick={() => setIsMore(!isMore)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setIsMore(!isMore)
+                  }}
                 >
                   {isMore ? (
                     <>
@@ -333,7 +349,7 @@ const PCWeekView = memo<IPCWeekViewProps>(({ currentDate, recordMap, loading, on
               const isToday = dateStr === todayStr
               const festivals = filterCalendarFestivalEvents(getChinaCalendarEvents(date.toDate(), lng), {
                 showSolarFestivals,
-                showSolarTerms,
+                showSolarTerms: false,
               })
               const lunar = getChinaCalendarLunarInfo(date.toDate(), lng)
               const legalFestival = festivals.find(item => item.type === 'holiday' || item.type === 'workday')

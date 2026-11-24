@@ -1,4 +1,4 @@
-import type { AuthRequestOptions, CodeLoginResponse, EmailCodeLoginParams, GoogleLoginParams, LoginResponse, PhoneCodeLoginParams, SendEmailCodeParams, SendPhoneCodeParams, UpdateUserInfoParams } from './auth.types'
+import type { AuthRequestOptions, CodeLoginResponse, EmailCodeLoginParams, GoogleLoginParams, LoginResponse, PhoneCodeLoginParams, SendEmailCodeParams, SendPhoneCodeParams, UpdatePasswordParams, UpdateUserInfoParams } from './auth.types'
 import type { UserInfo } from '@/store/user'
 import type { RequestOptions } from '@/utils/request'
 import http from '@/utils/request'
@@ -38,6 +38,14 @@ export function getUserInfoApi(options?: RequestOptions & AuthRequestOptions) {
  */
 export function updateUserInfoApi(data: UpdateUserInfoParams) {
   return http.put<UserInfo>('user/info/update', data)
+}
+
+/**
+ * Update User Password
+ * Set or change login password for authenticated user.
+ */
+export function updatePasswordApi(data: UpdatePasswordParams) {
+  return http.put<{ hasPassword: boolean, updatedAt: string }>('user/password/update', data)
 }
 
 /**

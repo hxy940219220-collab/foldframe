@@ -285,36 +285,40 @@ export function AiSocialPageContent() {
       onDragOver={publishMode === 'chat' ? handleDragOver : undefined}
       onDrop={publishMode === 'chat' ? handleDrop : undefined}
     >
-      {/* 顶部模式切换栏：AI 对话发布 | 排版工坊 */}
-      <div className="sticky top-0 z-20 border-b border-border/70 bg-background/90 backdrop-blur-md">
+      {/* 顶部模式切换栏：AI 策划台 | 排版工坊 */}
+      <div className="sticky top-0 z-20 border-b border-border/70 bg-card/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-4 py-2.5 md:px-6">
-          <div className="inline-flex items-center rounded-xl border border-border/80 bg-muted/50 p-1">
-            <button
-              type="button"
-              onClick={() => handleSelectPublishMode('chat')}
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all cursor-pointer',
-                publishMode === 'chat'
-                  ? 'bg-card text-foreground shadow-xs font-semibold'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              AI 对话发布
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSelectPublishMode('publisher')}
-              className={cn(
-                'inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all cursor-pointer',
-                publishMode === 'publisher'
-                  ? 'bg-card text-foreground shadow-xs font-semibold'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              <Smartphone className="h-3.5 w-3.5 text-primary" />
-              排版工坊
-            </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center rounded-xl border border-border/80 bg-muted/50 p-1">
+              <button
+                type="button"
+                data-testid="tab-ai-planner"
+                onClick={() => handleSelectPublishMode('chat')}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all cursor-pointer',
+                  publishMode === 'chat'
+                    ? 'bg-card text-foreground shadow-xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                AI 策划台
+              </button>
+              <button
+                type="button"
+                data-testid="tab-compose-studio"
+                onClick={() => handleSelectPublishMode('publisher')}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all cursor-pointer',
+                  publishMode === 'publisher'
+                    ? 'bg-card text-foreground shadow-xs font-semibold'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                <Smartphone className="h-3.5 w-3.5 text-primary" />
+                排版工坊
+              </button>
+            </div>
           </div>
 
           {publishMode === 'publisher' && materialGroups.length > 1 && (
@@ -342,7 +346,7 @@ export function AiSocialPageContent() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-24 text-sm text-muted-foreground">
-              暂无可用素材分组，请先前往「内容创作」创建素材
+              暂无可用素材分组，请先前往「视觉创作」生成视觉素材
             </div>
           )}
         </section>
@@ -359,7 +363,7 @@ export function AiSocialPageContent() {
           )}
 
           {/* 首屏 Chat 区域 */}
-          <section className="min-h-[58vh] flex items-center justify-center px-4 pt-10 pb-8 md:pt-14 md:pb-12">
+          <section className="min-h-[38vh] flex items-center justify-center px-4 pt-12 pb-8 md:pt-16 md:pb-10">
             <HomeChat
               ref={homeChatRef}
               externalPrompt={appliedPrompt}

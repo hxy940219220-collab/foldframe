@@ -6,13 +6,8 @@
 
 import type { IDisplayMessage, IWorkflowStep } from '@/store/agent'
 import { ArrowDown } from 'lucide-react'
-import { useState } from 'react'
-import { useTransClient } from '@/app/i18n/client'
 import { ChatMessage } from '@/components/Chat/ChatMessage'
-import { RatingModal } from '@/components/Chat/Rating'
 import { Button } from '@/components/ui/button'
-import { StarRating } from '@/components/ui/star-rating'
-import { toast } from '@/utils/ui/toast'
 
 export interface IChatMessageListProps {
   /** 消息列表 */
@@ -35,10 +30,6 @@ export interface IChatMessageListProps {
   scrollToBottomText: string
   /** 任务 ID */
   taskId?: string
-  /** 任务评分（null 表示未评价） */
-  rating?: number | null
-  /** 评分保存成功回调 */
-  onRatingSaved?: () => void
 }
 
 export function ChatMessageList({
@@ -51,40 +42,12 @@ export function ChatMessageList({
   onScroll,
   onScrollToBottom,
   scrollToBottomText,
-  taskId,
-  rating,
-  onRatingSaved,
 }: IChatMessageListProps) {
-  const { t } = useTransClient('chat')
-  const [ratingOpen, setRatingOpen] = useState(false)
-  const [selectedRating, setSelectedRating] = useState<number | null>(null)
-
   // 过滤出用户和 AI 消息
   const filteredMessages = messages.filter(
     (message): message is IDisplayMessage & { role: 'user' | 'assistant' } =>
       message.role === 'user' || message.role === 'assistant',
   )
-
-  // 判断是否显示评分 UI
-  const hasUserMessage = filteredMessages.some(m => m.role === 'user')
-  const hasAssistantMessage = filteredMessages.some(m => m.role === 'assistant')
-  const isNotRated = rating === null || rating === undefined
-  const showRatingUI
-    = hasUserMessage && hasAssistantMessage && isNotRated && !isGenerating && taskId
-
-  // 处理星星点击
-  const handleStarClick = (value: number) => {
-    setSelectedRating(value)
-    setRatingOpen(true)
-  }
-
-  // 处理评分保存成功
-  const handleRatingSaved = () => {
-    setRatingOpen(false)
-    setSelectedRating(null)
-    toast.success(t('rating.submitSuccess'))
-    onRatingSaved?.()
-  }
 
   return (
     <div className="flex-1 relative overflow-hidden">
@@ -125,14 +88,6 @@ export function ChatMessageList({
             />
           )}
 
-          {/* 评分引导 UI */}
-          {showRatingUI && (
-            <div className="flex flex-col items-start gap-3 py-6">
-              <p className="text-sm text-muted-foreground">{t('rating.feedbackPrompt')}</p>
-              <StarRating onChange={handleStarClick} size="md" />
-            </div>
-          )}
-
           {/* 底部占位元素 */}
           <div ref={bottomRef} />
         </div>
@@ -151,17 +106,6 @@ export function ChatMessageList({
             <span className="text-sm">{scrollToBottomText}</span>
           </Button>
         </div>
-      )}
-
-      {/* 评分弹窗 */}
-      {taskId && (
-        <RatingModal
-          taskId={taskId}
-          open={ratingOpen}
-          defaultRating={selectedRating}
-          onClose={() => setRatingOpen(false)}
-          onSaved={handleRatingSaved}
-        />
       )}
     </div>
   )

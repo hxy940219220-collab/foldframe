@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "PostPilot 社媒发布助手",
+  "version": "1.0.0",
+  "description": "PostPilot 官方本地浏览器扩展：在本地浏览器中安全连接小红书、抖音、微信视频号等创作者后台，配合 PostPilot 工作台同步账号与辅助发布。",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "PostPilot 社媒发布助手",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://localhost:*/*",
+    "http://127.0.0.1:*/*",
+    "https://*.xiaohongshu.com/*",
+    "https://creator.douyin.com/*",
+    "https://channels.weixin.qq.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:*/*",
+        "http://127.0.0.1:*/*"
+      ],
+      "js": [
+        "content-bridge.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "page-bridge.js"
+      ],
+      "matches": [
+        "http://localhost:*/*",
+        "http://127.0.0.1:*/*"
+      ]
+    }
+  ]
+}

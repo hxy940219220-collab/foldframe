@@ -17,10 +17,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { useSystemStore } from '@/store/system'
 import { cn } from '@/utils/className'
 import { MediaUpload } from '../MediaUpload'
-import { AgentTestingNoticeDialog } from './AgentTestingNoticeDialog'
 
 export interface IChatInputProps {
   /** 输入内容 */
@@ -57,6 +55,10 @@ export interface IChatInputProps {
   className?: string
   /** 是否允许空输入发送（用于首页使用 placeholder 作为默认值的场景） */
   allowEmptySubmit?: boolean
+  /** 底部操作栏左侧扩展插槽（如模型选择器、上下文圆环） */
+  leftToolbarExtra?: React.ReactNode
+  /** 底部操作栏右侧扩展插槽（发送按钮左侧） */
+  rightToolbarExtra?: React.ReactNode
 }
 
 /**
@@ -80,13 +82,12 @@ export function ChatInput({
   mode = 'large',
   className,
   allowEmptySubmit = false,
+  leftToolbarExtra,
+  rightToolbarExtra,
 }: IChatInputProps) {
   const { t } = useTransClient('chat')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isFocused, setIsFocused] = useState(false)
-  const [noticeOpen, setNoticeOpen] = useState(false)
-  const disableAgentTestingNotice = useSystemStore(state => state.disableAgentTestingNotice)
-  const setDisableAgentTestingNotice = useSystemStore(state => state.setDisableAgentTestingNotice)
 
   /** 当前字符数 */
   const currentLength = value.length
@@ -163,23 +164,8 @@ export function ChatInput({
     }
   }
 
-  /** 请求发送：提交前展示 Agent 测试阶段提示 */
+  /** 请求发送：直接提交，不再弹出测试阶段提示 */
   const handleSendRequest = () => {
-    if (disableAgentTestingNotice) {
-      onSend()
-      return
-    }
-
-    setNoticeOpen(true)
-  }
-
-  /** 确认提示后继续发送 */
-  const handleNoticeConfirm = (doNotShowAgain: boolean) => {
-    if (doNotShowAgain) {
-      setDisableAgentTestingNotice(true)
-    }
-
-    setNoticeOpen(false)
     onSend()
   }
 
@@ -274,6 +260,8 @@ export function ChatInput({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            {/* 左侧扩展工具（文本模型选择器 + 上下文占比圆环等） */}
+            {leftToolbarExtra}
             {/* 字数限制提示：只在超出时显示并标红 */}
             {isOverLimit && (
               <div className="text-xs text-destructive">
@@ -284,35 +272,34 @@ export function ChatInput({
             )}
           </div>
 
-          {/* 右侧：发送/停止按钮 */}
-          <button
-            onClick={handleButtonClick}
-            disabled={!isGenerating && !canSend}
-            className={cn(
-              'shrink-0 flex items-center justify-center rounded-full transition-all',
-              mode === 'large' ? 'w-10 h-10' : 'w-8 h-8',
-              // 生成中或无法发送时都显示灰色
-              !isGenerating && !canSend
-                ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                : 'bg-gradient-back text-gradient-foreground shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25 active:scale-95',
-            )}
-          >
-            {isGenerating ? (
-              <Square className={cn(mode === 'large' ? 'w-4 h-4' : 'w-3 h-3')} fill="currentColor" />
-            ) : isUploading ? (
-              <Loader2 className={cn('animate-spin', mode === 'large' ? 'w-5 h-5' : 'w-4 h-4')} />
-            ) : (
-              <ArrowUp className={cn(mode === 'large' ? 'w-5 h-5' : 'w-4 h-4')} />
-            )}
-          </button>
+          {/* 右侧：可选扩展 + 发送/停止按钮 */}
+          <div className="flex items-center gap-2 shrink-0">
+            {rightToolbarExtra}
+            <button
+              type="button"
+              data-testid="chat-input-send"
+              onClick={handleButtonClick}
+              disabled={!isGenerating && !canSend}
+              className={cn(
+                'shrink-0 flex items-center justify-center rounded-full transition-all cursor-pointer',
+                mode === 'large' ? 'w-10 h-10' : 'w-8 h-8',
+                // 生成中或无法发送时都显示灰色
+                !isGenerating && !canSend
+                  ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                  : 'bg-gradient-back text-gradient-foreground shadow-sm shadow-primary/20 hover:shadow-md hover:shadow-primary/25 active:scale-95',
+              )}
+            >
+              {isGenerating ? (
+                <Square className={cn(mode === 'large' ? 'w-4 h-4' : 'w-3 h-3')} fill="currentColor" />
+              ) : isUploading ? (
+                <Loader2 className={cn('animate-spin', mode === 'large' ? 'w-5 h-5' : 'w-4 h-4')} />
+              ) : (
+                <ArrowUp className={cn(mode === 'large' ? 'w-5 h-5' : 'w-4 h-4')} />
+              )}
+            </button>
+          </div>
         </div>
       </div>
-
-      <AgentTestingNoticeDialog
-        open={noticeOpen}
-        onOpenChange={setNoticeOpen}
-        onConfirm={handleNoticeConfirm}
-      />
     </>
   )
 }

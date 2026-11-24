@@ -1,42 +1,23 @@
 /**
- * AgentFeatures - AI Agent 功能亮点轮播展示（用于首页）
- * 使用 Swiper 实现自动轮播效果，支持无缝滚动
+ * AgentFeatures - PostPilot 精简交互式核心创作能力轮播（6 大核心模块）
  */
 'use client'
 
 import type { FC } from 'react'
 import type { Swiper as SwiperType } from 'swiper'
 import {
-  Activity,
-  BarChart3,
-  Calendar,
+  CalendarCheck,
   ChevronLeft,
   ChevronRight,
-  Download,
-  FileText,
-  Frame,
-  Hash,
-  Image as ImageIcon,
-  Languages,
-  Layers,
-  Lightbulb,
-  ListTodo,
-  MessageSquare,
-  MonitorSmartphone,
-  PanelTop,
-  ScanEye,
-  Scissors,
-  Search,
-  Send,
-  Timer,
-  Users,
-  Video,
+  Cpu,
+  ImagePlus,
+  SlidersHorizontal,
+  Smartphone,
   Workflow,
 } from 'lucide-react'
 import { useCallback, useRef } from 'react'
 import { Autoplay, Pagination } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/react'
-import { useTransClient } from '@/app/i18n/client'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/className'
 
@@ -48,217 +29,126 @@ interface AgentFeaturesProps {
   className?: string
 }
 
-// 图标映射 - 每个功能使用不同的图标
-const iconMap = {
-  inspiration: Lightbulb, // 创意灵感 - 灯泡
-  oneClickScript: FileText, // 一键生成脚本 - 文档
-  multiTemplates: Layers, // 多风格模板 - 图层
-  imageGenerate: ImageIcon, // 图片生成 - 图片
-  videoGenerate: Video, // 视频生成 - 视频
-  highlight: Scissors, // 高光剪辑 - 剪刀
-  storyboard: PanelTop, // 分镜设计 - 面板
-  coverSuggestion: Frame, // 封面建议 - 相框
-  download: Download, // 素材下载 - 下载
-  videoTranslation: Languages, // 视频翻译 - 语言
-  platformAdapt: MonitorSmartphone, // 平台适配 - 多设备
-  topicTag: Hash, // 话题标签 - 标签
-  seo: Search, // SEO优化 - 搜索
-  schedule: Calendar, // 定时发布 - 日历
-  multiPlatform: Send, // 多平台分发 - 发送
-  smartTime: Timer, // 智能发布时间 - 计时器
-  sse: Activity, // 流式任务 - 活动/脉冲
-  taskManagement: ListTodo, // 任务管理 - 待办列表
-  workflow: Workflow, // 可扩展工作流 - 工作流
-  videoUnderstanding: ScanEye, // 视频理解 - 扫描眼睛
-  report: BarChart3, // 运营报告 - 柱状图
-  commentAssistant: MessageSquare, // 评论助手 - 消息
-  audienceInsight: Users, // 用户画像 - 用户组
-} as const
+const CORE_CAPABILITIES = [
+  {
+    key: 'commercial-gen',
+    title: '商业生图与短视频',
+    desc: '直连即梦 5.0 与 Seedance 视频模型，一句话产出商业大片与高转化宣传短片。',
+    icon: ImagePlus,
+    tint: 'bg-indigo-500/10 text-indigo-600',
+  },
+  {
+    key: 'infinite-canvas',
+    title: '无限画布与创作副驾',
+    desc: '节点自由拖拽连线，@ 引用画布图/视频给副驾 Agent，快速延展多版创意。',
+    icon: Workflow,
+    tint: 'bg-violet-500/10 text-violet-600',
+  },
+  {
+    key: 'six-dim-remix',
+    title: '六维精准改图',
+    desc: '锁定人物与产品主体，独立微调镜头、光影、场景、画风、穿搭与表情，支持自定义输入。',
+    icon: SlidersHorizontal,
+    tint: 'bg-sky-500/10 text-sky-600',
+  },
+  {
+    key: 'phone-layout',
+    title: '仿真手机排版工坊',
+    desc: '图文与视频彻底分流，小红书/抖音/Instagram 实机比例裁切与 AI 文案实时预览。',
+    icon: Smartphone,
+    tint: 'bg-emerald-500/10 text-emerald-600',
+  },
+  {
+    key: 'multi-platform',
+    title: '13+ 平台发布待办',
+    desc: '一键存入发布待办日历，支持国内外主流社媒多账号排期与状态追踪。',
+    icon: CalendarCheck,
+    tint: 'bg-amber-500/10 text-amber-600',
+  },
+  {
+    key: 'local-models',
+    title: '多模型直连与第三方 API',
+    desc: '打通 Antigravity、Codex、Grok、WorkBuddy 及自定义 API，按需切换思考强度。',
+    icon: Cpu,
+    tint: 'bg-rose-500/10 text-rose-600',
+  },
+] as const
 
-// 所有功能项
-const allFeatures = [
-  'inspiration',
-  'oneClickScript',
-  'multiTemplates',
-  'imageGenerate',
-  'videoGenerate',
-  'highlight',
-  'storyboard',
-  'coverSuggestion',
-  'download',
-  'videoTranslation',
-  'platformAdapt',
-  'topicTag',
-  'seo',
-  'schedule',
-  'multiPlatform',
-  'smartTime',
-  'sse',
-  'taskManagement',
-  'workflow',
-  'videoUnderstanding',
-  'report',
-  'commentAssistant',
-  'audienceInsight',
-]
-
-/**
- * 功能卡片组件 - icon 和 title 同行布局
- */
-interface FeatureCardProps {
-  itemKey: string
-  t: (key: string) => string
-}
-
-const FeatureCard: FC<FeatureCardProps> = ({ itemKey, t }) => {
-  const Icon = iconMap[itemKey as keyof typeof iconMap]
-  const title = t(`agentFeatures.items.${itemKey}.title`)
-  const desc = t(`agentFeatures.items.${itemKey}.desc`)
-
-  return (
-    <div className="h-full rounded-xl border border-border bg-card p-4 transition-colors duration-200 hover:border-primary/30">
-      {/* icon + title 同行 */}
-      <div className="flex items-center gap-3 mb-2">
-        {/* 带渐变动画的图标容器 */}
-        <div
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted animate-pulse"
-          style={{ animationDuration: '3s' }}
-        >
-          <Icon className="h-[18px] w-[18px] text-muted-foreground" />
-        </div>
-        <h4 className="text-sm font-medium text-foreground line-clamp-1">{title}</h4>
-      </div>
-
-      {/* 描述 */}
-      <p className="text-xs leading-relaxed text-muted-foreground line-clamp-2">{desc}</p>
-    </div>
-  )
-}
-
-/**
- * AgentFeatures 主组件
- */
 const AgentFeatures: FC<AgentFeaturesProps> = ({ className }) => {
-  const { t } = useTransClient('promptGallery')
   const swiperRef = useRef<SwiperType | null>(null)
 
-  // 处理 Swiper 实例
   const onSwiper = useCallback((swiper: SwiperType) => {
     swiperRef.current = swiper
   }, [])
 
-  // 导航按钮点击
-  const handlePrev = useCallback(() => {
-    swiperRef.current?.slidePrev()
-  }, [])
-
-  const handleNext = useCallback(() => {
-    swiperRef.current?.slideNext()
-  }, [])
-
   return (
-    <section className={cn('py-10 px-4 md:px-6 lg:px-8', className)}>
-      <div className="w-full max-w-5xl mx-auto">
-        {/* 标题区域 */}
-        <div className="mb-8 text-center sm:mb-8">
-          <h2 className="mb-2 text-2xl font-bold text-foreground sm:text-3xl">
-            {t('agentFeatures.title')}
-          </h2>
-          <p className="text-sm text-muted-foreground sm:text-base">
-            {t('agentFeatures.subtitle')}
-          </p>
-        </div>
-        <div className="flex flex-col gap-3 mb-8 md:flex-row md:items-end md:justify-between">
-          <div />
-          {/* 桌面端导航按钮 */}
-          <div className="hidden md:flex items- center gap-2">
+    <section className={cn('py-8 px-4 md:px-6 lg:px-8', className)}>
+      <div className="mx-auto w-full max-w-5xl">
+        <div className="mb-6 flex flex-col items-center justify-between gap-3 sm:flex-row">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+              核心创作与发布能力
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+              从视觉生成到多平台分发的 6 个核心工作流模块
+            </p>
+          </div>
+          <div className="hidden items-center gap-1.5 sm:flex">
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
-              className="h-8 w-8 rounded-full cursor-pointer"
-              onClick={handlePrev}
+              className="h-8 w-8 rounded-full"
+              onClick={() => swiperRef.current?.slidePrev()}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
-              className="h-8 w-8 rounded-full cursor-pointer"
-              onClick={handleNext}
+              className="h-8 w-8 rounded-full"
+              onClick={() => swiperRef.current?.slideNext()}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        {/* Swiper 轮播 - 移动端分页器在两侧 */}
-        <div className="flex items-center gap-2">
-          {/* 移动端左箭头 */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden h-8 w-8 shrink-0 rounded-full cursor-pointer"
-            onClick={handlePrev}
+        <div className="agent-features-swiper">
+          <Swiper
+            modules={[Autoplay, Pagination]}
+            onSwiper={onSwiper}
+            spaceBetween={14}
+            slidesPerView={1}
+            loop
+            autoplay={{
+              delay: 3600,
+              disableOnInteraction: false,
+              pauseOnMouseEnter: true,
+            }}
+            pagination={{ clickable: true }}
+            breakpoints={{
+              0: { slidesPerView: 1, spaceBetween: 12 },
+              640: { slidesPerView: 2, spaceBetween: 14 },
+              1024: { slidesPerView: 3, spaceBetween: 16 },
+            }}
           >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-
-          {/* Swiper 内容 */}
-          <div className="flex-1 min-w-0 agent-features-swiper">
-            <Swiper
-              modules={[Autoplay, Pagination]}
-              onSwiper={onSwiper}
-              spaceBetween={12}
-              slidesPerView={1}
-              loop
-              autoplay={{
-                delay: 3000,
-                disableOnInteraction: false,
-                pauseOnMouseEnter: true,
-              }}
-              pagination={{
-                clickable: true,
-              }}
-              breakpoints={{
-                // 移动端：1 个卡片
-                0: {
-                  slidesPerView: 1,
-                  spaceBetween: 12,
-                },
-                // 小屏幕：2 个卡片
-                480: {
-                  slidesPerView: 2,
-                  spaceBetween: 12,
-                },
-                // 平板：3 个卡片
-                768: {
-                  slidesPerView: 3,
-                  spaceBetween: 16,
-                },
-                // 桌面：4 个卡片
-                1024: {
-                  slidesPerView: 4,
-                  spaceBetween: 16,
-                },
-              }}
-            >
-              {allFeatures.map(itemKey => (
-                <SwiperSlide key={itemKey} className="h-auto!">
-                  <FeatureCard itemKey={itemKey} t={t} />
+            {CORE_CAPABILITIES.map((item) => {
+              const Icon = item.icon
+              return (
+                <SwiperSlide key={item.key} className="h-auto!">
+                  <div className="group h-full rounded-2xl border border-border/80 bg-card/92 p-4 shadow-[0_4px_18px_-10px_rgba(67,56,202,0.14)] transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/35">
+                    <div className="mb-2.5 flex items-center gap-3">
+                      <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105', item.tint)}>
+                        <Icon className="h-[18px] w-[18px]" />
+                      </div>
+                      <h4 className="text-sm font-semibold text-foreground">{item.title}</h4>
+                    </div>
+                    <p className="text-xs leading-5 text-muted-foreground">{item.desc}</p>
+                  </div>
                 </SwiperSlide>
-              ))}
-            </Swiper>
-          </div>
-
-          {/* 移动端右箭头 */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden h-8 w-8 shrink-0 rounded-full cursor-pointer"
-            onClick={handleNext}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+              )
+            })}
+          </Swiper>
         </div>
       </div>
     </section>

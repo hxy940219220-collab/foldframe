@@ -6,13 +6,19 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { agentApi } from '@/api/ai/ai.api'
 import { useTransClient } from '@/app/i18n/client'
 import { ChatInput } from '@/components/Chat/ChatInput'
+import {
+  ContextUsageRing,
+  estimateConversationContextTokens,
+} from '@/components/Chat/ContextUsageRing'
 import EditTitleModal from '@/components/common/EditTitleModal'
+import { TextModelPicker } from '@/components/draft-box/components/TextModelPicker'
 import { PublishDetailModal } from '@/components/Plugin/PublishDetailModal'
 import { useDocumentTitle, useMediaUpload } from '@/hooks'
+import { usePlannerTextModels } from '@/hooks/usePlannerTextModels'
 import { useAgentStore } from '@/store/agent'
 import { usePluginStore } from '@/store/plugin'
 import { toast } from '@/utils/ui/toast'
@@ -43,12 +49,22 @@ export default function ChatDetailPage() {
     isGenerating,
     progress,
     isActiveTask,
+    contextUsage,
     setLocalIsGenerating,
     updateTaskTitle,
   } = useChatState({
     taskId,
     t: t as (key: string) => string,
   })
+
+  // 文本模型选择器与当前上下文窗口
+  const {
+    models: textModelOptions,
+    groups: textModelGroups,
+    selectedModel,
+    setSelectedModel,
+    contextWindowTokens,
+  } = usePlannerTextModels()
 
   // 中断状态 - 用于强制隐藏工作流步骤
   const [isInterrupted, setIsInterrupted] = useState(false)
@@ -151,10 +167,15 @@ export default function ChatDetailPage() {
     const startTask = async () => {
       setIsInterrupted(false)
       setLocalIsGenerating(true)
+      const chosenModel = pendingTask.model || selectedModel
+      if (pendingTask.model) {
+        setSelectedModel(pendingTask.model)
+      }
       try {
         await createTask({
           prompt: pendingTask.prompt,
           medias: pendingTask.medias,
+          model: chosenModel,
           t: t as (key: string) => string,
           onTaskIdReady: (newTaskId) => {
             // 使用 replace 替换 URL，不添加历史记录
@@ -166,12 +187,12 @@ export default function ChatDetailPage() {
         console.error('[ChatPage] Create task failed:', error)
         toast.error(error.message || t('message.error'))
         // 出错时返回首页
-        router.replace(`/${lng}`)
+        router.replace(`/${lng}/ai-social`)
       }
     }
 
     startTask()
-  }, [taskId, lng, router, consumePendingTask, createTask, t, setLocalIsGenerating])
+  }, [taskId, lng, router, consumePendingTask, createTask, t, setLocalIsGenerating, selectedModel, setSelectedModel])
 
   /**
    * 首次加载完成后，强制滚动到底部
@@ -216,6 +237,7 @@ export default function ChatDetailPage() {
       await continueTask({
         prompt: currentPrompt,
         medias: currentMedias,
+        model: selectedModel,
         t: t as (key: string) => string,
         taskId,
       })
@@ -235,6 +257,7 @@ export default function ChatDetailPage() {
     medias,
     isGenerating,
     taskId,
+    selectedModel,
     t,
     continueTask,
     clearMedias,
@@ -242,6 +265,16 @@ export default function ChatDetailPage() {
     scrollToBottom,
     setLocalIsGenerating,
   ])
+
+  const usedContextTokens = useMemo(
+    () => estimateConversationContextTokens({
+      serverUsage: contextUsage,
+      messages: displayMessages,
+      draftText: inputValue,
+      draftMediaCount: medias.length,
+    }),
+    [contextUsage, displayMessages, inputValue, medias.length],
+  )
 
   /**
    * 停止生成
@@ -340,7 +373,7 @@ export default function ChatDetailPage() {
         progress={progress}
         thinkingText={t('message.thinking')}
         taskId={taskId}
-        rating={task?.rating ?? null}
+        messages={displayMessages}
         isFavorited={isFavorited}
         onFavoriteToggle={handleFavoriteToggle}
         onEditTitle={() => setEditTitleOpen(true)}
@@ -359,8 +392,6 @@ export default function ChatDetailPage() {
         onScrollToBottom={() => scrollToBottom(true)}
         scrollToBottomText={t('detail.scrollToBottom')}
         taskId={taskId}
-        rating={localRating !== undefined ? localRating : (task?.rating ?? null)}
-        onRatingSaved={() => setLocalRating(1)}
       />
 
       {/* 底部输入区域 - 限宽居中 */}
@@ -379,6 +410,27 @@ export default function ChatDetailPage() {
             isUploading={isUploading}
             placeholder={t('detail.continuePlaceholder')}
             mode="compact"
+            rightToolbarExtra={(
+              <div className="flex items-center gap-1.5">
+                <ContextUsageRing
+                  usedTokens={usedContextTokens}
+                  totalTokens={contextWindowTokens}
+                  testId="chat-context-ring"
+                />
+                <TextModelPicker
+                  value={selectedModel}
+                  models={textModelOptions}
+                  groups={textModelGroups}
+                  onChange={setSelectedModel}
+                  variant="pill"
+                  minimalTrigger
+                  autoCloseOnMouseLeave
+                  side="top"
+                  align="end"
+                  testId="chat-text-model"
+                />
+              </div>
+            )}
           />
         </div>
       </div>

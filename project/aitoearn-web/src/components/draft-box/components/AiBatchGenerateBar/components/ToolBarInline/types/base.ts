@@ -1,4 +1,4 @@
-import type { DraftTextModelOption } from '@/api/ai/ai.api'
+import type { DraftTextModelGroup, DraftTextModelOption } from '@/api/ai/ai.api'
 import type { AiBatchGenerateBarLocalState } from '../../../store'
 import type { EffectiveLimitsDetailed } from '../../../utils/platformLimits'
 import type { DraftContentType, ImageModelPricing, VideoModelInfo, VideoModelType } from '@/api/ai/ai.types'
@@ -29,6 +29,7 @@ export interface ToolBarInlineProps {
   configKey: string
   fallbackState: AiBatchGenerateBarLocalState
   textModelOptions?: DraftTextModelOption[]
+  textModelGroups?: DraftTextModelGroup[]
   selectedTextModel?: string
   imageAspectRatios: string[]
   imageModelOptions: ImageModelOption[]
@@ -43,6 +44,7 @@ export interface ToolBarInlineProps {
   inputVideoDuration: number | null
   isLoading: boolean
   hideNonDraftModes?: boolean
+  hideDraftModes?: boolean
   effectiveLimitsDetailed: EffectiveLimitsDetailed
   disabledPlatforms: Map<PlatType, string[]>
   actions: ToolBarInlineActions

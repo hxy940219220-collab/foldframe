@@ -106,13 +106,25 @@ const CalendarTimingItem = memo(
       const festivals = useMemo(() => {
         return filterCalendarFestivalEvents(getChinaCalendarEvents(arg.date, lng), {
           showSolarFestivals,
-          showSolarTerms,
+          showSolarTerms: false,
         })
-      }, [arg.date, lng, showSolarFestivals, showSolarTerms])
+      }, [arg.date, lng, showSolarFestivals])
       const lunar = useMemo(() => getChinaCalendarLunarInfo(arg.date, lng), [arg.date, lng])
       const legalFestival = festivals.find(item => item.type === 'holiday' || item.type === 'workday')
       const hasFestival = festivals.length > 0
       const isToday = argDate.getTime() === nowDate.getTime()
+
+      const handleCellPublishClick = () => {
+        if (argDate < nowDate || loading) return
+        const days = dayjs(arg.date)
+        const nowDay = dayjs()
+        if (nowDay.isSame(days, 'day')) {
+          onClickPub(nowDay.add(10, 'minute').format())
+        }
+        else {
+          onClickPub(days.hour(10).minute(0).second(0).format())
+        }
+      }
 
       // 进入视图时将"今天"尽量居中显示（仅在日历容器内滚动）
       useEffect(() => {
@@ -144,11 +156,15 @@ const CalendarTimingItem = memo(
             }
             cellRef.current = node
           }}
+          data-testid={`calendar-month-cell-${dateStr}`}
+          onClick={handleCellPublishClick}
+          title={argDate >= nowDate ? '点击该日期格直接排期发布' : undefined}
           className={cn(
             'calendarTimingItem--js',
             'relative box-border p-1.5 md:p-2.5 flex flex-col font-semibold overflow-hidden',
             'min-h-[120px] md:min-h-[200px] h-full group',
             'transition-colors',
+            argDate >= nowDate && 'cursor-pointer hover:bg-primary/[0.03]',
             isToday && 'ring-1 ring-inset ring-primary/15',
             isToday && !hasFestival && 'bg-gradient-to-br from-primary/5 via-background to-brand-cyan/5',
             argDate < nowDate && !hasFestival && 'bg-muted/30',
@@ -158,7 +174,7 @@ const CalendarTimingItem = memo(
         >
           {/* 顶部：日期和添加按钮 */}
           <div className="relative z-10 mb-2.5 flex items-start justify-between gap-1 group/top">
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5" onClick={e => e.stopPropagation()}>
               <CalendarFestivalSummary
                 festivals={festivals}
                 date={arg.date}
@@ -207,16 +223,9 @@ const CalendarTimingItem = memo(
                   'h-5 w-5 md:h-6 md:w-6 p-0 cursor-pointer',
                   'md:opacity-0 md:group-hover:opacity-100 transition-opacity',
                 )}
-                onClick={() => {
-                  const days = dayjs(arg.date)
-                  const today = dayjs()
-
-                  if (today.date() === days.date()) {
-                    onClickPub(today.add(10, 'minute').format())
-                  }
-                  else {
-                    onClickPub(days.format())
-                  }
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleCellPublishClick()
                 }}
               >
                 <Plus className="h-3 w-3 md:h-3.5 md:w-3.5" />
@@ -262,7 +271,11 @@ const CalendarTimingItem = memo(
               {/* 发布记录 */}
               {recordsLast.map((v) => {
                 return (
-                  <div data-testid="calendar-cell-record" key={v.id + v.title + v.uid + v.updatedAt}>
+                  <div
+                    data-testid="calendar-cell-record"
+                    key={v.id + v.title + v.uid + v.updatedAt}
+                    onClick={e => e.stopPropagation()}
+                  >
                     {/* 移动端不显示拖拽层 */}
                     {!isMobile && <CustomDragLayer publishRecord={v} snapToGrid={false} />}
                     <CalendarRecord publishRecord={v} />
@@ -276,7 +289,8 @@ const CalendarTimingItem = memo(
                   data-testid="calendar-cell-show-more"
                   variant="ghost"
                   className="w-full h-auto py-1.5 md:py-2 px-2 md:px-3 text-xs md:text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors justify-start cursor-pointer"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation()
                     setIsMore(!isMore)
                   }}
                 >

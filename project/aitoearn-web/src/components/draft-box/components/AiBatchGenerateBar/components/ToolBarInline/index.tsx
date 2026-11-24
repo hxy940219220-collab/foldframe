@@ -6,12 +6,11 @@
 'use client'
 
 import type { ToolBarInlineProps } from './types'
-import { Bot, Check, ChevronDown, Settings2 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { ChevronDown, Settings2 } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { cn } from '@/utils/className'
 import { memo } from 'react'
 import { useTransClient } from '@/app/i18n/client'
+import { TextModelPicker } from '../../../TextModelPicker'
 import { useAiBatchGenerateBarLocalState } from '../../store'
 import PlatformSelector from '../PlatformSelector'
 import { AspectRatioSelect } from './components/AspectRatioSelect'
@@ -29,7 +28,7 @@ import { useClickPopover } from './hooks/useClickPopover'
 import { useToolBarActions } from './hooks/useToolBarActions'
 import { useToolBarDerivedData } from './hooks/useToolBarDerivedData'
 import { useToolBarDraftValues } from './hooks/useToolBarDraftValues'
-import { modelOptionClassName, modelPillClass, modelTagClassName, pillClass } from './utils/styles'
+import { modelPillClass, pillClass } from './utils/styles'
 
 const ToolBarInline = memo(
   ({
@@ -37,6 +36,7 @@ const ToolBarInline = memo(
     configKey,
     fallbackState,
     textModelOptions = [],
+    textModelGroups = [],
     selectedTextModel = 'agy:default',
     imageAspectRatios,
     imageModelOptions,
@@ -51,6 +51,7 @@ const ToolBarInline = memo(
     inputVideoDuration,
     isLoading,
     hideNonDraftModes = false,
+    hideDraftModes = false,
     effectiveLimitsDetailed,
     disabledPlatforms,
     actions,
@@ -169,6 +170,7 @@ const ToolBarInline = memo(
         <GenerationModeSelect
           contentType={contentType}
           hideNonDraftModes={hideNonDraftModes}
+          hideDraftModes={hideDraftModes}
           isDraftMode={isDraftMode}
           isVideoMode={isVideoMode}
           labels={{
@@ -194,60 +196,18 @@ const ToolBarInline = memo(
         )}
 
         {isDraftMode ? (
-          <Popover open={modelPopover.open} onOpenChange={modelPopover.onOpenChange}>
-            <PopoverTrigger asChild>
-              <button
-                data-testid="draftbox-ai-text-model"
-                type="button"
-                className={cn(modelPillClass, 'max-w-[240px]')}
-              >
-                <Bot className="h-3.5 w-3.5 shrink-0 text-primary" />
-                <span className="truncate">
-                  {textModelOptions.find(m => m.value === selectedTextModel)?.label || selectedTextModel || 'Antigravity CLI (默认)'}
-                </span>
-                <ChevronDown className="h-3 w-3 opacity-60 shrink-0" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[min(92vw,340px)] p-0" side="top" align="start" allowInnerScroll>
-              <div className="flex items-center justify-between border-b border-border px-3 py-2">
-                <span className="text-xs font-medium text-foreground">文本大语言模型 (LLM)</span>
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">纯文案/脚本草稿</span>
-              </div>
-              <div className="max-h-[min(50vh,320px)] overflow-y-auto p-2">
-                <div className="flex flex-col gap-1">
-                  {(textModelOptions.length > 0
-                    ? textModelOptions
-                    : [{ value: 'agy:default', label: 'Antigravity CLI (默认)', provider: 'agy', tag: '本机 LLM' }]
-                  ).map((opt) => {
-                    const isActive = opt.value === selectedTextModel
-                    return (
-                      <button
-                        key={opt.value}
-                        type="button"
-                        className={cn(
-                          modelOptionClassName,
-                          'items-center text-xs',
-                          isActive
-                            ? 'border-primary/30 bg-primary/5 text-foreground shadow-sm'
-                            : 'border-transparent text-foreground hover:border-border/70 hover:bg-muted/60',
-                        )}
-                        onClick={() => {
-                          onTextModelChange?.(opt.value)
-                          modelPopover.onOpenChange(false)
-                        }}
-                      >
-                        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-                          <span className="truncate">{opt.label}</span>
-                          {opt.tag && <Badge className={modelTagClassName}>{opt.tag}</Badge>}
-                        </div>
-                        {isActive && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+          <TextModelPicker
+            value={selectedTextModel}
+            models={textModelOptions}
+            groups={textModelGroups}
+            open={modelPopover.open}
+            onOpenChange={modelPopover.onOpenChange}
+            onChange={val => onTextModelChange?.(val)}
+            triggerClassName={modelPillClass}
+            side="bottom"
+            align="start"
+            testId="draftbox-ai-text-model"
+          />
         ) : (
           <ModelSelect
             currentModelDisplay={currentModelDisplay}

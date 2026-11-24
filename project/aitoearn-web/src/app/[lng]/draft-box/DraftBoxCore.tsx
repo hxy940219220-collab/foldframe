@@ -12,7 +12,6 @@ import { useShallow } from 'zustand/react/shallow'
 import { useTransClient } from '@/app/i18n/client'
 import CreatePlanModal from '@/components/draft-box/components/CreatePlanModal'
 import DraftContentModule from '@/components/draft-box/components/DraftContentModule'
-import PlanTabBar from '@/components/draft-box/components/PlanTabBar'
 import { Button } from '@/components/ui/button'
 import { useBrandPromotionStore } from '@/store/draft-box/brandPromotionStore'
 import { usePlanDetailStore } from '@/store/draft-box/planDetailStore'
@@ -192,18 +191,14 @@ export default function DraftBoxCore() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Tab 栏 */}
-      <div data-testid="draftbox-plan-tabs">
-        <PlanTabBar onPlanChange={handlePlanChange} />
-      </div>
       <div className="flex-1 min-h-0">
         <div className="flex flex-col h-full bg-background">
           <div id="draft-box-scroll-content" className="flex-1 overflow-auto">
-            <DraftContentModule />
+            <DraftContentModule showPlanSwitcher onPlanChange={handlePlanChange} />
           </div>
         </div>
       </div>
-      {/* 创建/编辑草稿箱弹窗 */}
+      {/* 创建/编辑创作空间弹窗 */}
       <CreatePlanModal />
     </div>
   )

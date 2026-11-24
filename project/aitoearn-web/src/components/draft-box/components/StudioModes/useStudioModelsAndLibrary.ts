@@ -1,6 +1,6 @@
 'use client'
 
-import type { DraftTextModelOption } from '@/api/ai/ai.api'
+import type { DraftTextModelGroup, DraftTextModelOption } from '@/api/ai/ai.api'
 import type { DraftGenerationTask, ImageModelInfo, VideoModelInfo } from '@/api/ai/ai.types'
 import type { MediaItem, PromotionMaterial } from '@/api/materials/material.types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -16,6 +16,7 @@ export interface StudioCatalogState {
   imageModels: ImageModelInfo[]
   videoModels: VideoModelInfo[]
   textModels: DraftTextModelOption[]
+  textModelGroups: DraftTextModelGroup[]
   defaultTextModel: string
   loading: boolean
 }
@@ -25,6 +26,7 @@ export function useStudioModelsAndLibrary(groupId: string) {
     imageModels: [],
     videoModels: [],
     textModels: [],
+    textModelGroups: [],
     defaultTextModel: 'agy:default',
     loading: true,
   })
@@ -77,6 +79,7 @@ export function useStudioModelsAndLibrary(groupId: string) {
             { value: 'agy:default', label: 'Antigravity CLI (默认)', provider: 'agy', tag: '本机 LLM' },
             { value: 'codex:default', label: 'Codex CLI (默认)', provider: 'codex', tag: '本机 LLM' },
           ],
+          textModelGroups: textRes?.data?.groups ?? [],
           defaultTextModel: textRes?.data?.defaultModel || 'agy:default',
         }))
       })

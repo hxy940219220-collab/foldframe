@@ -7,6 +7,7 @@ import { modePillClass } from '../../utils/styles'
 export function GenerationModeSelect({
   contentType,
   hideNonDraftModes,
+  hideDraftModes = false,
   isDraftMode,
   isVideoMode,
   labels,
@@ -37,7 +38,7 @@ export function GenerationModeSelect({
       </PopoverTrigger>
       <PopoverContent className="w-auto p-2" side="top" align="start">
         <div className="flex flex-col gap-1">
-          {[
+          {!hideDraftModes && [
             {
               key: 'draft_image',
               label: `${labels.draftModeOn}(${labels.contentTypeImageText})`,
@@ -78,7 +79,7 @@ export function GenerationModeSelect({
           })}
           {!hideNonDraftModes && (
             <>
-              <div className="border-t border-border my-1" />
+              {!hideDraftModes && <div className="border-t border-border my-1" />}
               {[
                 {
                   key: 'image',

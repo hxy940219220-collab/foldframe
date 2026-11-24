@@ -13,6 +13,7 @@ export interface LocalEngineInfo {
   version?: string | null
   credits?: number | string | null
   models?: string[]
+  modelLabels?: Record<string, string>
   imageModels?: string[]
   videoModels?: string[]
   baseUrl?: string

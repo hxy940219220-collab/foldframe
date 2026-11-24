@@ -10,7 +10,6 @@ import React, { useCallback, useState } from 'react'
 import { agentApi } from '@/api/ai/ai.api'
 import { useTransClient } from '@/app/i18n/client'
 import { TaskCard, TaskCardSkeleton } from '@/components/Chat'
-import RatingModal from '@/components/Chat/Rating'
 import ShareModal from '@/components/Chat/Share/ShareModal'
 import { cn } from '@/utils/className'
 import { toast } from '@/utils/ui/toast'
@@ -35,7 +34,6 @@ export function TaskHistoryList({
   linkBasePath = '/chat',
 }: ITaskHistoryListProps) {
   const { t } = useTransClient('chat')
-  const [ratingModalFor, setRatingModalFor] = useState<string | null>(null)
   const [shareTaskId, setShareTaskId] = useState<string | null>(null)
   // 本地任务状态（用于乐观更新），初始值使用 props.tasks 避免首次渲染时空页面闪烁
   const [localTasks, setLocalTasks] = useState<TaskListItem[]>(tasks)
@@ -44,10 +42,6 @@ export function TaskHistoryList({
   React.useEffect(() => {
     setLocalTasks(tasks)
   }, [tasks])
-
-  const handleRateClick = (taskId: string) => {
-    setRatingModalFor(taskId)
-  }
 
   /** 处理删除任务 */
   const handleDelete = async (id: string) => {
@@ -69,20 +63,7 @@ export function TaskHistoryList({
     }
   }
 
-  /** 处理评分更新 */
-  const handleRatingUpdate = async (
-    taskId: string,
-    data: { rating?: number | null, comment?: string | null },
-  ) => {
-    // 这里可以更新本地状态，或者让父组件处理
-    // 由于父组件有自己的状态管理，我们通过 onRefresh 来更新
-    if (onRefresh) {
-      await onRefresh()
-    }
-    toast.success(t('rating.saveSuccess' as any) || 'Saved')
-  }
-
-  /** 处理收藏切换 - 乐观更新 */
+  /** 处理点赞切换 - 乐观更新 */
   const handleFavoriteToggle = useCallback(
     async (taskId: string, shouldFavorite: boolean) => {
       // 乐观更新：先改本地 tasks 状态
@@ -139,10 +120,8 @@ export function TaskHistoryList({
                 status={task.status}
                 createdAt={task.createdAt}
                 updatedAt={task.updatedAt}
-                rating={task.rating}
                 isFavorited={!!task.favoritedAt}
                 onDelete={() => handleDelete(String(task.id))}
-                onRateClick={() => handleRateClick(task.id)}
                 onShare={() => setShareTaskId(String(task.id))}
                 onFavoriteToggle={handleFavoriteToggle}
               />
@@ -161,17 +140,6 @@ export function TaskHistoryList({
             return <React.Fragment key={task.id}>{card}</React.Fragment>
           })}
 
-      <RatingModal
-        taskId={ratingModalFor ?? ''}
-        open={!!ratingModalFor}
-        onClose={() => setRatingModalFor(null)}
-        onSaved={(data) => {
-          if (ratingModalFor) {
-            handleRatingUpdate(ratingModalFor, data)
-          }
-          setRatingModalFor(null)
-        }}
-      />
       {/* ShareModal centralized here to avoid overlay click propagation issues */}
       <ShareModal
         taskId={shareTaskId ?? ''}

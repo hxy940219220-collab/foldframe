@@ -1,32 +1,37 @@
 {
+  "helpDocs": {
+    "title": "PostPilot 帮助文档",
+    "description": "了解 PostPilot AI 视觉创作与社媒发布工作台的完整功能指南、本机多模型引擎接入步骤与最佳实践。",
+    "keywords": "PostPilot, 帮助文档, AI内容创作, 无限画布, 多维改图, 仿真手机排版, 多平台发布, 本机大模型"
+  },
   "privacyPolicy": {
     "title": "隐私政策",
-    "description": "查阅服务提供方关于个人数据收集、使用和存储的政策。",
-    "keywords": "隐私政策, 数据保护, 个人信息, GDPR合规, 数据安全, 用户隐私"
+    "description": "了解 PostPilot 在本地优先架构下如何处理您的创作素材、账号授权凭证与模型调用数据。",
+    "keywords": "PostPilot, 隐私政策, 数据保护, 本地优先, 凭证隔离, 数据安全"
   },
   "termsOfService": {
     "title": "服务条款",
-    "description": "查阅服务提供方的账户、内容使用和支付条款。",
-    "keywords": "服务条款, 用户协议, 平台规则, 内容规范, 付款条款"
+    "description": "查阅 PostPilot 工作台的使用规范、AI 生成内容权属说明以及第三方模型与社媒平台合规指引。",
+    "keywords": "PostPilot, 服务条款, 用户协议, AI内容规范, 平台规则"
   },
   "dataDeletion": {
     "title": "账户与数据删除",
-    "description": "查阅服务提供方的账户注销和个人数据删除流程。",
-    "keywords": "数据删除, 账号注销, 隐私权利, 数据擦除, 删除账号, 被遗忘权"
+    "description": "了解如何在本地彻底清除 PostPilot 素材缓存、发布草稿与本机模型登录态。",
+    "keywords": "PostPilot, 数据删除, 本地清理, 退出登录, 数据自主权"
   },
   "dataProtection": {
-    "title": "数据保护协议",
-    "description": "查阅服务提供方关于数据处理、安全措施和用户权利的协议。",
-    "keywords": "数据保护协议, GDPR合规, 数据处理, 数据安全, 隐私权利, 数据控制者"
+    "title": "数据保护说明",
+    "description": "了解 PostPilot 的本地桥接隔离机制、访问令牌保护与存储安全措施。",
+    "keywords": "PostPilot, 数据保护, 本地安全, 令牌隔离"
   },
   "extensionPrivacy": {
-    "title": "浏览器扩展隐私",
-    "description": "查阅浏览器扩展提供方的权限说明和数据使用政策。",
-    "keywords": "扩展隐私, 浏览器扩展, Chrome扩展, 数据权限, 扩展数据收集"
+    "title": "浏览器扩展隐私说明",
+    "description": "了解 PostPilot 浏览器扩展所需的最小化权限与本地会话同步机制。",
+    "keywords": "PostPilot, 浏览器扩展, 隐私权限, 账号同步"
   },
   "providerDocument": {
-    "heading": "服务提供方文档",
-    "current": "在服务提供方网站阅读",
-    "bundled": "查看此版本附带的原文（英文）"
+    "heading": "PostPilot 文档中心",
+    "current": "返回帮助文档",
+    "bundled": "返回工作台"
   }
 }

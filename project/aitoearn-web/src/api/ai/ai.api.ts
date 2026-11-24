@@ -528,15 +528,47 @@ export function apiGetDraftMediaMeta(params: { mediaId?: string, url?: string })
   )
 }
 
+export type DraftTextModelGroupId = 'agy' | 'codex' | 'grok' | 'workbuddy' | 'thirdParty'
+export type DraftTextModelEffortLevel = 'low' | 'medium' | 'high' | 'xhigh'
+
+export interface DraftTextModelEffortOption {
+  level: DraftTextModelEffortLevel
+  label: string
+  value: string
+}
+
+export interface DraftTextModelGroup {
+  id: DraftTextModelGroupId
+  label: string
+  subtitle: string
+  kind: 'local' | 'api'
+  ready: boolean
+  modelCount: number
+}
+
 export interface DraftTextModelOption {
   value: string
   label: string
+  shortLabel?: string
   provider: string
+  groupId?: DraftTextModelGroupId
+  groupLabel?: string
   tag?: string
+  tierBadge?: string
+  description?: string
+  costRate?: string
+  costShort?: string
+  contextWindow?: string
+  supportsImages?: boolean
+  supportsReasoning?: boolean
+  effortOptions?: DraftTextModelEffortOption[]
+  defaultEffort?: DraftTextModelEffortLevel
+  configured?: boolean
 }
 
 export interface DraftTextModelsResponse {
   defaultModel: string
+  groups?: DraftTextModelGroup[]
   models: DraftTextModelOption[]
 }
 

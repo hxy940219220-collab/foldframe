@@ -12,6 +12,7 @@
 
 import type { CalendarViewType } from '@/store/system'
 import dayjs from 'dayjs'
+import isoWeek from 'dayjs/plugin/isoWeek'
 import { CalendarDays, ChevronLeft, ChevronRight, Grid3X3 } from 'lucide-react'
 import { memo, useMemo } from 'react'
 import { useShallow } from 'zustand/react/shallow'
@@ -28,6 +29,8 @@ import 'dayjs/locale/fr'
 import 'dayjs/locale/ja'
 import 'dayjs/locale/ko'
 
+dayjs.extend(isoWeek)
+
 export interface ICalendarToolbarProps {
   currentDate: Date
   viewType: CalendarViewType
@@ -43,92 +46,74 @@ const CalendarToolbar = memo<ICalendarToolbarProps>(
     const lng = useGetClientLng()
     const {
       showSolarFestivals,
-      showSolarTerms,
       setShowSolarFestivals,
-      setShowSolarTerms,
     } = useSystemStore(
       useShallow(state => ({
         showSolarFestivals: state.calendarShowSolarFestivals,
-        showSolarTerms: state.calendarShowSolarTerms,
         setShowSolarFestivals: state.setCalendarShowSolarFestivals,
-        setShowSolarTerms: state.setCalendarShowSolarTerms,
       })),
     )
 
-    // 根据语言设置 dayjs locale 并格式化日期
+    // 根据语言设置 dayjs locale 并格式化日期（周视图清晰标出第几周与起止日期）
     const formattedDate = useMemo(() => {
       const locale = getDayjsLocale(lng)
       dayjs.locale(locale)
 
       if (viewType === 'month') {
-        return dayjs(currentDate).format('MMMM YYYY')
+        return lng === 'zh-CN'
+          ? dayjs(currentDate).format('YYYY年M月')
+          : dayjs(currentDate).format('MMMM YYYY')
       }
 
-      // 周视图：显示周范围
+      // 周视图：显示第几周 + 周范围
       const start = dayjs(currentDate).startOf('week')
       const end = start.add(6, 'day')
+      const weekNum = start.isoWeek()
 
       // 根据语言选择格式
       switch (lng) {
         case 'zh-CN':
-        case 'ja':
-          // 中文/日语: "1月12日 - 18日, 2026"
+        case 'ja': {
+          // 中文/日语: "2026年第48周 · 11月23日 - 29日"
           if (start.month() === end.month()) {
-            return `${start.format('M月D日')} - ${end.format('D日')}, ${end.format('YYYY')}`
+            return `${end.format('YYYY')}年第${weekNum}周 · ${start.format('M月D日')} - ${end.format('D日')}`
           }
           else if (start.year() === end.year()) {
-            return `${start.format('M月D日')} - ${end.format('M月D日')}, ${end.format('YYYY')}`
+            return `${end.format('YYYY')}年第${weekNum}周 · ${start.format('M月D日')} - ${end.format('M月D日')}`
           }
           else {
-            return `${start.format('YYYY年M月D日')} - ${end.format('YYYY年M月D日')}`
+            return `${start.format('YYYY')}年第${weekNum}周 · ${start.format('M月D日')} - ${end.format('YYYY年M月D日')}`
           }
+        }
 
         case 'ko':
-          // 韩语: "1월 12일 - 18일, 2026"
           if (start.month() === end.month()) {
-            return `${start.format('M월 D일')} - ${end.format('D일')}, ${end.format('YYYY')}`
+            return `${end.format('YYYY')}년 ${weekNum}주차 · ${start.format('M월 D일')} - ${end.format('D일')}`
           }
-          else if (start.year() === end.year()) {
-            return `${start.format('M월 D일')} - ${end.format('M월 D일')}, ${end.format('YYYY')}`
-          }
-          else {
-            return `${start.format('YYYY년 M월 D일')} - ${end.format('YYYY년 M월 D일')}`
-          }
+          return `${end.format('YYYY')}년 ${weekNum}주차 · ${start.format('M월 D일')} - ${end.format('M월 D일')}`
 
         case 'de':
-          // 德语: "12. - 18. Jan 2026"
           if (start.month() === end.month()) {
-            return `${start.format('D.')} - ${end.format('D. MMM YYYY')}`
+            return `KW ${weekNum} · ${start.format('D.')} - ${end.format('D. MMM YYYY')}`
           }
-          else if (start.year() === end.year()) {
-            return `${start.format('D. MMM')} - ${end.format('D. MMM YYYY')}`
-          }
-          else {
-            return `${start.format('D. MMM YYYY')} - ${end.format('D. MMM YYYY')}`
-          }
+          return `KW ${weekNum} · ${start.format('D. MMM')} - ${end.format('D. MMM YYYY')}`
 
         case 'fr':
-          // 法语: "12 - 18 janv. 2026"
           if (start.month() === end.month()) {
-            return `${start.format('D')} - ${end.format('D MMM YYYY')}`
+            return `S${weekNum} · ${start.format('D')} - ${end.format('D MMM YYYY')}`
           }
-          else if (start.year() === end.year()) {
-            return `${start.format('D MMM')} - ${end.format('D MMM YYYY')}`
-          }
-          else {
-            return `${start.format('D MMM YYYY')} - ${end.format('D MMM YYYY')}`
-          }
+          return `S${weekNum} · ${start.format('D MMM')} - ${end.format('D MMM YYYY')}`
 
         default:
-          // 英语等: "Jan 12 - 18, 2026"
+          // 英语等: "Week 48 · Nov 23 - 29, 2026"
           if (start.month() === end.month()) {
-            return `${start.format('MMM D')} - ${end.format('D, YYYY')}`
+            return `Week ${weekNum} · ${start.format('MMM D')} - ${end.format('D, YYYY')}`
           }
           else if (start.year() === end.year()) {
-            return `${start.format('MMM D')} - ${end.format('MMM D, YYYY')}`
+            return `Week ${weekNum} · ${start.format('MMM D')} - ${end.format('MMM D, YYYY')}`
           }
           else {
-            return `${start.format('MMM D, YYYY')} - ${end.format('MMM D, YYYY')}`
+            return `Week ${weekNum} · ${start.format('MMM D, YYYY')} - ${end.format('MMM D, YYYY')}`
           }
       }
     }, [currentDate, lng, viewType])
@@ -162,43 +147,22 @@ const CalendarToolbar = memo<ICalendarToolbarProps>(
 
         {/* 右侧：视图切换和今天按钮 */}
         <div className="flex items-center gap-2">
-          <div
-            className="hidden items-center gap-0.5 rounded-md border border-border bg-muted/40 p-0.5 md:flex"
-            aria-label={`${t('calendar.filters.solarFestivals')} / ${t('calendar.filters.solarTerms')}`}
+          <Button
+            data-testid="calendar-toggle-solar-festival"
+            type="button"
+            variant="outline"
+            size="sm"
+            className={cn(
+              'hidden md:inline-flex h-7 md:h-8 rounded-md px-2.5 text-xs font-medium cursor-pointer',
+              showSolarFestivals
+                ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/15'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+            aria-pressed={showSolarFestivals}
+            onClick={() => setShowSolarFestivals(!showSolarFestivals)}
           >
-            <Button
-              data-testid="calendar-toggle-solar-festival"
-              type="button"
-              variant="ghost"
-              size="sm"
-              className={cn(
-                'h-7 rounded-md px-2.5 text-xs font-medium cursor-pointer shadow-none',
-                showSolarFestivals
-                  ? 'bg-background text-foreground shadow-sm hover:bg-background'
-                  : 'text-muted-foreground hover:bg-background/60 hover:text-foreground',
-              )}
-              aria-pressed={showSolarFestivals}
-              onClick={() => setShowSolarFestivals(!showSolarFestivals)}
-            >
-              {t('calendar.filters.solarFestivals')}
-            </Button>
-            <Button
-              data-testid="calendar-toggle-solar-term"
-              type="button"
-              variant="ghost"
-              size="sm"
-              className={cn(
-                'h-7 rounded-md px-2.5 text-xs font-medium cursor-pointer shadow-none',
-                showSolarTerms
-                  ? 'bg-background text-foreground shadow-sm hover:bg-background'
-                  : 'text-muted-foreground hover:bg-background/60 hover:text-foreground',
-              )}
-              aria-pressed={showSolarTerms}
-              onClick={() => setShowSolarTerms(!showSolarTerms)}
-            >
-              {t('calendar.filters.solarTerms')}
-            </Button>
-          </div>
+            {t('calendar.filters.solarFestivals')}
+          </Button>
 
           {/* 视图切换按钮 */}
           <div className="flex items-center border rounded-md">

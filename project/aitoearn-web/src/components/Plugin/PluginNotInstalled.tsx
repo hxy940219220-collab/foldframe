@@ -1,11 +1,11 @@
 /**
- * PluginNotInstalled - 插件未安装状态组件
- * 显示下载引导和安装说明，移动端显示桌面端专用提示
+ * PluginNotInstalled - PostPilot 浏览器扩展安装引导组件
+ * 提供真实可下载的 PostPilot 原生 Manifest V3 扩展包（.zip）与 3 步加载说明
  */
 
 'use client'
 
-import { BookOpen, Chrome, CloudDownload, Github, Monitor, Puzzle } from 'lucide-react'
+import { BookOpen, Download, Monitor, Puzzle, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 import { useChannelManagerStore } from '@/components/ChannelManager'
@@ -14,52 +14,27 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { usePluginStore } from '@/store/plugin'
 import { PLUGIN_DOWNLOAD_LINKS } from '@/store/plugin/constants'
 
-/**
- * 移动端提示组件 - 提示用户前往 PC 端使用插件
- */
 function MobilePluginTip() {
   const { t } = useTranslation('plugin')
 
   return (
     <div className="flex flex-col items-center py-6 px-4">
-      {/* 图标 */}
       <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
         <Monitor className="h-8 w-8 text-primary" />
       </div>
-
-      {/* 标题 */}
       <h3 className="mb-2 text-base font-semibold text-foreground">{t('mobile.title')}</h3>
-
-      {/* 描述 */}
       <p className="mb-6 max-w-sm text-center text-sm text-muted-foreground">
         {t('mobile.description')}
       </p>
-
-      {/* 前往 PC 端提示 */}
       <div className="mb-6 flex w-full items-center justify-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
         <Monitor className="h-4 w-4 shrink-0 text-primary" />
         <span className="text-sm font-medium text-primary">{t('mobile.goToPC')}</span>
-      </div>
-
-      {/* 插件介绍卡片 */}
-      <div className="w-full rounded-lg border border-border bg-muted/30 p-5">
-        <div className="mb-2 flex items-center gap-2">
-          <Puzzle className="h-5 w-5 text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">{t('header.downloadPlugin')}</span>
-        </div>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {t('mobile.introduction')}
-        </p>
       </div>
     </div>
   )
 }
 
-/**
- * 插件未安装状态组件
- */
 export function PluginNotInstalled() {
-  const { t } = useTranslation('plugin')
   const isMobile = useIsMobile()
   const closePluginModal = usePluginStore(state => state.closePluginModal)
   const closeChannelManager = useChannelManagerStore(state => state.closeModal)
@@ -74,52 +49,47 @@ export function PluginNotInstalled() {
   }
 
   return (
-    <div className="flex flex-col items-center py-8 px-4">
-      {/* 图标 */}
-      <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-        <Puzzle className="h-10 w-10 text-primary" />
+    <div className="flex flex-col items-center py-6 px-4">
+      {/* PostPilot 扩展徽标 */}
+      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-back text-white shadow-[0_10px_24px_-8px_rgba(67,56,202,0.5)]">
+        <Puzzle className="h-8 w-8" />
       </div>
 
-      {/* 标题 */}
-      <h3 className="mb-2 text-lg font-semibold text-foreground">{t('header.downloadPlugin')}</h3>
-
-      {/* 描述 */}
-      <p className="mb-8 max-w-sm text-center text-sm text-muted-foreground">
-        {t('header.downloadDescription')}
+      <h3 className="mb-1.5 text-lg font-semibold text-foreground">安装 PostPilot 浏览器扩展</h3>
+      <p className="mb-6 max-w-sm text-center text-xs leading-6 text-muted-foreground">
+        PostPilot 原生本地扩展（Manifest V3），用于在本地浏览器安全桥接小红书、抖音与视频号创作者后台。
       </p>
 
-      {/* 下载按钮 */}
-      <div className="flex w-full max-w-xs flex-col space-y-3">
+      {/* 真实本地下载 */}
+      <div className="flex w-full max-w-xs flex-col space-y-2.5">
         <Button className="w-full gap-2" asChild>
-          <a href={PLUGIN_DOWNLOAD_LINKS.chrome} target="_blank" rel="noopener noreferrer">
-            <Chrome className="h-4 w-4" />
-            {t('header.chromeWebStore')}
-          </a>
-        </Button>
-
-        <Button variant="outline" className="w-full gap-2" asChild>
-          <a href={PLUGIN_DOWNLOAD_LINKS.china} target="_blank" rel="noopener noreferrer">
-            <CloudDownload className="h-4 w-4" />
-            {t('header.chinaLatestZipDownload')}
-          </a>
-        </Button>
-
-        <Button variant="outline" className="w-full gap-2" asChild>
-          <a href={PLUGIN_DOWNLOAD_LINKS.github} target="_blank" rel="noopener noreferrer">
-            <Github className="h-4 w-4" />
-            {t('header.githubLatestDownload')}
+          <a href={PLUGIN_DOWNLOAD_LINKS.package} download="postpilot-extension.zip">
+            <Download className="h-4 w-4" />
+            下载 PostPilot 扩展包 (.zip)
           </a>
         </Button>
       </div>
 
-      {/* 查看安装教程链接 */}
+      {/* 3 步快速加载提示 */}
+      <div className="mt-5 w-full max-w-xs rounded-xl border border-border bg-muted/35 p-3.5 text-[11.5px] leading-5 text-muted-foreground">
+        <div className="mb-1.5 flex items-center gap-1.5 font-semibold text-foreground">
+          <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+          3 步本地加载（Chrome / Edge / Arc）
+        </div>
+        <ol className="list-decimal space-y-1 pl-4">
+          <li>解压刚下载的 <code className="text-foreground">postpilot-extension.zip</code></li>
+          <li>打开 <code className="text-foreground">chrome://extensions/</code> 并开启「开发者模式」</li>
+          <li>点击「加载已解压的扩展程序」选中目录，点开图标授权即可</li>
+        </ol>
+      </div>
+
       <Link
         href="/websit/plugin-guide"
         onClick={handleViewGuide}
-        className="mt-6 flex items-center justify-center gap-2 w-full max-w-xs px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors cursor-pointer"
+        className="mt-4 flex items-center justify-center gap-2 w-full max-w-xs px-4 py-2.5 rounded-xl bg-primary/[0.06] border border-primary/20 text-xs font-medium text-primary hover:bg-primary/10 transition-colors cursor-pointer"
       >
-        <BookOpen className="h-5 w-5" />
-        <span className="font-medium">{t('header.viewInstallGuide')}</span>
+        <BookOpen className="h-4 w-4" />
+        <span>查看完整安装与使用教程</span>
       </Link>
     </div>
   )

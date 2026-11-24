@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PostPilot · AI 内容创作与多端发布工作台</title>
-  <meta name="description" content="覆盖商业生图、短视频制作、多维改图、仿真手机排版、13+ 平台发布待办与本机多模型接入的一体化 AI 工作台。" />
-  <meta property="og:title" content="PostPilot · AI 内容创作与多端发布工作台" />
-  <meta property="og:description" content="从商业产品图、写实人像、品牌海报和短视频创作，到手机端实时排版、多平台发布待办与本机 Antigravity / Codex / 即梦 / Grok / WorkBuddy 模型接入。" />
+  <title>PostPilot · AI 内容策划、视觉创作与多端排期工作台</title>
+  <meta name="description" content="覆盖 AI 运营策划与多格式导出、7 平台仿真手机排版工坊、商业生图/短视频/无限画布/多维改图、发布排期日历与专用排版草稿箱、14 项技能广场及本机多模型接入的一体化 AI 工作台。" />
+  <meta property="og:title" content="PostPilot · AI 内容策划、视觉创作与多端排期工作台" />
+  <meta property="og:description" content="从一句话多平台策划与 Word/PDF/HTML/Excel 导出，到仿真手机排版、商业视觉创作、排期日历与排版草稿箱闭环，以及 Antigravity / Codex / 即梦 AI / Grok / WorkBuddy 本机多模型路由。" />
   <meta property="og:image" content="/images/layout-workshop.webp" />
   <meta property="og:type" content="website" />
   <link rel="icon" href="/logo.png" type="image/png" />
@@ -73,18 +73,6 @@
       font-size: 15px;
       letter-spacing: 0.04em;
     }
-    .brand-mark {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #7c3aed, #a855f7);
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-      font-size: 14px;
-      color: #fff;
-      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
-    }
     .nav-links {
       display: flex;
       align-items: center;
@@ -130,15 +118,15 @@
     h1 {
       margin: 12px 0 0;
       font-family: "Noto Serif SC", "Songti SC", serif;
-      font-size: clamp(2.1rem, 4.8vw, 3.6rem);
+      font-size: clamp(2.1rem, 4.8vw, 3.5rem);
       font-weight: 500;
       line-height: 1.2;
       letter-spacing: 0.02em;
     }
     .lead {
       margin: 16px 0 0;
-      max-width: 48em;
-      font-size: clamp(1rem, 1.45vw, 1.12rem);
+      max-width: 50em;
+      font-size: clamp(1rem, 1.45vw, 1.1rem);
       color: var(--body);
       line-height: 1.78;
     }
@@ -205,7 +193,7 @@
       font-family: inherit;
       font-size: 12.5px;
       font-weight: 500;
-      padding: 7px 13px;
+      padding: 7px 12px;
       border-radius: 999px;
       cursor: pointer;
       transition: all .18s;
@@ -285,7 +273,7 @@
     }
     .stat-v {
       margin-top: 6px;
-      font-size: 14.5px;
+      font-size: 14px;
       font-weight: 600;
       color: var(--text);
     }
@@ -317,7 +305,7 @@
       max-width: 38em;
     }
 
-    /* Full-width Retina Walkthrough (crisp large screenshots!) */
+    /* Full-width Walkthrough */
     .walkthrough {
       display: grid;
       gap: 44px;
@@ -358,7 +346,7 @@
     }
     .step-desc {
       margin: 10px 0 0;
-      max-width: 56em;
+      max-width: 58em;
       font-size: 14px;
       color: var(--body);
       line-height: 1.78;
@@ -385,6 +373,28 @@
     .step-media img {
       width: 100%;
       height: auto;
+    }
+    .step-media-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2px;
+      background: var(--line);
+    }
+    .step-media-grid .step-media {
+      position: relative;
+    }
+    .media-pill {
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(8, 8, 17, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 500;
+      backdrop-filter: blur(8px);
     }
 
     .footer {
@@ -450,6 +460,7 @@
       .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .stage-meta { grid-template-columns: 1fr; }
       .step-header { padding: 18px 20px; }
+      .step-media-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -462,7 +473,7 @@
       </a>
       <nav class="nav-links" aria-label="页面导航">
         <a href="#interactive" class="nav-link">界面体验</a>
-        <a href="#walkthrough" class="nav-link">7 大核心功能</a>
+        <a href="#walkthrough" class="nav-link">8 大核心模块</a>
         <a href="https://github.com/hxy940219220-collab/postpilot" target="_blank" rel="noopener noreferrer" class="nav-link nav-pill">GitHub 源码 ↗</a>
         <a href="https://www.huangxiyuan.net/projects/postpilot" class="nav-link nav-pill">返回作品集</a>
       </nav>
@@ -473,224 +484,269 @@
     <section class="hero">
       <div class="eyebrow">
         <span class="eyebrow-dot"></span>
-        <span>AI 内容创作与多端发布工作台</span>
+        <span>AI 内容策划 · 视觉创作 · 多端排期发布工作台</span>
       </div>
-      <h1>PostPilot · 从商业设计到多平台发布</h1>
+      <h1>PostPilot · 从一句话策划到多平台排期分发</h1>
       <p class="lead">
-        面向内容团队与品牌运营的一体化 AI 工作台。不仅支持商业产品图、写实人物照、品牌广告、宣传短视频和文案创作，还能直接在手机端排版预览、统一管理 13 个国内外社媒平台的发布待办，并直连电脑本机的 Antigravity、Codex、即梦 AI、Grok 与 WorkBuddy 等模型引擎。
+        面向内容团队与品牌运营的一体化本地优先 AI 工作台。全新午夜靛紫轻奢浅色玻璃视觉体系，打通「AI 运营策划与多格式导出 → 7 平台仿真手机排版工坊 → 快捷生图 / 无限画布 / 多维改图 → 排期日历与专用排版草稿箱 → 14 项内置技能与本机多模型路由」全链路闭环。
       </p>
       <div class="hero-actions">
-        <a href="#walkthrough" class="btn btn-primary">查看 7 大核心功能 ↓</a>
+        <a href="#walkthrough" class="btn btn-primary">查看 8 大核心模块 ↓</a>
         <a href="https://github.com/hxy940219220-collab/postpilot" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">GitHub 源码 ↗</a>
-        <a href="https://www.huangxiyuan.net/#project-postpilot" class="btn btn-ghost">huangxiyuan.net ↗</a>
+        <a href="https://www.huangxiyuan.net/projects/postpilot" class="btn btn-ghost">huangxiyuan.net ↗</a>
       </div>
 
-      <!-- Interactive Retina Stage -->
+      <!-- Interactive Stage -->
       <div id="interactive" class="stage-card">
         <div class="stage-tabs">
           <div class="tab-group" role="tablist" aria-label="核心模块切换">
-            <button class="tab-btn" role="tab" aria-selected="true" data-key="layout">1. 排版工坊</button>
-            <button class="tab-btn" role="tab" aria-selected="false" data-key="workspace">2. 创作工作台</button>
-            <button class="tab-btn" role="tab" aria-selected="false" data-key="canvas">3. 无限画布</button>
-            <button class="tab-btn" role="tab" aria-selected="false" data-key="remix">4. 多维改图</button>
-            <button class="tab-btn" role="tab" aria-selected="false" data-key="assets">5. AI 素材库</button>
-            <button class="tab-btn" role="tab" aria-selected="false" data-key="publish">6. 发布待办</button>
-            <button class="tab-btn" role="tab" aria-selected="false" data-key="models">7. 模型接入</button>
+            <button class="tab-btn" role="tab" aria-selected="true" data-key="planner">1. AI 策划台</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="chatExport">2. 对话导出</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="layout">3. 排版工坊</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="workspace">4. 视觉工作台</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="canvas">5. 无限画布</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="remix">6. 多维改图</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="publish">7. 排期与草稿箱</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="models">8. 模型接入</button>
+            <button class="tab-btn" role="tab" aria-selected="false" data-key="skills">9. 技能广场</button>
           </div>
-          <span class="stage-hint">2x Retina 原图 · 点击放大 · 支持左右方向键切换</span>
+          <span class="stage-hint">实跑原图 · 点击放大 · 支持左右方向键切换</span>
         </div>
 
         <div class="stage-viewport" id="stageViewport">
-          <img id="stageImg" src="/images/layout-workshop.webp" width="2880" height="1800" alt="PostPilot 排版工坊超清实拍" />
+          <img id="stageImg" src="/images/planner.webp" width="1024" height="640" alt="PostPilot AI 策划台实拍" />
         </div>
 
         <div class="stage-meta">
           <div>
-            <h3 id="stageTitle">排版工坊 · 手机端所见即所得预览与文案排版</h3>
-            <p id="stageDesc">图文发布与视频发布严格分开，右侧仿真手机实时同步小红书、抖音与 Instagram 排版效果；支持在手机旁切换 3:4 / 1:1 / 4:3 / 原图、拖动微调构图、手动裁剪与一键重构比例。</p>
+            <h3 id="stageTitle">1. AI 运营策划台 · 一句话生成跨平台成稿与精细模型调控</h3>
+            <p id="stageDesc">顶部支持勾选小红书、抖音、B站、X、Instagram、YouTube、视频号多端适配；右下角紧凑集成上下文占用圆环与分层模型/思考强度选择器（鼠标移出自动收起），下方沉淀近期策划案例与精选实操。</p>
           </div>
-          <button type="button" class="zoom-chip" id="stageZoomBtn">查看 2K 原图 ⤢</button>
+          <button type="button" class="zoom-chip" id="stageZoomBtn">放大查看原图 ⤢</button>
         </div>
       </div>
 
       <div class="stats">
         <div class="stat">
-          <div class="stat-k">商业视觉类型</div>
-          <div class="stat-v">产品主图 · 写实人像 · 品牌海报 · 短视频</div>
+          <div class="stat-k">策划与多格式交付</div>
+          <div class="stat-v">7 平台一鱼多吃 · Word / PDF / HTML / Excel 导出</div>
         </div>
         <div class="stat">
-          <div class="stat-k">三种创作模式</div>
-          <div class="stat-v">快捷工作台 · 无限画布 · 多维改图</div>
+          <div class="stat-k">视觉创作三模式</div>
+          <div class="stat-v">快捷工作台 · 无限画布 · 6 维自定义改图</div>
         </div>
         <div class="stat">
-          <div class="stat-k">多平台发布待办</div>
-          <div class="stat-v">小红书 / 视频号 / B站 / YouTube / TikTok 等 13 端</div>
+          <div class="stat-k">排期与草稿闭环</div>
+          <div class="stat-v">任意单元格点击排期 · 专用排版草稿箱一键填入</div>
         </div>
         <div class="stat">
-          <div class="stat-k">本地模型接入</div>
-          <div class="stat-v">Antigravity · Codex · 即梦 AI · Grok · WorkBuddy</div>
+          <div class="stat-k">本机模型与技能体系</div>
+          <div class="stat-v">5 大本机引擎 + 第三方 API · 14 项内置工作流</div>
         </div>
       </div>
     </section>
 
     <section id="walkthrough" class="block">
       <div class="section-head">
-        <h2>7 大核心功能全流程拆解</h2>
-        <p>所有界面均为本地实跑 2880×1800 超清截屏，点击任意图片可放大查看细节。</p>
+        <h2>8 大核心模块全链路拆解</h2>
+        <p>所有界面均为最新本地版本实跑高清截屏，点击任意大图可打开灯箱查看界面细节。</p>
       </div>
 
       <div class="walkthrough">
+        <!-- 01 -->
         <article class="step-block" id="step-1">
           <div class="step-header">
             <div>
               <div class="step-title-row">
                 <span class="step-num">01</span>
-                <h3>内容创作工作台：商业生图、生视频、写文案一站完成</h3>
+                <h3>AI 运营策划台与多格式打包导出：一鱼多吃，成稿即交付</h3>
               </div>
-              <p class="step-desc">在一个界面里就能完成商业产品主图、写实人物照、品牌海报、宣传短视频和图文文案生成。支持直接拖入参考图，点开任意一张成品还能在右侧看到提示词、所用模型、尺寸与积分消耗，方便团队复盘和复用。</p>
+              <p class="step-desc">输入卖点或上传产品参考图，勾选目标平台后一键输出各端原生语感标题、正文与流量标签。输入框右下角紧凑集成上下文 token 占比圆环与逐层零闪烁模型选择器（仅展示模型名与思考强度，移出自动收起）；对话详情支持红心点赞筛选与一键打包导出 Word（.doc）、PDF、HTML、Excel（.csv）与 Markdown。</p>
             </div>
             <div class="step-tags">
-              <span class="step-tag">商业产品图</span>
-              <span class="step-tag">写实人像与海报</span>
-              <span class="step-tag">宣传短视频</span>
-              <span class="step-tag">图文文案草稿</span>
+              <span class="step-tag">7 平台一鱼多吃</span>
+              <span class="step-tag">上下文占比圆环</span>
+              <span class="step-tag">Word / PDF / Excel 导出</span>
+              <span class="step-tag">点赞沉淀筛选</span>
             </div>
           </div>
-          <div class="step-media" data-zoom-src="/images/workspace.webp" data-zoom-title="01 内容创作工作台">
-            <img src="/images/workspace.webp" width="2880" height="1800" alt="PostPilot 内容创作工作台：展示商业耳机宣传短片、男女写实人物照、运动鞋与腕表产品图、新能源车与咖啡品牌广告以及图文文案草稿" loading="lazy" />
+          <div class="step-media-grid">
+            <div class="step-media" data-zoom-src="/images/planner.webp" data-zoom-title="01-A AI 策划台首页与右下角模型/上下文布局">
+              <img src="/images/planner.webp" width="1024" height="640" alt="PostPilot AI 策划台首页" loading="lazy" />
+              <span class="media-pill">AI 策划台首页</span>
+            </div>
+            <div class="step-media" data-zoom-src="/images/chat-export.webp" data-zoom-title="01-B 对话详情点赞与 Word / PDF / HTML / Excel / Markdown 五格式导出">
+              <img src="/images/chat-export.webp" width="1024" height="640" alt="PostPilot 对话多格式导出" loading="lazy" />
+              <span class="media-pill">五格式打包导出</span>
+            </div>
           </div>
         </article>
 
+        <!-- 02 -->
         <article class="step-block" id="step-2">
           <div class="step-header">
             <div>
               <div class="step-title-row">
                 <span class="step-num">02</span>
-                <h3>无限画布：把素材铺开整理，选中图片就能继续改图出新</h3>
+                <h3>仿真手机排版工坊：7 大平台所见即所得，一键直达排期发布</h3>
               </div>
-              <p class="step-desc">进入画布后，所有图片和视频会自动居中排开，不用在文件夹里来回翻找。点中任意一张图，下方就会直接弹出提示词和模型、比例、清晰度设置，改两句话就能继续生成新版本；也能把几张素材连上线作为参考，边做边让 AI 助手帮忙出创意。</p>
+              <p class="step-desc">入口将「图文发布」与「视频发布」彻底分流。右侧仿真手机实时呈现小红书、抖音、B站、X、Instagram、YouTube 与视频号 7 大平台的成片页与发现封面流；手机旁配备 3:4 / 1:1 / 4:3 / 原图切换、拖拽微调与自由裁剪。编辑完成后既可「存入草稿箱」，也能点击「一键排期发布」自动带入全部图文与标签直达发布弹窗。</p>
             </div>
             <div class="step-tags">
-              <span class="step-tag">自动居中排布</span>
-              <span class="step-tag">点图直接改词出图</span>
-              <span class="step-tag">多素材连线参考</span>
-              <span class="step-tag">AI 助手对话</span>
+              <span class="step-tag">7 平台手机仿真预览</span>
+              <span class="step-tag">图文 / 视频严格分流</span>
+              <span class="step-tag">竖排比例与裁剪</span>
+              <span class="step-tag">一键排期发布</span>
             </div>
           </div>
-          <div class="step-media" data-zoom-src="/images/canvas.webp" data-zoom-title="02 无限画布">
-            <img src="/images/canvas.webp" width="2880" height="1800" alt="PostPilot 无限画布：居中排布的商业人像、产品图与品牌广告，选中主图后在下方弹出可编辑的提示词和模型参数面板" loading="lazy" />
+          <div class="step-media" data-zoom-src="/images/layout-workshop.webp" data-zoom-title="02 仿真手机排版工坊：冷萃茶瓶 3 图笔记实时预览与一键排期发布">
+            <img src="/images/layout-workshop.webp" width="1024" height="640" alt="PostPilot 排版工坊：冷萃茶瓶 3 图小红书实时手机预览" loading="lazy" />
           </div>
         </article>
 
+        <!-- 03 -->
         <article class="step-block" id="step-3">
           <div class="step-header">
             <div>
               <div class="step-title-row">
                 <span class="step-num">03</span>
-                <h3>多维改图：不用写复杂提示词，按 6 个方向精准微调画面</h3>
+                <h3>视觉创作工作台：商业主图、写实人像、海报与宣传短片一站生成</h3>
               </div>
-              <p class="step-desc">选好一张人物照或产品主图后，直接按「换镜头角度、换光影氛围、换背景场景、换画风质感、换穿搭造型、换表情动作」六个方向微调。每项内置了常用下拉选项，也可以点开修改提示词再生成；还能一键批量出 4 张，或选 2 张图直接转成宣传短视频。</p>
+              <p class="step-desc">专注于高频商业视觉资产生产：输入一句话或拖入商品参考图，即可生成高质感产品精修图、写实人物照、品牌视觉海报与 5 秒商业宣传短片。支持图片 / 视频 / 草稿多维筛选，点击成品即可查看完整提示词、模型、分辨率与消耗明细，方便团队复盘复用。</p>
             </div>
             <div class="step-tags">
-              <span class="step-tag">6 维可视化预设</span>
-              <span class="step-tag">支持编辑提示词</span>
-              <span class="step-tag">批量生成 4 张</span>
-              <span class="step-tag">首尾帧转视频</span>
+              <span class="step-tag">商业产品主图</span>
+              <span class="step-tag">写实人像与海报</span>
+              <span class="step-tag">Seedance 宣传短片</span>
+              <span class="step-tag">透明参数复盘</span>
             </div>
           </div>
-          <div class="step-media" data-zoom-src="/images/remix.webp" data-zoom-title="03 多维改图">
-            <img src="/images/remix.webp" width="2880" height="1800" alt="PostPilot 多维改图：中心完整展示写实人物肖像，左右排布镜头、光影、背景、画风、穿搭、表情六组可编辑微调卡片" loading="lazy" />
+          <div class="step-media" data-zoom-src="/images/workspace.webp" data-zoom-title="03 视觉创作工作台：冷萃茶瓶、降噪耳机短片、联名运动鞋与写实人像资产流">
+            <img src="/images/workspace.webp" width="1024" height="640" alt="PostPilot 视觉创作工作台" loading="lazy" />
           </div>
         </article>
 
+        <!-- 04 -->
         <article class="step-block" id="step-4">
           <div class="step-header">
             <div>
               <div class="step-title-row">
                 <span class="step-num">04</span>
-                <h3>AI 生成素材库：按类型与画面比例快速筛选所有图片和视频</h3>
+                <h3>无限画布：全屏对比铺陈、连线衍生与画布 Agent 协作</h3>
               </div>
-              <p class="step-desc">所有生成的商业产品图、写实人物、品牌海报和宣传短视频都会自动沉淀在这里。顶部支持按「全部 / 图片 / 视频」分类，以及按「竖版 / 横版 / 方图 / 9:16 / 3:4 / 1:1 / 16:9」一键筛选，每张卡片自动标注类型和真实比例，找素材一目了然。</p>
+              <p class="step-desc">自动收起侧边栏提供沉浸式创作空间，支持一键居中铺开所有商业图与短视频素材。选中节点可就近修改提示词、切换图片/视频模型与清晰度继续出新，也能拖拽本地文件或在画布 Agent 对话框中直接 @ 引用画布素材，高效完成系列海报比稿与创意延展。</p>
             </div>
             <div class="step-tags">
-              <span class="step-tag">图片 / 视频分类</span>
-              <span class="step-tag">多比例快速筛选</span>
-              <span class="step-tag">自动标注 3:4 / 1:1 / 16:9</span>
+              <span class="step-tag">自动居中铺陈</span>
+              <span class="step-tag">画布 @ 引用参考</span>
+              <span class="step-tag">文 / 图 / 视频多模型切换</span>
+              <span class="step-tag">平滑缩放拖拽</span>
             </div>
           </div>
-          <div class="step-media" data-zoom-src="/images/assets.webp" data-zoom-title="04 AI 生成素材库">
-            <img src="/images/assets.webp" width="2880" height="1800" alt="PostPilot AI 生成素材库：展示耳机宣传视频、写实男女人物照、运动鞋与护肤品 3:4 主图、腕表与冷泡茶 1:1 电商图及新能源车与咖啡 16:9 宽屏广告" loading="lazy" />
+          <div class="step-media" data-zoom-src="/images/canvas.webp" data-zoom-title="04 无限画布：居中排布的商业视觉与画布协作工具栏">
+            <img src="/images/canvas.webp" width="1024" height="640" alt="PostPilot 无限画布" loading="lazy" />
           </div>
         </article>
 
+        <!-- 05 -->
         <article class="step-block" id="step-5">
           <div class="step-header">
             <div>
               <div class="step-title-row">
                 <span class="step-num">05</span>
-                <h3>排版工坊：所见即所得的手机端预览与图文 / 视频分流</h3>
+                <h3>多维改图：6 维细化预设 + 专业自定义输入，稳住主体一键出变体</h3>
               </div>
-              <p class="step-desc">入口处把「图文发布」和「视频发布」彻底分开。左侧点击「+」号即可从本地上传或直接从素材库选图，标题、正文和话题标签都能让 AI 一键辅助生成；右侧仿真手机实时呈现小红书、抖音和 Instagram 的发布效果，手机旁还能一键切 3:4 / 1:1 / 4:3 / 原图、拖动微调构图、手动裁剪或按目标比例重构画面。</p>
+              <p class="step-desc">围绕中心参考图，按「换镜头角度、换光影氛围、换背景场景、换画风质感（细分真人 / 2D / 3D 国风与漫剧流派）、换穿搭造型、换表情动作」六个维度可视化微调；每个维度均支持「自定义输入」满足专业创作者需求，并可一键批量生图或选首尾帧转宣传短视频。</p>
             </div>
             <div class="step-tags">
-              <span class="step-tag">图文 / 视频彻底分开</span>
-              <span class="step-tag">仿真手机实时预览</span>
-              <span class="step-tag">竖排比例与裁剪工具</span>
-              <span class="step-tag">AI 写标题与正文</span>
+              <span class="step-tag">6 维细化画风与穿搭</span>
+              <span class="step-tag">全维度自定义输入</span>
+              <span class="step-tag">主体一致性保持</span>
+              <span class="step-tag">首尾帧转视频</span>
             </div>
           </div>
-          <div class="step-media" data-zoom-src="/images/layout-workshop.webp" data-zoom-title="05 排版工坊">
-            <img src="/images/layout-workshop.webp" width="2880" height="1800" alt="PostPilot 排版工坊：3:4 极简琥珀护肤精华主图完整呈现在小红书仿真手机中，搭配右侧竖排比例栏与左侧图文写作区" loading="lazy" />
+          <div class="step-media" data-zoom-src="/images/remix.webp" data-zoom-title="05 多维改图：中心参考主体与 6 维可控微调面板">
+            <img src="/images/remix.webp" width="1024" height="640" alt="PostPilot 多维改图" loading="lazy" />
           </div>
         </article>
 
+        <!-- 06 -->
         <article class="step-block" id="step-6">
           <div class="step-header">
             <div>
               <div class="step-title-row">
                 <span class="step-num">06</span>
-                <h3>发布待办：多平台账号统一管理、排期与一键分发</h3>
+                <h3>发布排期日历 &amp; 专用「排版草稿箱」：全单元格直点排期、一键填入分发</h3>
               </div>
-              <p class="step-desc">做好的图文和视频可以直接流转到「发布待办」进行日历排期和跨平台分发。支持统一接入小红书、微信视频号、微信公众号、快手、B站、YouTube、TikTok、Instagram、Facebook、X (Twitter)、Threads、LinkedIn、Pinterest 等 13 个国内外主流内容平台，真正打通「做完即发布」的最后一公里。</p>
+              <p class="step-desc">顶栏清晰切换「排期日历」与「排版草稿箱」。周视图明确标注周数、起止日期与公历节日，点击日历中任意空白时间格即可直接唤起发布弹框；弹框左栏重构为纯净的「排版草稿箱」，支持一键填入右侧多平台编辑器或拖拽导入，并与排版工坊双向联动（支持「精修」回跳与「一键排期发布」），覆盖 13+ 国内外社媒平台。</p>
             </div>
             <div class="step-tags">
-              <span class="step-tag">13 个国内外社媒平台</span>
-              <span class="step-tag">日历定时排期</span>
-              <span class="step-tag">多账号统一管理</span>
-              <span class="step-tag">一键跨平台发布</span>
+              <span class="step-tag">周数 + 公历节日日历</span>
+              <span class="step-tag">任意单元格点击排期</span>
+              <span class="step-tag">专用排版草稿箱</span>
+              <span class="step-tag">13+ 平台统一分发</span>
             </div>
           </div>
-          <div class="step-media" data-zoom-src="/images/publish-queue.webp" data-zoom-title="06 发布待办 · 多平台频道接入与排期">
-            <img src="/images/publish-queue.webp" width="2880" height="1800" alt="PostPilot 发布待办：支持连接小红书、微信视频号、Instagram、快手、YouTube、B站、TikTok、LinkedIn、Facebook、微信公众号等 13 个内容平台" loading="lazy" />
+          <div class="step-media-grid">
+            <div class="step-media" data-zoom-src="/images/publish-queue.webp" data-zoom-title="06-A 发布排期周日历：第 48 周多平台排期卡片与全格直点排期">
+              <img src="/images/publish-queue.webp" width="1024" height="640" alt="PostPilot 发布排期日历" loading="lazy" />
+              <span class="media-pill">排期日历（周数 + 公历节日）</span>
+            </div>
+            <div class="step-media" data-zoom-src="/images/draft-box.webp" data-zoom-title="06-B 专用排版草稿箱：按平台筛选、一键排期发布与精修回跳">
+              <img src="/images/draft-box.webp" width="1024" height="640" alt="PostPilot 专用排版草稿箱" loading="lazy" />
+              <span class="media-pill">专用排版草稿箱</span>
+            </div>
           </div>
         </article>
 
+        <!-- 07 -->
         <article class="step-block" id="step-7">
           <div class="step-header">
             <div>
               <div class="step-title-row">
                 <span class="step-num">07</span>
-                <h3>本地模型接入：直连本机 Antigravity、Codex、即梦、Grok 与 WorkBuddy</h3>
+                <h3>模型接入中心：真实平台直连 + 第三方 API 快捷接入 + 思考强度分场景路由</h3>
               </div>
-              <p class="step-desc">不被单一云端平台锁定。支持直接接入电脑本机已登录的 <strong>Antigravity</strong>、<strong>Codex（含 ChatGPT / GPT 生图）</strong>、<strong>即梦 AI（5.0 生图 / Seedance 视频）</strong>、<strong>Grok（支持一键跳转网页登录）</strong> 与腾讯 <strong>WorkBuddy（国产多模型引擎）</strong>，也可按需填写真实第三方 API Key（OpenAI / DeepSeek / Gemini 等），并为「内容 Agent、文案草稿、图片生成、视频生成」分别指定默认模型。</p>
+              <p class="step-desc">顶部优先展示已安装的 <strong>Antigravity</strong>、<strong>Codex（GPT）</strong>、<strong>即梦 AI（实时显示剩余积分）</strong>、<strong>Grok</strong> 与 <strong>WorkBuddy</strong> 五大直连账号，紧随国内外主流第三方 API 快捷接入条（DeepSeek / 硅基流动 / 智谱 GLM / 通义千问 / OpenAI / Anthropic / Gemini / OpenRouter）。下方按「内容 Agent、文案与草稿规划、图片生成、视频生成」四大场景分别拆分「使用模型」与「思考强度 / 清晰度」，配置直观零负担。</p>
             </div>
             <div class="step-tags">
-              <span class="step-tag">本机 Antigravity / Codex</span>
-              <span class="step-tag">Grok 网页授权接入</span>
-              <span class="step-tag">腾讯 WorkBuddy</span>
-              <span class="step-tag">即梦 5.0 / Seedance</span>
-              <span class="step-tag">分场景模型路由</span>
+              <span class="step-tag">5 大本机直连账号</span>
+              <span class="step-tag">第三方 API 快捷接入</span>
+              <span class="step-tag">模型与思考强度拆分</span>
+              <span class="step-tag">即梦实时积分监控</span>
             </div>
           </div>
-          <div class="step-media" data-zoom-src="/images/models-hub.webp" data-zoom-title="07 本地模型接入与分场景路由">
-            <img src="/images/models-hub.webp" width="2880" height="1800" alt="PostPilot 模型接入中心：展示本机 Antigravity、Codex、即梦 AI、Grok 与 WorkBuddy 五大引擎状态与一键网页登录，以及 Agent、文案、生图、生视频四个场景的默认模型路由配置" loading="lazy" />
+          <div class="step-media" data-zoom-src="/images/models-hub.webp" data-zoom-title="07 模型接入中心：账号直连、第三方 API 快捷条与四场景模型/思考强度路由">
+            <img src="/images/models-hub.webp" width="1024" height="640" alt="PostPilot 模型接入中心" loading="lazy" />
+          </div>
+        </article>
+
+        <!-- 08 -->
+        <article class="step-block" id="step-8">
+          <div class="step-header">
+            <div>
+              <div class="step-title-row">
+                <span class="step-num">08</span>
+                <h3>技能管理广场：14 项内置商业创作工作流，全新清新扁平图标体系</h3>
+              </div>
+              <p class="step-desc">将多平台运营策划、图像/视频生成、短剧解说、精细视频剪辑、多轨合成、图片精修、去硬字幕、漫剧/国风风格转绘、出海配音翻译、爆款视频拆解与封面提取等 14 项高频能力封装为标准化 Skill。采用全新设计的清新现代扁平 App 图标体系，支持精选推荐、分类检索与点击查阅完整执行规范。</p>
+            </div>
+            <div class="step-tags">
+              <span class="step-tag">14 项内置商业技能</span>
+              <span class="step-tag">清新扁平图标体系</span>
+              <span class="step-tag">创作副驾自动调度</span>
+              <span class="step-tag">分类检索与规范查阅</span>
+            </div>
+          </div>
+          <div class="step-media" data-zoom-src="/images/skills-catalog.webp" data-zoom-title="08 技能管理广场：14 项商业创作工作流与全新清新图标">
+            <img src="/images/skills-catalog.webp" width="1024" height="640" alt="PostPilot 技能管理广场" loading="lazy" />
           </div>
         </article>
       </div>
     </section>
 
     <footer class="footer">
-      <span>PostPilot · Next.js 14 · NestJS · MongoDB · 本地多模型引擎桥接</span>
+      <span>PostPilot · Next.js 14 · NestJS · MongoDB · 本地多模型引擎桥接与 13+ 平台分发</span>
       <div style="display:flex;gap:18px;flex-wrap:wrap;">
         <a href="https://github.com/hxy940219220-collab/postpilot" target="_blank" rel="noopener noreferrer">GitHub 源码 ↗</a>
         <a href="https://www.huangxiyuan.net/projects/postpilot">作品集详情页</a>
@@ -711,45 +767,55 @@
 
   <script>
     const SCENES = {
+      planner: {
+        img: "/images/planner.webp",
+        title: "1. AI 运营策划台 · 一句话生成跨平台成稿与精细模型调控",
+        desc: "顶部支持勾选小红书、抖音、B站、X、Instagram、YouTube、视频号多端适配；右下角紧凑集成上下文占用圆环与分层模型/思考强度选择器（鼠标移出自动收起），下方沉淀近期策划案例与精选实操。",
+      },
+      chatExport: {
+        img: "/images/chat-export.webp",
+        title: "2. 对话详情 · 红心点赞筛选与 Word / PDF / HTML / Excel / Markdown 打包导出",
+        desc: "去掉冗余评分，聚焦真实创作交付：支持对高质量策划结果一键红心点赞沉淀，并在顶栏将完整对话与排版结果打包导出为 5 种常用文档与表格格式。",
+      },
       layout: {
         img: "/images/layout-workshop.webp",
-        title: "1. 排版工坊 · 手机端所见即所得预览与文案排版",
-        desc: "图文发布与视频发布严格分开，右侧仿真手机实时同步小红书、抖音与 Instagram 排版效果；支持在手机旁切换 3:4 / 1:1 / 4:3 / 原图、拖动微调构图、手动裁剪与一键重构比例。",
+        title: "3. 仿真手机排版工坊 · 7 平台实时预览与一键排期发布",
+        desc: "图文发布与视频发布严格分流，右侧仿真手机实时呈现小红书、抖音、B站、X、Instagram、YouTube、视频号效果；支持竖排比例与裁剪工具，以及存入草稿箱或一键排期发布。",
       },
       workspace: {
         img: "/images/workspace.webp",
-        title: "2. 内容创作工作台 · 商业生图、短视频与文案一站完成",
-        desc: "统一生成商业产品图、写实人物照、品牌海报、宣传短视频和图文文案。支持拖拽参考图，点击任意作品可查看完整提示词、模型、尺寸与积分消耗。",
+        title: "4. 视觉创作工作台 · 商业产品图、写实人像与宣传短片一站生产",
+        desc: "统一生成电商主图、写实人物、品牌海报与商业宣传短片，支持拖入参考图并查看完整提示词、模型、分辨率与消耗明细。",
       },
       canvas: {
         img: "/images/canvas.webp",
-        title: "3. 无限画布 · 铺开素材，点图直接改词出新",
-        desc: "所有素材自动居中铺开在画布上，选中任意图片即可在下方直接改提示词、换比例继续生成，也能把多张素材连线当参考并搭配 AI 助手协作。",
+        title: "5. 无限画布 · 全屏居中铺陈、节点衍生与画布 Agent 协作",
+        desc: "自动收起导航提供沉浸画布视野，支持素材铺陈比稿、拖拽上传、画布 @ 引用与文本/图片/视频多模型灵活切换。",
       },
       remix: {
         img: "/images/remix.webp",
-        title: "4. 多维改图 · 6 个可视化方向精准微调成片",
-        desc: "围绕原图从镜头角度、光影氛围、背景场景、画风质感、穿搭造型、表情动作六个方向微调，内置下拉选项并可改词，支持批量出 4 张和首尾帧转视频。",
-      },
-      assets: {
-        img: "/images/assets.webp",
-        title: "5. AI 生成素材库 · 按类型和画面比例快速找图找视频",
-        desc: "自动归档全部图片和视频素材，支持按类型与竖版/横版/方图及具体比例一键筛选，每张卡片清晰标注类型与真实画面比例。",
+        title: "6. 多维改图 · 6 维细化画风穿搭预设 + 专业自定义输入",
+        desc: "按镜头、光影、背景、画风（细分真人/2D/3D）、穿搭、表情六个维度精准出变体，全部维度均支持自定义输入，并支持首尾帧转视频。",
       },
       publish: {
         img: "/images/publish-queue.webp",
-        title: "6. 发布待办 · 13 个国内外社媒平台统一接入与定时排期",
-        desc: "支持接入小红书、微信视频号、微信公众号、快手、B站、YouTube、TikTok、Instagram、Facebook、X、LinkedIn、Pinterest 等平台，实现从创作到多端发布的完整闭环。",
+        title: "7. 发布排期日历与专用排版草稿箱 · 任意单元格点击排期、草稿一键填入",
+        desc: "周视图清晰显示周数与公历节日，点击任意空白格直接触发排期发布；弹窗左栏与独立草稿箱页支持将排版好的图文/视频一键填入右侧多平台发布区。",
       },
       models: {
         img: "/images/models-hub.webp",
-        title: "7. 本地模型接入 · 直连本机 Antigravity、Codex、即梦、Grok 与 WorkBuddy",
-        desc: "直接调用电脑本机 Antigravity、Codex（含 GPT 生图）、即梦 AI、Grok（支持一键网页登录）与 WorkBuddy，并按场景灵活路由。",
+        title: "8. 模型接入中心 · 5 大本机引擎 + 第三方 API + 思考强度分场景路由",
+        desc: "直连本机 Antigravity、Codex、即梦 AI（实时积分）、Grok 与 WorkBuddy，顶部快捷接入国内外第三方 API，下方四场景独立拆分模型与思考强度/清晰度。",
+      },
+      skills: {
+        img: "/images/skills-catalog.webp",
+        title: "9. 技能管理广场 · 14 项商业创作工作流与清新扁平图标体系",
+        desc: "内置多平台运营策划、图像/视频生成、短剧解说、精细剪辑、字幕移除、出海翻译等 14 项专业技能，支持分类检索与规范查阅。",
       },
     };
 
     const keys = Object.keys(SCENES);
-    let currentKey = "layout";
+    let currentKey = "planner";
 
     const stageImg = document.getElementById("stageImg");
     const stageTitle = document.getElementById("stageTitle");
@@ -798,27 +864,24 @@
     });
     document.querySelectorAll(".step-media").forEach(el => {
       el.addEventListener("click", () => {
-        openLightbox(el.dataset.zoomSrc, el.dataset.zoomTitle);
+        openLightbox(el.dataset.zoomSrc, el.dataset.zoomTitle || "");
       });
     });
-
     lightboxClose.addEventListener("click", closeLightbox);
     lightbox.addEventListener("click", (e) => {
       if (e.target === lightbox) closeLightbox();
     });
-
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && lightbox.classList.contains("open")) {
-        closeLightbox();
+    document.addEventListener("keydown", (e) => {
+      if (lightbox.classList.contains("open")) {
+        if (e.key === "Escape") closeLightbox();
         return;
       }
-      if (lightbox.classList.contains("open")) return;
       if (e.key === "ArrowRight") {
-        const idx = (keys.indexOf(currentKey) + 1) % keys.length;
-        selectScene(keys[idx]);
+        const next = keys[(keys.indexOf(currentKey) + 1) % keys.length];
+        selectScene(next);
       } else if (e.key === "ArrowLeft") {
-        const idx = (keys.indexOf(currentKey) - 1 + keys.length) % keys.length;
-        selectScene(keys[idx]);
+        const prev = keys[(keys.indexOf(currentKey) - 1 + keys.length) % keys.length];
+        selectScene(prev);
       }
     });
   </script>

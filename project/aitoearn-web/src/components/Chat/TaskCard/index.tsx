@@ -13,7 +13,6 @@ import {
   Loader2,
   MessageSquare,
   Share2,
-  Star,
   Trash2,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -220,10 +219,10 @@ export function TaskCard({
         )}
       </div>
 
-      {/* Action buttons: 收藏 + 评分 + 分享 + 删除 - 只显示图标 + Tooltip */}
+      {/* Action buttons: 点赞 + 分享 + 删除 - 只显示图标 + Tooltip */}
       <TooltipProvider delayDuration={300}>
         <div className="mt-3 flex items-center justify-end gap-1">
-          {/* 收藏按钮 */}
+          {/* 点赞按钮 */}
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -247,25 +246,6 @@ export function TaskCard({
             <TooltipContent>
               {isFavorited ? t('task.unfavorite') : t('task.favorite')}
             </TooltipContent>
-          </Tooltip>
-
-          {/* 评分按钮 */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={handleRateClick}
-                className="flex items-center justify-center w-7 h-7 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors opacity-60 hover:opacity-100 cursor-pointer"
-                aria-label={t('task.rate')}
-              >
-                <Star
-                  className={cn(
-                    'w-4 h-4 transition-colors',
-                    rating && 'text-amber-400 fill-amber-400',
-                  )}
-                />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>{t('task.rate')}</TooltipContent>
           </Tooltip>
 
           {/* 分享按钮 */}

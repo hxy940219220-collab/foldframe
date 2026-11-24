@@ -15,12 +15,13 @@ import LoginDialog from '@/app/layout/LoginDialog'
 import SettingsModal from '@/app/layout/SettingsModal'
 import { isPublicPage } from '@/app/layout/shared/utils/routeUtils'
 import { WechatBrowserOverlay } from '@/components/common/WechatBrowserOverlay'
-import { PluginPublishingFloatButton } from '@/components/Plugin'
+import { PluginModal, PluginPublishingFloatButton } from '@/components/Plugin'
 import NotificationCenter from '@/components/ui/NotificationCenter'
 import { Toaster } from '@/components/ui/sonner'
 import { useConfigManagerDialogStore } from '@/store/configManagerDialog'
 import { useLoginDialogStore } from '@/store/login-dialog'
 import { usePlatformMetadataStore } from '@/store/platformMetadata'
+import { usePluginStore } from '@/store/plugin'
 import { useSettingsModalStore } from '@/store/settingsModal'
 import { useUserStore } from '@/store/user'
 
@@ -61,6 +62,12 @@ export function Providers({
   // 全局设置弹框状态
   const { settingsVisible, settingsDefaultTab, closeSettings } = useSettingsModalStore()
   const { open: configManagerOpen, closeDialog: closeConfigManagerDialog } = useConfigManagerDialogStore()
+  const { pluginModalVisible, closePluginModal } = usePluginStore(
+    useShallow(state => ({
+      pluginModalVisible: state.pluginModalVisible,
+      closePluginModal: state.closePluginModal,
+    })),
+  )
 
   useEffect(() => {
     if (!_hasHydrated) {
@@ -135,6 +142,8 @@ export function Providers({
           <LoginDialog />
           {/* 全局配置管理弹框 */}
           <ConfigManagerDialog open={configManagerOpen} onClose={closeConfigManagerDialog} />
+          {/* 全局浏览器扩展弹框 */}
+          <PluginModal visible={pluginModalVisible} onClose={closePluginModal} />
           {/* 全局设置弹框 - 统一在此渲染，避免多处重复 */}
           <SettingsModal
             open={settingsVisible}

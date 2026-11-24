@@ -4,10 +4,10 @@
  */
 
 /** GitHub 仓库地址 */
-export const GITHUB_REPO = 'yikart/AiToEarn'
+export const GITHUB_REPO = 'hxy940219220-collab/postpilot'
 
-/** 文档网站地址 */
-export const DOCS_URL = 'https://docs.aitoearn.ai'
+/** 内置帮助文档路由 */
+export const DOCS_URL = '/websit/help-docs'
 
 /**
  * 导航菜单分组配置

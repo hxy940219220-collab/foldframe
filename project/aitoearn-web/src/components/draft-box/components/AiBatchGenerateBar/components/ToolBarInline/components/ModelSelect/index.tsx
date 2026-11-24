@@ -1,5 +1,6 @@
 import type { ModelSelectProps } from '../../types'
-import { AlertTriangle, Check, ChevronDown, Sparkles } from 'lucide-react'
+import { AlertTriangle, Check, ChevronDown } from 'lucide-react'
+import { cleanVisualModelLabel, VisualModelIcon } from '@/components/common/ProviderAppIcon'
 import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/utils/className'
@@ -25,6 +26,9 @@ export function ModelSelect({
   onVideoModelSelectionModeChange,
   onVideoModelToggle,
 }: ModelSelectProps) {
+  const primaryModelId = selectedModelValues[0] || ''
+  const triggerLabel = cleanVisualModelLabel(currentModelDisplay.label)
+
   return (
     <Popover open={popover.open} onOpenChange={popover.onOpenChange}>
       <PopoverTrigger asChild>
@@ -33,8 +37,8 @@ export function ModelSelect({
           type="button"
           className={cn(modelPillClass, 'max-w-[240px]')}
         >
-          <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
-          <span className="truncate">{currentModelDisplay.label}</span>
+          <VisualModelIcon modelId={primaryModelId} label={currentModelDisplay.label} size={18} />
+          <span className="truncate">{triggerLabel}</span>
           {currentModelDisplay.extraCount > 0 && (
             <span className="ml-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-primary">
               +
@@ -112,6 +116,12 @@ export function ModelSelect({
                         onVideoModelToggle(key)
                       }}
                     >
+                      <VisualModelIcon
+                        modelId={key}
+                        label={model.description || model.name}
+                        size={22}
+                        className="mt-0.5"
+                      />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
                           <span
@@ -120,7 +130,7 @@ export function ModelSelect({
                               isActive ? 'font-medium text-foreground' : 'text-foreground',
                             )}
                           >
-                            {model.description || model.name}
+                            {cleanVisualModelLabel(model.description || model.name)}
                           </span>
                           {model.tags.map(tag => (
                             <Badge key={tag} className={modelTagClassName}>
@@ -149,7 +159,7 @@ export function ModelSelect({
                       type="button"
                       className={cn(
                         modelOptionClassName,
-                        'items-start text-xs',
+                        'items-center text-xs',
                         isActive
                           ? 'border-primary/30 bg-primary/5 text-foreground shadow-sm'
                           : 'border-transparent text-foreground hover:border-border/70 hover:bg-muted/60',
@@ -158,8 +168,9 @@ export function ModelSelect({
                         onImageModelToggle(value)
                       }}
                     >
+                      <VisualModelIcon modelId={value} label={label} size={22} />
                       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-                        <span>{label}</span>
+                        <span>{cleanVisualModelLabel(label)}</span>
                         {tags.map(tag => (
                           <Badge key={tag} className={modelTagClassName}>
                             {tag}
@@ -167,7 +178,7 @@ export function ModelSelect({
                         ))}
                       </div>
                       {isActive && (
-                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                        <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
                       )}
                     </button>
                   )

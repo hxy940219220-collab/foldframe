@@ -6,7 +6,7 @@
 'use client'
 
 import type { DraftListSectionTab } from '../DraftListSection'
-import { ArrowLeft, Dna, LayoutList, Loader2, Maximize2, Minimize2, Network } from 'lucide-react'
+import { ArrowLeft, Dna, LayoutList, Loader2, Maximize2, Minimize2, Network, Palette } from 'lucide-react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useTransClient } from '@/app/i18n/client'
@@ -29,6 +29,7 @@ import { CreateMaterialModal } from '../CreateMaterialModal'
 import { DraftDetailDialog } from '../DraftDetailDialog'
 import { DraftListSection } from '../DraftListSection'
 import { GenerationDetailDialog } from '../GenerationDetailDialog'
+import PlanTabBar from '../PlanTabBar'
 import { InfiniteCanvasStudio } from '../StudioModes/InfiniteCanvasStudio'
 import { VisualEvolutionStudio } from '../StudioModes/VisualEvolutionStudio'
 import { TransferDraftDialog } from '../TransferDraftDialog'
@@ -86,6 +87,10 @@ interface DraftContentModuleProps {
   embedded?: boolean
   /** 是否允许拖拽草稿/素材到发布弹框 */
   enablePublishDrag?: boolean
+  /** 是否在顶部工作台栏中内联展示创作空间切换器 */
+  showPlanSwitcher?: boolean
+  /** 创作空间切换回调 */
+  onPlanChange?: (planId: string) => void
 }
 
 function DraftContentModule({
@@ -98,6 +103,8 @@ function DraftContentModule({
   contentClassName = 'space-y-6 p-4 md:p-6',
   embedded = false,
   enablePublishDrag = false,
+  showPlanSwitcher = false,
+  onPlanChange,
 }: DraftContentModuleProps) {
   const { t } = useTransClient('brandPromotion')
   const {
@@ -319,75 +326,88 @@ function DraftContentModule({
           isImmersiveFullscreen && 'fixed inset-0 z-50 flex flex-col bg-background overflow-hidden',
         )}
       >
+        {!embedded && (
+          <header
+            data-testid="studio-unified-header"
+            className={cn(
+              'sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-border/80 bg-card/90 px-5 py-2.5 backdrop-blur-md shrink-0',
+              isImmersiveFullscreen && 'bg-card/95 px-4 py-2',
+            )}
+          >
+            <div className="flex flex-wrap items-center gap-3 min-w-0">
+              {isImmersiveFullscreen ? (
+                <button
+                  type="button"
+                  onClick={() => handleSelectStudioViewMode('classic')}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted cursor-pointer"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  返回工作台
+                </button>
+              ) : (
+                <div className="flex items-center gap-2.5 shrink-0">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-back text-gradient-foreground shadow-sm shadow-primary/20">
+                    <Palette className="h-4 w-4" />
+                  </div>
+                  <h1 className="text-base font-semibold tracking-tight text-foreground">
+                    {t('studio.title')}
+                  </h1>
+                </div>
+              )}
+
+              {showPlanSwitcher && (
+                <>
+                  <span className="hidden sm:inline-block h-4 w-px bg-border/80 shrink-0" />
+                  <PlanTabBar inline onPlanChange={onPlanChange} />
+                </>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="studio-mode-switcher" role="tablist" aria-label="视觉创作台模式切换">
+                {STUDIO_VIEW_MODES.map((mode) => {
+                  const Icon = mode.icon
+                  const active = effectiveStudioMode === mode.id
+                  return (
+                    <button
+                      key={mode.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      title={mode.description}
+                      data-active={active ? 'true' : 'false'}
+                      onClick={() => handleSelectStudioViewMode(mode.id)}
+                      className={cn('studio-mode-btn')}
+                    >
+                      <Icon className="h-3.5 w-3.5 shrink-0" />
+                      <span>{mode.label}</span>
+                      {mode.badge && <span className="studio-mode-badge">{mode.badge}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {effectiveStudioMode !== 'classic' && (
+                <button
+                  type="button"
+                  title={isImmersiveFullscreen ? '退出全屏 (Esc)' : '全屏专注模式（隐藏导航栏，最大化创作区）'}
+                  onClick={() => setStudioFullscreen(v => !v)}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border bg-card px-3 text-xs font-medium text-foreground shadow-2xs hover:border-primary/40 hover:bg-muted cursor-pointer"
+                >
+                  {isImmersiveFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+                  <span>{isImmersiveFullscreen ? '退出全屏' : '全屏'}</span>
+                </button>
+              )}
+            </div>
+          </header>
+        )}
+
         <div
           className={cn(
             embedded ? 'flex flex-col gap-4 p-4' : contentClassName,
-            isImmersiveFullscreen && 'flex h-full max-w-none flex-col !p-0',
+            isImmersiveFullscreen && 'flex flex-1 min-h-0 max-w-none flex-col !p-0',
           )}
         >
-          {!embedded && (
-            <div
-              className={cn(
-                'workspace-header-row',
-                effectiveStudioMode !== 'classic' && 'workspace-header-compact',
-                isImmersiveFullscreen && 'border-b border-border bg-card/95 px-4 py-2 !mb-0 backdrop-blur shrink-0',
-              )}
-            >
-              <div className="flex items-center gap-2.5">
-                {isImmersiveFullscreen ? (
-                  <button
-                    type="button"
-                    onClick={() => handleSelectStudioViewMode('classic')}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted cursor-pointer"
-                  >
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                    返回工作台
-                  </button>
-                ) : (
-                  <h1 className={cn('workspace-title', effectiveStudioMode !== 'classic' && '!text-lg')}>
-                    {t('studio.title')}
-                  </h1>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="studio-mode-switcher" role="tablist" aria-label="创作工作台模式切换">
-                  {STUDIO_VIEW_MODES.map((mode) => {
-                    const Icon = mode.icon
-                    const active = effectiveStudioMode === mode.id
-                    return (
-                      <button
-                        key={mode.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={active}
-                        title={mode.description}
-                        data-active={active ? 'true' : 'false'}
-                        onClick={() => handleSelectStudioViewMode(mode.id)}
-                        className={cn('studio-mode-btn')}
-                      >
-                        <Icon className="h-3.5 w-3.5 shrink-0" />
-                        <span>{mode.label}</span>
-                        {mode.badge && <span className="studio-mode-badge">{mode.badge}</span>}
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {effectiveStudioMode !== 'classic' && (
-                  <button
-                    type="button"
-                    title={isImmersiveFullscreen ? '退出全屏 (Esc)' : '全屏专注模式（隐藏导航栏，最大化创作区）'}
-                    onClick={() => setStudioFullscreen(v => !v)}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border bg-card px-3 text-xs font-medium text-foreground shadow-2xs hover:border-primary/40 hover:bg-muted cursor-pointer"
-                  >
-                    {isImmersiveFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-                    <span>{isImmersiveFullscreen ? '退出全屏' : '全屏'}</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
 
           {effectiveStudioMode === 'classic' && (
             <>

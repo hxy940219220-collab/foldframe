@@ -6,7 +6,7 @@
 'use client'
 
 import type { TaskListItem } from '@/api/ai/ai.types'
-import { ArrowLeft, FileText, FileVideo, History, RefreshCw, Search, Star, X } from 'lucide-react'
+import { ArrowLeft, FileText, FileVideo, Heart, History, RefreshCw, Search, X } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { agentApi } from '@/api/ai/ai.api'
@@ -226,14 +226,15 @@ export function TasksHistoryPageContent() {
 
           {/* 筛选按钮区域 */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* 收藏筛选按钮 */}
+            {/* 点赞筛选按钮 */}
             <Button
               variant={favoriteOnly ? 'default' : 'outline'}
               size="sm"
+              data-testid="tasks-history-like-filter"
               onClick={handleToggleFavoriteOnly}
               className="gap-1.5 cursor-pointer"
             >
-              <Star className={cn('w-4 h-4', favoriteOnly && 'fill-current')} />
+              <Heart className={cn('w-4 h-4', favoriteOnly && 'fill-red-500 text-red-500')} />
               <span className="hidden sm:inline">{t('history.favoriteOnly')}</span>
             </Button>
 
@@ -266,9 +267,9 @@ export function TasksHistoryPageContent() {
             // 空状态 - 根据筛选条件显示不同提示
             <div className="flex flex-col items-center justify-center py-16">
               {favoriteOnly ? (
-                // 收藏筛选的空状态
+                // 点赞筛选的空状态
                 <>
-                  <Star className="w-16 h-16 text-muted-foreground/30 mb-4" />
+                  <Heart className="w-16 h-16 text-muted-foreground/30 mb-4" />
                   <p className="text-muted-foreground mb-4">{t('history.emptyFavorites')}</p>
                   <Button onClick={handleClearFilters} className="cursor-pointer">
                     {t('history.clearFilters')}

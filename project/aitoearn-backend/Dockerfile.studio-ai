@@ -6,7 +6,8 @@ RUN npm install --prefix /opt/compiler typescript@5.9.3
 COPY apps/aitoearn-ai/src/config.ts apps/aitoearn-ai/src/
 COPY apps/aitoearn-ai/src/app.module.ts apps/aitoearn-ai/src/
 COPY apps/aitoearn-ai/src/core/local-bridge/ apps/aitoearn-ai/src/core/local-bridge/
-COPY apps/aitoearn-ai/src/core/agent/agent.controller.ts apps/aitoearn-ai/src/core/agent/agent.dto.ts apps/aitoearn-ai/src/core/agent/agent.module.ts apps/aitoearn-ai/src/core/agent/
+COPY apps/aitoearn-ai/src/core/agent/agent.controller.ts apps/aitoearn-ai/src/core/agent/agent.dto.ts apps/aitoearn-ai/src/core/agent/agent.module.ts apps/aitoearn-ai/src/core/agent/skill-init.service.ts apps/aitoearn-ai/src/core/agent/
+COPY apps/aitoearn-ai/src/core/agent/skills/ apps/aitoearn-ai/src/core/agent/skills/
 COPY apps/aitoearn-ai/src/core/agent/claude-code-router/claude-code-router.service.ts apps/aitoearn-ai/src/core/agent/claude-code-router/
 COPY apps/aitoearn-ai/src/core/agent/mcp/media.mcp.ts apps/aitoearn-ai/src/core/agent/mcp/task-mcp-http.service.ts apps/aitoearn-ai/src/core/agent/mcp/
 COPY apps/aitoearn-ai/src/core/agent/services/agent-runtime.service.ts apps/aitoearn-ai/src/core/agent/services/
@@ -40,3 +41,5 @@ NODE
 
 FROM aitoearn/aitoearn-ai@sha256:b18f6c878f4f9ce6a639e609efac3e958eb08b25a1f54fe823a03ed7675ed5f7
 COPY --from=compiler /out /app
+COPY apps/aitoearn-ai/src/core/agent/skills/ /app/apps/aitoearn-ai/src/core/agent/skills/
+COPY apps/aitoearn-ai/src/core/agent/skills/ /app/.claude-session/.claude/skills/

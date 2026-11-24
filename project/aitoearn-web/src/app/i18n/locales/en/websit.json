@@ -1,32 +1,37 @@
 {
+  "helpDocs": {
+    "title": "PostPilot Documentation",
+    "description": "Complete product guide for PostPilot — AI visual creation, Infinite Canvas, Multi-Dimensional Editing, Phone Layout Studio, and Local LLM Engine setup.",
+    "keywords": "PostPilot, documentation, AI content studio, Infinite Canvas, Multi-Dimensional Editing, social publishing, local LLM"
+  },
   "privacyPolicy": {
-    "title": "Privacy policy",
-    "description": "Read the service provider’s policy on the collection, use and storage of personal data.",
-    "keywords": "privacy policy, data protection, personal information, GDPR compliance, data security, user privacy"
+    "title": "Privacy Policy",
+    "description": "How PostPilot handles creative assets, local model credentials, and publishing workflows under a local-first architecture.",
+    "keywords": "PostPilot, privacy policy, local-first, data protection, credential isolation"
   },
   "termsOfService": {
-    "title": "Terms of service",
-    "description": "Read the provider’s terms for accounts, content and payments.",
-    "keywords": "terms of service, user agreement, platform rules, content guidelines, payment terms"
+    "title": "Terms of Service",
+    "description": "Usage terms, AI-generated content ownership, and third-party model and platform compliance for PostPilot.",
+    "keywords": "PostPilot, terms of service, user agreement, AI content guidelines"
   },
   "dataDeletion": {
-    "title": "Account and data deletion",
-    "description": "Read the provider’s instructions for deleting your account and personal data.",
-    "keywords": "data deletion, account removal, privacy rights, data erasure, delete account, right to be forgotten"
+    "title": "Account & Data Deletion",
+    "description": "How to cleanly remove local creative assets, drafts, and local engine sessions in PostPilot.",
+    "keywords": "PostPilot, data deletion, local cleanup, sign out"
   },
   "dataProtection": {
-    "title": "Data protection agreement",
-    "description": "Review the provider’s agreement on data processing, security and user rights.",
-    "keywords": "data protection, GDPR compliance, data processing, data security, privacy rights, data controller"
+    "title": "Data Protection Overview",
+    "description": "Security practices, loopback bridge token auth, and local storage isolation in PostPilot.",
+    "keywords": "PostPilot, data protection, local bridge security"
   },
   "extensionPrivacy": {
-    "title": "Browser extension privacy",
-    "description": "Read the extension provider’s policy on browser permissions and data use.",
-    "keywords": "extension privacy, browser extension, Chrome extension, data permissions, extension data collection"
+    "title": "Browser Extension Privacy",
+    "description": "Minimal browser permissions and local session sync rules used by the PostPilot extension.",
+    "keywords": "PostPilot, browser extension, permissions, privacy"
   },
   "providerDocument": {
-    "heading": "Service provider documentation",
-    "current": "Read on the provider’s website",
-    "bundled": "View the original included with this version (English)"
+    "heading": "PostPilot Docs",
+    "current": "Back to Help Docs",
+    "bundled": "Back to Studio"
   }
 }

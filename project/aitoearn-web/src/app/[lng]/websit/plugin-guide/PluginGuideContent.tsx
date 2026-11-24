@@ -1,671 +1,324 @@
 /**
- * PluginGuideContent - 浏览器插件图文教学内容组件
- * 客户端组件，包含图片预览交互和国际化翻译
+ * PluginGuideContent - PostPilot 浏览器插件与平台账号连接教程
+ * PostPilot Obsidian + Light Canvas 原生风格，无外部品牌截图残留
  */
 'use client'
 
 import {
+  ArrowRight,
+  BookOpen,
   CheckCircle2,
   ChevronRight,
-  Download,
+  Chrome,
   HelpCircle,
+  KeyRound,
+  Link2,
   Puzzle,
-  Shield,
+  RefreshCw,
+  ShieldCheck,
   Smartphone,
-  ZoomIn,
 } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
-import { useCallback, useState } from 'react'
-import { useTransClient } from '@/app/i18n/client'
-import { isProviderScreenshot, ProviderScreenshotLink } from '@/components/common/ProviderScreenshotLink'
-import { MediaPreview } from '@/components/common/MediaPreview'
+import { useParams } from 'next/navigation'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { cn } from '@/utils/className'
-
-interface PublicImageAsset {
-  src: string
-  width: number
-  height: number
-}
-
-const pluginGuideImages = {
-  pluginGuideImg1: { src: '/assets/plugin-guide-images/pluginGuideImg1.png', width: 1917, height: 941 },
-  pluginGuideImg3: { src: '/assets/plugin-guide-images/pluginGuideImg3.png', width: 1912, height: 1026 },
-  pluginGuideImg4: { src: '/assets/plugin-guide-images/pluginGuideImg4.png', width: 1912, height: 1032 },
-  pluginGuideImg8: { src: '/assets/plugin-guide-images/pluginGuideImg8.png', width: 1912, height: 976 },
-  pluginGuideImg10: { src: '/assets/plugin-guide-images/pluginGuideImg10.png', width: 398, height: 885 },
-  pluginGuideImg11: { src: '/assets/plugin-guide-images/pluginGuideImg11.png', width: 1908, height: 1024 },
-  pluginGuideImg12: { src: '/assets/plugin-guide-images/pluginGuideImg12.png', width: 1910, height: 926 },
-  pluginGuideImg13: { src: '/assets/plugin-guide-images/pluginGuideImg13.png', width: 1908, height: 939 },
-  pluginGuideImg14: { src: '/assets/plugin-guide-images/pluginGuideImg14.png', width: 1905, height: 937 },
-  pluginGuideImg15: { src: '/assets/plugin-guide-images/pluginGuideImg15.png', width: 1896, height: 936 },
-  pluginGuideImg16: { src: '/assets/plugin-guide-images/pluginGuideImg16.png', width: 1915, height: 922 },
-  pluginGuideImg17: { src: '/assets/plugin-guide-images/pluginGuideImg17.png', width: 1897, height: 896 },
-  pluginGuideImg18: { src: '/assets/plugin-guide-images/pluginGuideImg18.png', width: 407, height: 905 },
-  pluginGuideImg19: { src: '/assets/plugin-guide-images/pluginGuideImg19.png', width: 411, height: 904 },
-  pluginGuideImg1_1: { src: '/assets/plugin-guide-images/pluginGuideImg1-1.png', width: 1618, height: 827 },
-  pluginGuideImg1_2: { src: '/assets/plugin-guide-images/pluginGuideImg1-2.png', width: 1878, height: 1015 },
-  pluginGuideImg1_3: { src: '/assets/plugin-guide-images/pluginGuideImg1-3.png', width: 1893, height: 935 },
-  pluginGuideImg1_4: { src: '/assets/plugin-guide-images/pluginGuideImg1-4.png', width: 1789, height: 975 },
-  pluginGuideImg1_5: { src: '/assets/plugin-guide-images/pluginGuideImg1-5.png', width: 1850, height: 940 },
-} satisfies Record<string, PublicImageAsset>
-
-const {
-  pluginGuideImg1,
-  pluginGuideImg3,
-  pluginGuideImg4,
-  pluginGuideImg8,
-  pluginGuideImg10,
-  pluginGuideImg11,
-  pluginGuideImg12,
-  pluginGuideImg13,
-  pluginGuideImg14,
-  pluginGuideImg15,
-  pluginGuideImg16,
-  pluginGuideImg17,
-  pluginGuideImg18,
-  pluginGuideImg19,
-  pluginGuideImg1_1,
-  pluginGuideImg1_2,
-  pluginGuideImg1_3,
-  pluginGuideImg1_4,
-  pluginGuideImg1_5,
-} = pluginGuideImages
-
-// 所有图片列表，用于 MediaPreview
-const ALL_IMAGES = [
-  pluginGuideImg1,
-  pluginGuideImg3,
-  pluginGuideImg4,
-  pluginGuideImg1_1,
-  pluginGuideImg1_2,
-  pluginGuideImg1_3,
-  pluginGuideImg1_4,
-  pluginGuideImg1_5,
-  pluginGuideImg8,
-  pluginGuideImg18,
-  pluginGuideImg19,
-  pluginGuideImg10,
-  pluginGuideImg11,
-  pluginGuideImg12,
-  pluginGuideImg13,
-  pluginGuideImg14,
-  pluginGuideImg15,
-  pluginGuideImg16,
-  pluginGuideImg17,
-]
-
-/**
- * 步骤卡片组件
- */
-interface StepCardProps {
-  stepNumber: number
-  title: string
-  children: React.ReactNode
-  icon?: React.ReactNode
-}
-
-function StepCard({ stepNumber, title, children, icon }: StepCardProps) {
-  return (
-    <div className="relative">
-      {/* 步骤连接线 */}
-      <div className="absolute left-[18px] top-14 bottom-0 w-[2px] bg-gradient-to-b from-[#c565ef]/30 to-[#55D9ED]/15" />
-
-      <div className="flex gap-4 md:gap-6">
-        {/* 步骤编号 */}
-        <div className="shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-[#c565ef] to-[#55D9ED] text-white flex items-center justify-center font-semibold text-sm z-10 shadow-md shadow-[#c565ef]/20">
-          {stepNumber}
-        </div>
-
-        {/* 步骤内容 */}
-        <div className="flex-1 pb-8 md:pb-12">
-          <div className="flex items-center gap-2 mb-3">
-            {icon}
-            <h3 className="text-lg md:text-xl font-semibold">{title}</h3>
-          </div>
-          <div className="space-y-4">{children}</div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/**
- * 图片展示组件
- */
-interface GuideImageProps {
-  src: PublicImageAsset
-  alt: string
-  caption?: string
-  className?: string
-  onClick?: () => void
-}
-
-function GuideImage({ src, alt, caption, className, onClick }: GuideImageProps) {
-  if (isProviderScreenshot(src.src))
-    return <ProviderScreenshotLink src={src.src} description={caption || alt} />
-
-  return (
-    <figure className={cn('my-4', className)}>
-      <div
-        className="group relative overflow-hidden rounded-xl border border-border/50 bg-card p-1.5 shadow-sm cursor-pointer transition-all duration-300 hover:shadow-lg hover:ring-2 hover:ring-[#c565ef]/15 hover:-translate-y-0.5"
-        onClick={onClick}
-      >
-        <Image
-          src={src.src}
-          alt={alt}
-          className="w-full h-auto max-h-[500px] object-contain rounded-md"
-          width={src.width}
-          height={src.height}
-          priority={false}
-          quality={100}
-        />
-        {/* 点击放大提示 */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-all rounded-md">
-          <div className="opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100 transition-all bg-white/90 dark:bg-black/80 rounded-full p-2 shadow-lg">
-            <ZoomIn className="w-5 h-5 text-[#c565ef]" />
-          </div>
-        </div>
-      </div>
-      {caption && (
-        <figcaption className="mt-2 text-sm text-muted-foreground text-center">
-          {caption}
-        </figcaption>
-      )}
-    </figure>
-  )
-}
-
-/**
- * 目录导航组件
- */
-function TableOfContents({ t }: { t: (key: string) => string }) {
-  const sections = [
-    { id: 'installation', label: t('sections.installation') },
-    { id: 'manual-install', label: t('sections.manualInstall') },
-    { id: 'authorize', label: t('sections.authorize') },
-    { id: 'login-account', label: t('sections.loginAccount') },
-    { id: 'sync-account', label: t('sections.syncAccount') },
-    { id: 'faq', label: t('faq.title') },
-  ]
-
-  return (
-    <Card className="relative h-fit overflow-hidden border-border/50 p-4 shadow-sm">
-      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#c565ef] to-[#55D9ED]" />
-      <h4 className="font-semibold mb-3 text-sm text-muted-foreground uppercase tracking-wide">
-        {t('tableOfContents')}
-      </h4>
-      <nav className="space-y-1">
-        {sections.map(section => (
-          <a
-            key={section.id}
-            href={`#${section.id}`}
-            className="flex items-center gap-2 px-2 py-1.5 text-sm rounded-md border-l-2 border-transparent hover:border-[#c565ef]/50 hover:bg-gradient-to-r hover:from-[#c565ef]/5 hover:to-transparent transition-all cursor-pointer"
-          >
-            <ChevronRight className="w-3 h-3" />
-            {section.label}
-          </a>
-        ))}
-      </nav>
-    </Card>
-  )
-}
 
 export default function PluginGuideContent() {
-  const { t } = useTransClient('pluginGuide')
-  const [previewOpen, setPreviewOpen] = useState(false)
-  const [previewIndex, setPreviewIndex] = useState(0)
+  const params = useParams()
+  const activeLng = ((params?.lng as string) || 'zh-CN').toLowerCase()
+  const isZh = activeLng.startsWith('zh')
 
-  // 打开图片预览
-  const openPreview = useCallback((index: number) => {
-    setPreviewIndex(index)
-    setPreviewOpen(true)
-  }, [])
+  const sections = isZh
+    ? [
+        { id: 'overview', label: '插件作用与支持平台' },
+        { id: 'install', label: '1. 安装与启用扩展' },
+        { id: 'authorize', label: '2. 绑定 PostPilot 工作台' },
+        { id: 'creator-login', label: '3. 登录社媒创作者后台' },
+        { id: 'sync', label: '4. 同步账号并一键发布' },
+        { id: 'faq', label: '常见问题排查' },
+      ]
+    : [
+        { id: 'overview', label: 'Overview & Platforms' },
+        { id: 'install', label: '1. Install Extension' },
+        { id: 'authorize', label: '2. Authorize PostPilot' },
+        { id: 'creator-login', label: '3. Sign In to Creator Portals' },
+        { id: 'sync', label: '4. Sync & Publish' },
+        { id: 'faq', label: 'Troubleshooting FAQ' },
+      ]
 
-  // 关闭图片预览
-  const closePreview = useCallback(() => {
-    setPreviewOpen(false)
-  }, [])
-
-  // 将图片转换为 MediaPreview 所需的格式
-  const previewItems = ALL_IMAGES.map((img, index) => ({
-    type: 'image' as const,
-    src: img.src,
-    title: `${t('title')} - ${index + 1}`,
-  }))
+  const platforms = isZh
+    ? ['小红书', '抖音', '微信视频号', '微信公众号', 'B站', '快手', '微博', 'YouTube', 'TikTok', 'Instagram', 'X (Twitter)', 'Facebook', 'Threads']
+    : ['Xiaohongshu', 'Douyin', 'WeChat Channels', 'WeChat OA', 'Bilibili', 'Kuaishou', 'Weibo', 'YouTube', 'TikTok', 'Instagram', 'X (Twitter)', 'Facebook', 'Threads']
 
   return (
-    <div className="relative min-h-screen bg-background">
-      {/* 装饰光晕 */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute top-[30%] -right-40 w-80 h-80 bg-[#c565ef]/3 rounded-full blur-3xl" />
-        <div className="absolute top-[60%] -left-40 w-80 h-80 bg-[#55D9ED]/3 rounded-full blur-3xl" />
-      </div>
-
-      {/* 图片预览组件 */}
-      <MediaPreview
-        open={previewOpen}
-        items={previewItems}
-        initialIndex={previewIndex}
-        onClose={closePreview}
-      />
-
-      {/* 页头区域 */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-[#c565ef]/5 via-[#55D9ED]/3 to-background">
-        {/* 页头装饰光晕 */}
-        <div className="pointer-events-none absolute -top-20 -left-20 w-60 h-60 bg-[#c565ef]/8 rounded-full blur-3xl" />
-        <div className="pointer-events-none absolute -top-10 -right-20 w-60 h-60 bg-[#55D9ED]/8 rounded-full blur-3xl" />
-        <div className="container mx-auto px-4 py-12 md:py-16">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#c565ef]/10 bg-gradient-to-r from-[#c565ef]/5 to-[#55D9ED]/5 px-3 py-1.5 backdrop-blur-sm">
-              <div className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-br from-[#c565ef] to-[#55D9ED]">
-                <Puzzle className="w-3 h-3 text-white" />
-              </div>
-              <span className="text-sm font-medium text-foreground/80">Browser Extension</span>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* 顶部 Hero */}
+      <header className="border-b border-border bg-card">
+        <div className="mx-auto max-w-6xl px-6 py-10 md:py-14">
+          <div className="max-w-3xl space-y-4">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs font-medium text-foreground">
+              <Puzzle className="h-3.5 w-3.5 text-[#6D28D9]" />
+              <span>{isZh ? 'PostPilot 浏览器扩展指南' : 'PostPilot Browser Extension'}</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-[#c565ef] to-[#55D9ED] bg-clip-text text-transparent">
-                {t('title')}
-              </span>
+            <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+              {isZh ? '插件安装和使用教程' : 'Browser Extension Setup & Usage Guide'}
             </h1>
-            <p className="text-lg text-muted-foreground">{t('introduction')}</p>
-            <Alert className="mx-auto mt-6 max-w-2xl border-border/60 bg-background/85 text-left shadow-sm backdrop-blur-sm">
-              <HelpCircle className="h-4 w-4 text-primary" />
+            <p className="text-base leading-relaxed text-muted-foreground">
+              {isZh
+                ? '通过 PostPilot 浏览器扩展，您可以在本地浏览器中安全复用已登录的社媒创作者后台会话，实现小红书、抖音、微信视频号等平台的一键账号同步与自动化发布。'
+                : 'Use the PostPilot browser extension to reuse your active local browser creator sessions for seamless account sync and multi-platform publishing.'}
+            </p>
+
+            <Alert className="border-border bg-background text-left">
+              <Chrome className="h-4 w-4 text-foreground" />
               <div className="min-w-0 flex-1">
-                <AlertTitle>{t('recommendedBrowser.title')}</AlertTitle>
-                <AlertDescription>{t('recommendedBrowser.content')}</AlertDescription>
+                <AlertTitle>{isZh ? '推荐浏览器环境' : 'Recommended Browsers'}</AlertTitle>
+                <AlertDescription className="text-muted-foreground">
+                  {isZh
+                    ? '推荐使用最新版 Google Chrome、Microsoft Edge 或 Arc 等 Chromium 内核浏览器，以获得最稳定的创作者后台同步与发布体验。'
+                    : 'Use the latest Google Chrome, Microsoft Edge, or Arc (Chromium-based) for the most reliable creator session syncing.'}
+                </AlertDescription>
               </div>
             </Alert>
+
+            <div className="flex flex-wrap gap-3 pt-1">
+              <Button asChild size="sm" className="gap-1.5">
+                <Link href="/accounts">
+                  <Link2 className="h-3.5 w-3.5" />
+                  {isZh ? '前往频道与账号管理' : 'Manage Channels'}
+                </Link>
+              </Button>
+              <Button asChild size="sm" variant="outline" className="gap-1.5">
+                <Link href="/websit/help-docs">
+                  <BookOpen className="h-3.5 w-3.5" />
+                  {isZh ? '返回产品帮助文档' : 'Back to Help Docs'}
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
-        {/* 渐变分隔线 */}
-        <div className="h-px bg-gradient-to-r from-transparent via-[#c565ef]/20 to-transparent" />
-      </div>
+      </header>
 
-      {/* 主体内容 */}
-      <div className="container mx-auto px-4 py-8 md:py-12">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* 目录 - 桌面端侧边栏 */}
-          <aside className="hidden w-64 shrink-0 self-start lg:sticky lg:top-0 lg:block">
-            <TableOfContents t={t} />
-          </aside>
+      {/* 主体两栏 */}
+      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-10 lg:flex-row">
+        <aside className="hidden w-60 shrink-0 lg:block">
+          <Card className="sticky top-6 border-border p-4 shadow-none">
+            <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {isZh ? '目录导航' : 'Table of Contents'}
+            </div>
+            <nav className="space-y-1">
+              {sections.map(s => (
+                <a
+                  key={s.id}
+                  href={`#${s.id}`}
+                  className="flex items-center gap-2 rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                  <span>{s.label}</span>
+                </a>
+              ))}
+            </nav>
+          </Card>
+        </aside>
 
-          {/* 教程内容 */}
-          <main className="flex-1 max-w-4xl">
-            {/* ===== 第一部分：安装插件 ===== */}
-            <section id="installation" className="mb-12">
-              <div className="flex items-center gap-3 mb-6 p-4 rounded-xl bg-gradient-to-r from-primary/5 to-transparent border-l-4 border-primary/40">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/15 to-primary/10 flex items-center justify-center">
-                  <Download className="w-5 h-5 text-primary" />
+        <main className="min-w-0 flex-1 space-y-10">
+          {/* 支持平台 */}
+          <section id="overview" className="scroll-mt-8 space-y-4">
+            <h2 className="text-2xl font-bold tracking-tight">
+              {isZh ? '插件作用与支持平台' : 'What the Extension Does'}
+            </h2>
+            <p className="text-sm leading-7 text-muted-foreground">
+              {isZh
+                ? '部分国内社媒平台（例如小红书、微信视频号等）不向个人开发者开放官方直发 API。安装浏览器扩展后，PostPilot 可以在您的本机浏览器内自动填充排版好的图集、视频、标题与话题，免去反复复制粘贴与重新上传。'
+                : 'Some platforms do not provide open publishing APIs for individual creators. The extension bridges your local browser creator session directly with PostPilot so your formatted media, titles, and hashtags publish cleanly.'}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {platforms.map(p => (
+                <span
+                  key={p}
+                  className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground"
+                >
+                  {p}
+                </span>
+              ))}
+            </div>
+          </section>
+
+          {/* 步骤 1 */}
+          <section id="install" className="scroll-mt-8">
+            <Card className="border-border p-6 shadow-none space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-back text-sm font-semibold text-white shadow-xs shadow-primary/25">
+                  1
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold">{t('sections.installation')}</h2>
+                <h2 className="text-lg font-semibold">
+                  {isZh ? '安装并启用浏览器扩展' : 'Install & Enable the Browser Extension'}
+                </h2>
               </div>
+              <ol className="list-decimal space-y-2.5 pl-5 text-sm leading-6 text-muted-foreground">
+                <li>
+                  {isZh
+                    ? '在浏览器右上角点击扩展图标（或地址栏输入 chrome://extensions/）打开「扩展程序管理」页面。'
+                    : 'Open chrome://extensions/ in your Chromium browser.'}
+                </li>
+                <li>
+                  {isZh
+                    ? '如使用本地离线扩展包（.crx 或已解压目录），请先在右上角开启「开发者模式（Developer mode）」。'
+                    : 'Enable Developer Mode in the top-right corner when loading a local package.'}
+                </li>
+                <li>
+                  {isZh
+                    ? '将扩展包拖入页面（或点击「加载已解压的扩展程序」选择本地扩展目录），确认添加并将其固定到浏览器工具栏。'
+                    : 'Drag the package into the page (or click Load Unpacked) and pin the extension to your toolbar.'}
+                </li>
+              </ol>
+            </Card>
+          </section>
 
-              <StepCard
-                stepNumber={1}
-                title={t('steps.step1.title')}
-                icon={<Puzzle className="w-5 h-5 text-muted-foreground" />}
-              >
-                <p className="text-muted-foreground">{t('steps.step1.content')}</p>
-                <GuideImage
-                  src={pluginGuideImg1}
-                  alt={t('steps.step1.caption')}
-                  caption={t('steps.step1.caption')}
-                  onClick={() => openPreview(0)}
-                />
-              </StepCard>
-
-              <StepCard stepNumber={2} title={t('steps.step2.title')}>
-                <p className="text-muted-foreground">{t('steps.step2.content')}</p>
-                <GuideImage
-                  src={pluginGuideImg1_1}
-                  alt={t('steps.step2.caption')}
-                  caption={t('steps.step2.caption')}
-                  onClick={() => openPreview(3)}
-                />
-
-                <Alert className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
-                  <HelpCircle className="h-4 w-4 text-blue-600" />
-                  <div className="min-w-0 flex-1">
-                    <AlertTitle className="mb-2 leading-snug text-blue-800 dark:text-blue-300">
-                      {t('steps.step2.note')}
-                    </AlertTitle>
-                    <AlertDescription className="text-blue-700 dark:text-blue-400">
-                      <ul className="mt-0 list-disc space-y-3 pl-5">
-                        <li>
-                          <span className="font-medium">{t('steps.step2.channels.chrome.title')}</span>
-                          {t('steps.step2.channels.chrome.content')}
-                        </li>
-                        <li>
-                          <span className="font-medium">{t('steps.step2.channels.github.title')}</span>
-                          {t('steps.step2.channels.github.content')}
-                        </li>
-                        <li>
-                          <span className="font-medium">{t('steps.step2.channels.china.title')}</span>
-                          {t('steps.step2.channels.china.content')}
-                        </li>
-                      </ul>
-                      <p className="mt-3">
-                        {t('steps.step2.updateNote.prefix')}
-                        <Link
-                          href="/websit/plugin-update-docs"
-                          className="mx-1 font-medium text-blue-800 underline underline-offset-4 dark:text-blue-300"
-                        >
-                          {t('steps.step2.updateNote.linkText')}
-                        </Link>
-                        {t('steps.step2.updateNote.suffix')}
-                      </p>
-                    </AlertDescription>
-                  </div>
-                </Alert>
-              </StepCard>
-            </section>
-
-            {/* ===== 第二部分：手动安装（可选） ===== */}
-            <section id="manual-install" className="mb-12">
-              <div className="flex items-center gap-3 mb-6 p-4 rounded-xl bg-gradient-to-r from-orange-500/5 to-transparent border-l-4 border-orange-500/40">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500/15 to-orange-500/10 flex items-center justify-center">
-                  <Smartphone className="w-5 h-5 text-orange-500" />
+          {/* 步骤 2 */}
+          <section id="authorize" className="scroll-mt-8">
+            <Card className="border-border p-6 shadow-none space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-back text-sm font-semibold text-white shadow-xs shadow-primary/25">
+                  2
                 </div>
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-bold">{t('sections.manualInstall')}</h2>
-                  <p className="text-sm text-muted-foreground">{t('sections.manualInstallDesc')}</p>
-                </div>
+                <h2 className="text-lg font-semibold">
+                  {isZh ? '授权连接当前 PostPilot 工作台' : 'Authorize Your PostPilot Workspace'}
+                </h2>
               </div>
+              <div className="space-y-2.5 text-sm leading-6 text-muted-foreground">
+                <p>
+                  {isZh
+                    ? '保持 PostPilot 工作台页面处于登录状态，点击浏览器工具栏中的扩展图标：'
+                    : 'Keep PostPilot signed in and click the extension icon in your toolbar:'}
+                </p>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <KeyRound className="mt-1 h-4 w-4 shrink-0 text-[#6D28D9]" />
+                    <span>
+                      {isZh
+                        ? '点击扩展弹窗中的「立即授权（Authorize Now）」，授予当前本地 PostPilot 站点连接权限。'
+                        : 'Click "Authorize Now" inside the extension popup to grant access to your PostPilot workspace.'}
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <ShieldCheck className="mt-1 h-4 w-4 shrink-0 text-[#6D28D9]" />
+                    <span>
+                      {isZh
+                        ? '授权完成后刷新 PostPilot 页面，顶部/侧栏插件状态将显示为「已就绪」。'
+                        : 'Refresh PostPilot and verify the extension indicator shows Ready.'}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </Card>
+          </section>
 
-              <Alert className="mb-6 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
-                <HelpCircle className="h-4 w-4 text-amber-600" />
+          {/* 步骤 3 */}
+          <section id="creator-login" className="scroll-mt-8">
+            <Card className="border-border p-6 shadow-none space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-back text-sm font-semibold text-white shadow-xs shadow-primary/25">
+                  3
+                </div>
+                <h2 className="text-lg font-semibold">
+                  {isZh ? '登录对应社媒主站与创作者后台' : 'Sign In to Both Main Site & Creator Studio'}
+                </h2>
+              </div>
+              <p className="text-sm leading-6 text-muted-foreground">
+                {isZh
+                  ? '在同一个浏览器窗口中登录您计划发布的社交媒体账号。针对小红书等平台，请务必同时完成主站与创作者服务平台的登录：'
+                  : 'Sign into your target social accounts in the same browser window. For platforms like Xiaohongshu, make sure both the main website and the creator studio portal are logged in:'}
+              </p>
+              <Alert className="border-amber-500/30 bg-amber-50/70 dark:bg-amber-950/20">
+                <Smartphone className="h-4 w-4 text-amber-600" />
                 <div className="min-w-0 flex-1">
-                  <AlertTitle className="mb-2 leading-snug text-amber-800 dark:text-amber-300">
-                    {t('manualInstall.tip')}
+                  <AlertTitle className="text-amber-900 dark:text-amber-200">
+                    {isZh ? '小红书创作者中心提示' : 'Xiaohongshu Creator Studio Tip'}
                   </AlertTitle>
-                  <AlertDescription className="text-amber-700 dark:text-amber-400">
-                    {t('manualInstall.tipPrefix')}
-                    <a
-                      href="#authorize"
-                      className="mx-1 font-medium text-amber-800 underline underline-offset-4 dark:text-amber-300"
-                    >
-                      {t('manualInstall.tipLinkText')}
-                    </a>
-                    {t('manualInstall.tipSuffix')}
+                  <AlertDescription className="text-amber-800/90 dark:text-amber-300">
+                    {isZh
+                      ? '请先访问小红书主页并登录，再进入小红书创作者中心（creator.xiaohongshu.com）确认已进入发笔记后台。两者均保持登录后，插件即可稳定读取登录状态。'
+                      : 'Sign in on xiaohongshu.com AND open creator.xiaohongshu.com to confirm creator portal access before syncing.'}
                   </AlertDescription>
                 </div>
               </Alert>
+            </Card>
+          </section>
 
-              <div className="space-y-6">
-                <Card className="p-6 border-l-4 border-l-[#c565ef]/30 hover:border-l-[#c565ef]/60 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#c565ef]/20 to-[#55D9ED]/20 flex items-center justify-center text-xs font-semibold text-foreground">
-                      1
-                    </span>
-                    {t('manualInstall.step1.title')}
-                  </h4>
-                  <p className="text-muted-foreground mb-4">{t('manualInstall.step1.content')}</p>
-                  <GuideImage
-                    src={pluginGuideImg3}
-                    alt={t('manualInstall.step1.title')}
-                    onClick={() => openPreview(1)}
-                  />
-                </Card>
-
-                <Card className="p-6 border-l-4 border-l-[#c565ef]/30 hover:border-l-[#c565ef]/60 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#c565ef]/20 to-[#55D9ED]/20 flex items-center justify-center text-xs font-semibold text-foreground">
-                      2
-                    </span>
-                    {t('manualInstall.step2.title')}
-                  </h4>
-                  <p className="text-muted-foreground mb-4">{t('manualInstall.step2.content')}</p>
-                  <GuideImage
-                    src={pluginGuideImg4}
-                    alt={t('manualInstall.step2.title')}
-                    onClick={() => openPreview(2)}
-                  />
-                </Card>
-
-                <Card className="p-6 border-l-4 border-l-[#c565ef]/30 hover:border-l-[#c565ef]/60 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#c565ef]/20 to-[#55D9ED]/20 flex items-center justify-center text-xs font-semibold text-foreground">
-                      3
-                    </span>
-                    {t('manualInstall.step3.title')}
-                  </h4>
-                  <p className="text-muted-foreground mb-4">{t('manualInstall.step3.content')}</p>
-                  <GuideImage
-                    src={pluginGuideImg1_2}
-                    alt={t('manualInstall.step3.title')}
-                    onClick={() => openPreview(4)}
-                  />
-                </Card>
-
-                <Card className="p-6 border-l-4 border-l-[#c565ef]/30 hover:border-l-[#c565ef]/60 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#c565ef]/20 to-[#55D9ED]/20 flex items-center justify-center text-xs font-semibold text-foreground">
-                      4
-                    </span>
-                    {t('manualInstall.step4.title')}
-                  </h4>
-                  <p className="text-muted-foreground mb-4">{t('manualInstall.step4.content')}</p>
-                  <GuideImage
-                    src={pluginGuideImg1_3}
-                    alt={t('manualInstall.step4.title')}
-                    onClick={() => openPreview(5)}
-                  />
-                </Card>
-
-                <Card className="p-6 border-l-4 border-l-[#c565ef]/30 hover:border-l-[#c565ef]/60 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#c565ef]/20 to-[#55D9ED]/20 flex items-center justify-center text-xs font-semibold text-foreground">
-                      5
-                    </span>
-                    {t('manualInstall.step5.title')}
-                  </h4>
-                  <p className="text-muted-foreground mb-4">{t('manualInstall.step5.content')}</p>
-                  <GuideImage
-                    src={pluginGuideImg1_4}
-                    alt={t('manualInstall.step5.title')}
-                    onClick={() => openPreview(6)}
-                  />
-                </Card>
-
-                <Card className="p-6 border-l-4 border-l-[#c565ef]/30 hover:border-l-[#c565ef]/60 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-gradient-to-br from-[#c565ef]/20 to-[#55D9ED]/20 flex items-center justify-center text-xs font-semibold text-foreground">
-                      6
-                    </span>
-                    {t('manualInstall.step6.title')}
-                  </h4>
-                  <p className="text-muted-foreground mb-4">{t('manualInstall.step6.content')}</p>
-                  <GuideImage
-                    src={pluginGuideImg1_5}
-                    alt={t('manualInstall.step6.title')}
-                    onClick={() => openPreview(7)}
-                  />
-                </Card>
-              </div>
-            </section>
-
-            {/* ===== 第三部分：授权插件 ===== */}
-            <section id="authorize" className="mb-12">
-              <div className="flex items-center gap-3 mb-6 p-4 rounded-xl bg-gradient-to-r from-green-500/5 to-transparent border-l-4 border-green-500/40">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500/15 to-green-500/10 flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-green-500" />
+          {/* 步骤 4 */}
+          <section id="sync" className="scroll-mt-8">
+            <Card className="border-border p-6 shadow-none space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-back text-sm font-semibold text-white shadow-xs shadow-primary/25">
+                  4
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold">{t('sections.authorize')}</h2>
+                <h2 className="text-lg font-semibold">
+                  {isZh ? '同步频道并在发布待办中分发内容' : 'Sync Accounts & Dispatch from Publish Queue'}
+                </h2>
               </div>
-
-              <StepCard stepNumber={3} title={t('steps.step3.title')}>
-                <p className="text-muted-foreground">{t('steps.step3.content')}</p>
-                <GuideImage
-                  src={pluginGuideImg8}
-                  alt={t('steps.step3.caption')}
-                  caption={t('steps.step3.caption')}
-                  onClick={() => openPreview(8)}
-                />
-              </StepCard>
-
-              <StepCard stepNumber={4} title={t('steps.step5.title')}>
-                <p className="text-muted-foreground">{t('steps.step5.notLoggedInContent')}</p>
-                <GuideImage
-                  src={pluginGuideImg18}
-                  alt={t('steps.step5.notLoggedInCaption')}
-                  caption={t('steps.step5.notLoggedInCaption')}
-                  onClick={() => openPreview(9)}
-                />
-                <p className="text-muted-foreground">{t('steps.step5.loggedInContent')}</p>
-                <GuideImage
-                  src={pluginGuideImg19}
-                  alt={t('steps.step5.loggedInCaption')}
-                  caption={t('steps.step5.loggedInCaption')}
-                  onClick={() => openPreview(10)}
-                />
-              </StepCard>
-
-              <StepCard stepNumber={5} title={t('steps.step6.title')}>
-                <p className="text-muted-foreground">{t('steps.step6.content')}</p>
-                <GuideImage
-                  src={pluginGuideImg10}
-                  alt={t('steps.step6.caption1')}
-                  caption={t('steps.step6.caption1')}
-                  onClick={() => openPreview(11)}
-                />
-                <GuideImage
-                  src={pluginGuideImg11}
-                  alt={t('steps.step6.caption2')}
-                  caption={t('steps.step6.caption2')}
-                  onClick={() => openPreview(12)}
-                />
-              </StepCard>
-            </section>
-
-            {/* ===== 第四部分：登录账号 ===== */}
-            <section id="login-account" className="mb-12">
-              <div className="flex items-center gap-3 mb-6 p-4 rounded-xl bg-gradient-to-r from-purple-500/5 to-transparent border-l-4 border-purple-500/40">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/15 to-purple-500/10 flex items-center justify-center">
-                  <Smartphone className="w-5 h-5 text-purple-500" />
-                </div>
-                <h2 className="text-2xl md:text-3xl font-bold">{t('sections.loginAccount')}</h2>
+              <ul className="space-y-2.5 text-sm leading-6 text-muted-foreground">
+                <li className="flex items-start gap-2.5">
+                  <RefreshCw className="mt-1 h-4 w-4 shrink-0 text-foreground" />
+                  <span>
+                    {isZh
+                      ? '在扩展面板或「频道管理」页面点击「同步账号」，已登录的平台账号会自动出现在 PostPilot 频道列表中。'
+                      : 'Click Sync inside the extension or Channels page to import active accounts into PostPilot.'}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-foreground" />
+                  <span>
+                    {isZh
+                      ? '回到「AI 发布 → 排版工坊」完成仿真手机预览与文案微调，点击「存入发布待办」即可选择对应频道定时或立即发布。'
+                      : 'Finish layout & copy in AI Publish → Layout Studio and dispatch to your synced channels.'}
+                  </span>
+                </li>
+              </ul>
+              <div className="pt-2">
+                <Button asChild size="sm" variant="outline" className="gap-1.5">
+                  <Link href="/ai-social">
+                    {isZh ? '前往排版工坊体验发布流程' : 'Go to Layout Studio'}
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
               </div>
+            </Card>
+          </section>
 
-              <StepCard stepNumber={6} title={t('steps.step7.title')}>
-                <p className="text-muted-foreground">{t('steps.step7.loginContent')}</p>
-                <GuideImage
-                  src={pluginGuideImg12}
-                  alt={t('steps.step7.caption')}
-                  caption={t('steps.step7.caption')}
-                  onClick={() => openPreview(13)}
-                />
-              </StepCard>
-
-              <StepCard stepNumber={7} title={t('steps.step7b.title')}>
-                <p className="text-muted-foreground">{t('steps.step7b.content')}</p>
-                <GuideImage
-                  src={pluginGuideImg13}
-                  alt={t('steps.step7b.caption1')}
-                  caption={t('steps.step7b.caption1')}
-                  onClick={() => openPreview(14)}
-                />
-
-                <Alert className="bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800">
-                  <HelpCircle className="h-4 w-4 text-amber-600" />
-                  <div className="min-w-0 flex-1">
-                    <AlertTitle className="mb-2 leading-snug text-amber-800 dark:text-amber-300">
-                      {t('steps.step7b.importantNote')}
-                    </AlertTitle>
-                    <AlertDescription className="text-amber-700 dark:text-amber-400">
-                      {t('steps.step7b.importantNoteContent')}
-                    </AlertDescription>
-                  </div>
-                </Alert>
-
-                <GuideImage
-                  src={pluginGuideImg14}
-                  alt={t('steps.step7b.caption2')}
-                  caption={t('steps.step7b.caption2')}
-                  onClick={() => openPreview(15)}
-                />
-              </StepCard>
-            </section>
-
-            {/* ===== 第五部分：同步账号 ===== */}
-            <section id="sync-account" className="mb-12">
-              <div className="flex items-center gap-3 mb-6 p-4 rounded-xl bg-gradient-to-r from-blue-500/5 to-transparent border-l-4 border-blue-500/40">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/15 to-blue-500/10 flex items-center justify-center">
-                  <CheckCircle2 className="w-5 h-5 text-blue-500" />
-                </div>
-                <h2 className="text-2xl md:text-3xl font-bold">{t('sections.syncAccount')}</h2>
-              </div>
-
-              <StepCard stepNumber={8} title={t('steps.step8.title')}>
-                <p className="text-muted-foreground">{t('steps.step8.content')}</p>
-                <GuideImage
-                  src={pluginGuideImg15}
-                  alt={t('steps.step8.caption')}
-                  caption={t('steps.step8.caption')}
-                  onClick={() => openPreview(16)}
-                />
-              </StepCard>
-
-              <StepCard stepNumber={9} title={t('steps.step9.title')}>
-                <p className="text-muted-foreground">{t('steps.step9.content')}</p>
-                <GuideImage
-                  src={pluginGuideImg16}
-                  alt={t('steps.step9.caption1')}
-                  caption={t('steps.step9.caption1')}
-                  onClick={() => openPreview(17)}
-                />
-                <GuideImage
-                  src={pluginGuideImg17}
-                  alt={t('steps.step9.caption2')}
-                  caption={t('steps.step9.caption2')}
-                  onClick={() => openPreview(18)}
-                />
-              </StepCard>
-
-              {/* 完成提示 */}
-              <div className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-[#c565ef]/8 to-[#55D9ED]/8 border border-[#c565ef]/15 shadow-sm">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#c565ef] to-[#55D9ED] flex items-center justify-center shrink-0 shadow-md shadow-[#c565ef]/20">
-                    <CheckCircle2 className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">
-                      {t('steps.complete.title')}
-                    </h3>
-                    <p className="text-muted-foreground">
-                      {t('steps.complete.content')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* ===== FAQ 部分 ===== */}
-            <section id="faq" className="mb-12">
-              <div className="flex items-center gap-3 mb-6 p-4 rounded-xl bg-gradient-to-r from-violet-500/5 to-transparent border-l-4 border-violet-500/40">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500/15 to-violet-500/10 flex items-center justify-center">
-                  <HelpCircle className="w-5 h-5 text-violet-500" />
-                </div>
-                <h2 className="text-2xl md:text-3xl font-bold">{t('faq.title')}</h2>
-              </div>
-
-              <div className="space-y-4">
-                <Card className="p-6 border-l-4 border-l-[#c565ef]/30 hover:shadow-md transition-shadow">
-                  <h4 className="font-semibold mb-2 flex items-start gap-2">
-                    <span className="bg-gradient-to-r from-[#c565ef] to-[#55D9ED] bg-clip-text text-transparent font-bold">Q:</span>
-                    {t('faq.q1.question')}
-                  </h4>
-                  <p className="text-muted-foreground pl-6">
-                    <span className="bg-gradient-to-r from-[#55D9ED] to-[#c565ef] bg-clip-text text-transparent font-semibold">A: </span>
-                    {t('faq.q1.answer')}
-                  </p>
-                </Card>
-              </div>
-            </section>
-          </main>
-        </div>
+          {/* FAQ */}
+          <section id="faq" className="scroll-mt-8 space-y-4">
+            <div className="flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-foreground" />
+              <h2 className="text-2xl font-bold tracking-tight">
+                {isZh ? '常见问题排查' : 'Troubleshooting FAQ'}
+              </h2>
+            </div>
+            <div className="space-y-3">
+              <Card className="border-border p-5 shadow-none">
+                <h3 className="text-sm font-semibold">
+                  {isZh ? 'Q：已经登录了小红书，为什么插件依然提示未登录？' : 'Q: I logged into Xiaohongshu, why does it still show not logged in?'}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {isZh
+                    ? 'A：通常是因为只登录了小红书浏览主页，尚未打开「小红书创作者中心（creator.xiaohongshu.com）」。请在同一浏览器打开创作者中心并完成登录，再回到 PostPilot 刷新同步。'
+                    : 'A: Make sure you also open and authenticate inside creator.xiaohongshu.com in the same browser profile, then refresh PostPilot.'}
+                </p>
+              </Card>
+              <Card className="border-border p-5 shadow-none">
+                <h3 className="text-sm font-semibold">
+                  {isZh ? 'Q：使用多账号运营时如何切换？' : 'Q: How do I manage multiple creator accounts?'}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {isZh
+                    ? 'A：建议使用浏览器的独立用户配置文件（Chrome Profile）隔离不同账号环境，避免同一窗口内 Cookie 互相覆盖。'
+                    : 'A: Use separate browser profiles (Chrome Profiles) for each account to keep cookies isolated cleanly.'}
+                </p>
+              </Card>
+            </div>
+          </section>
+        </main>
       </div>
     </div>
   )

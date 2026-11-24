@@ -5,14 +5,18 @@ export function getOssUrl(path?: string) {
   if (
     path.startsWith('http')
     || path.startsWith('https')
+    || path.startsWith('/')
     || path.startsWith('ossProxy')
     || path.startsWith('/ossProxy/')
     || path.startsWith('blob:http')
     || path.startsWith('blob:https')
+    || path.startsWith('data:')
   ) {
     return path
   }
-  return `${process.env.NEXT_PUBLIC_OSS_URL}${path}`
+  const base = process.env.NEXT_PUBLIC_OSS_URL || '/oss/'
+  const normalizedBase = base.endsWith('/') ? base : `${base}/`
+  return `${normalizedBase}${path.replace(/^\/+/, '')}`
 }
 
 export interface OssThumbnailOptions {

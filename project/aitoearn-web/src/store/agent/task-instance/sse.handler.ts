@@ -179,11 +179,34 @@ function handleStreamEvent(ctx: ISSEHandlerContext, msg: ISSEMessage): void {
   }
 }
 
+function recordUsageIfPresent(ctx: ISSEHandlerContext, rawUsage: any, model?: string): void {
+  if (!rawUsage || typeof rawUsage !== 'object') return
+  const inputTokens = Number(rawUsage.input_tokens || 0) || 0
+  const outputTokens = Number(rawUsage.output_tokens || 0) || 0
+  const cacheReadTokens = Number(rawUsage.cache_read_input_tokens || 0) || 0
+  const cacheCreationTokens = Number(rawUsage.cache_creation_input_tokens || 0) || 0
+  const totalTokens = inputTokens + outputTokens + cacheReadTokens + cacheCreationTokens
+  if (totalTokens <= 0) return
+  ctx.updateData(prev => ({
+    contextUsage: {
+      inputTokens,
+      outputTokens,
+      cacheReadTokens,
+      cacheCreationTokens,
+      totalTokens,
+      model: model || prev.contextUsage?.model,
+    },
+  }))
+}
+
 /**
  * 处理 assistant 消息
  */
 function handleAssistantMessage(ctx: ISSEHandlerContext, msg: ISSEMessage): void {
   const assistantMsg = msg.message as any
+  if (assistantMsg?.message?.usage) {
+    recordUsageIfPresent(ctx, assistantMsg.message.usage, assistantMsg.message.model)
+  }
   if (assistantMsg?.message?.content && Array.isArray(assistantMsg.message.content)) {
     assistantMsg.message.content.forEach((item: any) => {
       if (item.type === 'tool_use') {
@@ -231,6 +254,10 @@ function handleResultMessage(ctx: ISSEHandlerContext, msg: ISSEMessage): void {
   const messageData = msg.data || msg.message
   if (!messageData)
     return
+
+  if (messageData.usage) {
+    recordUsageIfPresent(ctx, messageData.usage)
+  }
 
   // 获取 result 数组：优先从 messageData.result 获取，否则将 messageData 视为单个结果
   const resultArray: any[] = Array.isArray(messageData.result) ? messageData.result : [messageData]

@@ -1,8 +1,8 @@
 {
   "studio": {
-    "home": "首页",
-    "title": "创作工作台",
-    "compose": "创作提示词",
+    "home": "默认空间",
+    "title": "视觉创作台",
+    "compose": "视觉提示词",
     "library": "媒体资源",
     "reference": "添加参考素材",
     "clear": "清空输入和参考素材",
@@ -10,8 +10,8 @@
     "images": "{{count}} 张",
     "outputs": "{{count}} 条",
     "generate": "生成",
-    "videoPrompt": "上传或拖拽参考图，描述你想生成的视频画面、脚本，或输入 @ 引用素材…",
-    "imagePrompt": "上传或拖拽参考图，输入提示词或 @ 引用素材，描述你想生成的画面…",
+    "videoPrompt": "上传或拖拽参考图，描述你想生成的视频画面与运镜，或输入 @ 引用素材…",
+    "imagePrompt": "上传或拖拽参考图，输入画面提示词或 @ 引用素材，描述你想生成的视觉成片…",
     "emptyHint": "生成的内容会出现在这里。选一个提示词，开始第一次创作。",
     "product": "产品特写",
     "story": "日常故事",
@@ -401,9 +401,9 @@
     "platformIssueHint": "如果您的草稿不需要适配 {{platform}} 平台，可以取消选择目标平台"
   },
   "planTab": {
-    "more": "更多",
-    "moreTitle": "所有草稿箱",
-    "newPlan": "新建",
+    "more": "管理",
+    "moreTitle": "全部创作空间",
+    "newPlan": "新建空间",
     "totalCount": "共 {{count}} 个",
     "loadMore": "加载更多",
     "editPlan": "编辑",
@@ -413,7 +413,7 @@
     "noMore": "已全部加载"
   },
   "secondaryTab": {
-    "contentManagement": "内容创作",
+    "contentManagement": "视觉创作",
     "dataAnalysis": "数据分析"
   },
   "qrcode": {

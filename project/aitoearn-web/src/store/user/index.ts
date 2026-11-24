@@ -16,6 +16,7 @@ export interface UserInfo {
   updateTime: string
   _id: string
   avatar?: string
+  hasPassword?: boolean
   score?: number
   income?: number
   popularizeCode?: string

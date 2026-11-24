@@ -43,8 +43,8 @@
       "failed": "Failed"
     },
     "rate": "Rate",
-    "favorite": "Favorite",
-    "unfavorite": "Unfavorite",
+    "favorite": "Like",
+    "unfavorite": "Liked",
     "editTitle": "Edit Title",
     "share": "Shares",
     "titleLabel": "Task Title",
@@ -127,8 +127,8 @@
       "secondsUnit": "s"
     },
     "searchPlaceholder": "Search tasks...",
-    "favoriteOnly": "My Favorites",
-    "emptyFavorites": "No favorite tasks",
+    "favoriteOnly": "My Likes",
+    "emptyFavorites": "No liked tasks yet",
     "emptySearch": "No matching tasks found",
     "clearFilters": "Clear Filters"
   },

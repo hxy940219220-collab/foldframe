@@ -433,17 +433,20 @@ export class AgentRuntimeService {
   }
 
   private resolveAgentEngine(requestedModel?: string, existingSessionId?: string): 'claude-sdk' | LocalAgentEngineName {
+    const trimmedModel = (requestedModel || '').trim()
+    if (trimmedModel) {
+      if (/^agy(?:[:/]|$)/i.test(trimmedModel)) return 'agy'
+      if (/^codex(?:[:/]|$)/i.test(trimmedModel)) return 'codex'
+      if (/^grok(?:[:/]|$)/i.test(trimmedModel)) return 'grok'
+      if (/^workbuddy(?:[:/]|$)/i.test(trimmedModel)) return 'workbuddy'
+      // Explicit third-party / non-local model requested -> route via Claude SDK / router
+      return 'claude-sdk'
+    }
     if (existingSessionId) {
       if (/^agy:/i.test(existingSessionId)) return 'agy'
       if (/^codex:/i.test(existingSessionId)) return 'codex'
       if (/^grok:/i.test(existingSessionId)) return 'grok'
       if (/^workbuddy:/i.test(existingSessionId)) return 'workbuddy'
-    }
-    if (requestedModel) {
-      if (/^agy(?:[:/]|$)/i.test(requestedModel)) return 'agy'
-      if (/^codex(?:[:/]|$)/i.test(requestedModel)) return 'codex'
-      if (/^grok(?:[:/]|$)/i.test(requestedModel)) return 'grok'
-      if (/^workbuddy(?:[:/]|$)/i.test(requestedModel)) return 'workbuddy'
     }
     const configured = config.agent.engine || 'claude-sdk'
     if (configured === 'agy' || configured === 'codex' || configured === 'grok' || configured === 'workbuddy') {
@@ -459,18 +462,56 @@ export class AgentRuntimeService {
     return candidate && candidate !== 'default' ? candidate : undefined
   }
 
+  private estimateRoughTokens(text: string): number {
+    if (!text) return 0
+    let cjk = 0
+    for (let i = 0; i < text.length; i++) {
+      const code = text.charCodeAt(i)
+      if (code >= 0x4E00 && code <= 0x9FFF) cjk++
+    }
+    const rest = text.length - cjk
+    return Math.max(1, Math.round(cjk * 0.72 + rest * 0.28))
+  }
+
+  private buildHistoryReplayContext(historicalMessages?: Array<Record<string, unknown>>): string {
+    if (!historicalMessages || historicalMessages.length === 0) return ''
+    const lines: string[] = []
+    for (const msg of historicalMessages.slice(-12)) {
+      const type = String(msg?.type || '')
+      if (type === 'user') {
+        const raw = msg.content ?? (msg.message as any)?.content
+        const text = typeof raw === 'string'
+          ? raw
+          : Array.isArray(raw)
+            ? raw.filter((b: any) => b?.type === 'text' && b?.text).map((b: any) => b.text).join('\n')
+            : ''
+        if (text.trim()) lines.push(`User: ${text.trim().slice(0, 1200)}`)
+      }
+      else if (type === 'assistant') {
+        const raw = (msg.message as any)?.content
+        const text = Array.isArray(raw)
+          ? raw.filter((b: any) => b?.type === 'text' && b?.text).map((b: any) => b.text).join('\n')
+          : ''
+        if (text.trim()) lines.push(`Assistant: ${text.trim().slice(0, 1500)}`)
+      }
+    }
+    if (lines.length === 0) return ''
+    return `## Conversation Context So Far\n${lines.join('\n\n')}\n\n---\n\n## Current Request\n`
+  }
+
   private buildLocalNativeSystemPrompt(): string {
-    return `You are Foldframe's social media content creation and publishing Agent.
-You have native MCP tools exposed by the "foldframe" MCP server (setTitle, outputTaskResult, generateImage, generateVideo, getVideoStatus, wait, getCurrentTime, plus account/content/statistics/channels tools when available).
+    return `You are PostPilot's social media content planning, creation, and publishing Agent.
+You have native MCP tools exposed by the "foldframe" MCP server (setTitle, outputTaskResult, generateImage, generateVideo, getVideoStatus, wait, getCurrentTime, plus account/content/statistics/channels tools when available) and built-in skills including \`planning-social-content\` (cross-platform repurposing, short-video storyboards, product seeding funnels, and 7-day publishing calendars).
 
 ## Rules
 1. Always respond in the user's language.
 2. Never depict children, minors, or anyone appearing under 18.
 3. Call \`setTitle\` first with a concise title (<= 30 chars) for new tasks. Do NOT mention \`setTitle\` or \`outputTaskResult\` to the user.
-4. For image creation/editing, call \`generateImage\` (backed by local Dreamina / 即梦 CLI or configured image provider).
-5. For video creation, call \`generateVideo\` (backed by local Dreamina / 即梦 Seedance CLI or configured video provider), then poll \`getVideoStatus\` (using \`wait\` between polls) until completed.
-6. When you have produced final media or social post content, call \`outputTaskResult\` with the structured JSON result so Foldframe renders rich media/draft/publish cards.
-7. Execute media/publishing tools sequentially and give concise progress updates.`
+4. For multi-platform copywriting, script planning, seeding plans, or content calendars, deliver well-structured, ready-to-publish copy directly tailored to each selected platform's native tone.
+5. For image creation/editing, call \`generateImage\` (backed by local Dreamina / 即梦 CLI or configured image provider).
+6. For video creation, call \`generateVideo\` (backed by local Dreamina / 即梦 Seedance CLI or configured video provider), then poll \`getVideoStatus\` (using \`wait\` between polls) until completed.
+7. When you have produced final media or social post content, call \`outputTaskResult\` with the structured JSON result so PostPilot renders rich media/draft/publish cards.
+8. Execute media/publishing tools sequentially and give concise progress updates.`
   }
 
   private extractPromptAndImages(enhancedContent: ContentBlockParam[]): { prompt: string, imageUrls: string[] } {
@@ -497,6 +538,7 @@ You have native MCP tools exposed by the "foldframe" MCP server (setTitle, outpu
     userType: UserType
     dto: CreateContentGenerationTaskDto
     initialSessionId?: string
+    historicalMessages?: Array<Record<string, unknown>>
     enhancedContent: ContentBlockParam[]
     headers: Record<string, string>
     abortController: AbortController
@@ -510,6 +552,7 @@ You have native MCP tools exposed by the "foldframe" MCP server (setTitle, outpu
       userType,
       dto,
       initialSessionId,
+      historicalMessages,
       enhancedContent,
       headers,
       abortController,
@@ -544,10 +587,16 @@ You have native MCP tools exposed by the "foldframe" MCP server (setTitle, outpu
 
     const localModel = this.resolveLocalEngineModel(engine, dto.model)
     const displayModel = `${engine}:${localModel || 'default'}`
-    const resumeNativeSessionId = initialSessionId
+    const sameEngineSession = Boolean(initialSessionId && new RegExp(`^${engine}:`, 'i').test(initialSessionId))
+    const rawSessionSuffix = sameEngineSession && initialSessionId
       ? initialSessionId.replace(new RegExp(`^${engine}:`, 'i'), '')
       : undefined
-    const { prompt, imageUrls } = this.extractPromptAndImages(enhancedContent)
+    const resumeNativeSessionId = rawSessionSuffix && !rawSessionSuffix.startsWith('local-')
+      ? rawSessionSuffix
+      : undefined
+    const { prompt: rawPrompt, imageUrls } = this.extractPromptAndImages(enhancedContent)
+    const historyPrefix = !resumeNativeSessionId ? this.buildHistoryReplayContext(historicalMessages) : ''
+    const prompt = historyPrefix ? `${historyPrefix}${rawPrompt}` : rawPrompt
     const startedAt = Date.now()
 
     const agentEvents$ = new Observable<ContentGenerationTaskChunkVo>((subscriber) => {
@@ -734,14 +783,30 @@ You have native MCP tools exposed by the "foldframe" MCP server (setTitle, outpu
           }))
         }
 
+        if (!currentSessionId) {
+          const fallbackSid = `${engine}:local-${taskId}`
+          currentSessionId = fallbackSid
+          taskInfo.sessionId = fallbackSid
+          onSessionId(fallbackSid)
+          await this.contentGenerateRepository.updateById(taskId, { sessionId: fallbackSid })
+        }
+
         const durationMs = Date.now() - startedAt
-        const normalizedUsage = lastUsage
+        const fallbackInputTokens = this.estimateRoughTokens(this.buildLocalNativeSystemPrompt())
+          + this.estimateRoughTokens(prompt)
+          + imageUrls.length * 250
+        const fallbackOutputTokens = this.estimateRoughTokens(accumulatedText)
+        const normalizedUsage = lastUsage && ((lastUsage.input_tokens ?? 0) + (lastUsage.output_tokens ?? 0) + (lastUsage.cache_read_input_tokens ?? 0) > 0)
           ? {
               input_tokens: lastUsage.input_tokens ?? 0,
               output_tokens: lastUsage.output_tokens ?? 0,
               cache_read_input_tokens: lastUsage.cache_read_input_tokens ?? 0,
             }
-          : undefined
+          : {
+              input_tokens: fallbackInputTokens,
+              output_tokens: fallbackOutputTokens,
+              cache_read_input_tokens: 0,
+            }
 
         await this.aiLogRepo.create({
           userId,
@@ -856,7 +921,7 @@ You have native MCP tools exposed by the "foldframe" MCP server (setTitle, outpu
     } = params
 
     return from(this.initializeTask(userId, userType, dto, abortController, req)).pipe(
-      mergeMap(({ taskId, sessionId: initialSessionId, abortController, mcpServers, headers }) => {
+      mergeMap(({ taskId, sessionId: initialSessionId, historicalMessages, abortController, mcpServers, headers }) => {
         let sessionId = initialSessionId
         let completionResolver: () => void
         const completionPromise = new Promise<void>((resolve) => {
@@ -906,6 +971,7 @@ You have native MCP tools exposed by the "foldframe" MCP server (setTitle, outpu
                 userType,
                 dto,
                 initialSessionId,
+                historicalMessages,
                 enhancedContent,
                 headers,
                 abortController,

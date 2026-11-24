@@ -17,6 +17,7 @@ export function getDefaultTaskData(): ITaskMessageData {
     streamingText: '',
     progress: 0,
     isGenerating: false,
+    contextUsage: undefined,
     lastUpdated: 0,
   }
 }

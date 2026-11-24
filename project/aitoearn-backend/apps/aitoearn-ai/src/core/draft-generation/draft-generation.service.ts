@@ -213,80 +213,458 @@ export class DraftGenerationService {
 
   async getAvailableTextModels(): Promise<{
     defaultModel: string
-    models: Array<{ value: string, label: string, provider: string, tag?: string }>
+    groups: Array<{
+      id: 'agy' | 'codex' | 'grok' | 'workbuddy' | 'thirdParty'
+      label: string
+      subtitle: string
+      kind: 'local' | 'api'
+      ready: boolean
+      modelCount: number
+    }>
+    models: Array<{
+      value: string
+      label: string
+      shortLabel?: string
+      provider: string
+      groupId: 'agy' | 'codex' | 'grok' | 'workbuddy' | 'thirdParty'
+      groupLabel: string
+      tag?: string
+      tierBadge?: string
+      description?: string
+      costRate?: string
+      costShort?: string
+      contextWindow?: string
+      supportsImages?: boolean
+      supportsReasoning?: boolean
+      effortOptions?: Array<{ level: 'low' | 'medium' | 'high' | 'xhigh', label: string, value: string }>
+      defaultEffort?: 'low' | 'medium' | 'high' | 'xhigh'
+      configured?: boolean
+    }>
   }> {
+    type GroupId = 'agy' | 'codex' | 'grok' | 'workbuddy' | 'thirdParty'
+    type EffortLevel = 'low' | 'medium' | 'high' | 'xhigh'
+    interface TextModelItem {
+      value: string
+      label: string
+      shortLabel?: string
+      provider: string
+      groupId: GroupId
+      groupLabel: string
+      tag?: string
+      tierBadge?: string
+      description?: string
+      costRate?: string
+      costShort?: string
+      contextWindow?: string
+      supportsImages?: boolean
+      supportsReasoning?: boolean
+      effortOptions?: Array<{ level: EffortLevel, label: string, value: string }>
+      defaultEffort?: EffortLevel
+      configured?: boolean
+    }
+
+    const EFFORT_LABELS: Record<EffortLevel, string> = {
+      low: '低',
+      medium: '中',
+      high: '高',
+      xhigh: '极高',
+    }
+    const EFFORT_ORDER: EffortLevel[] = ['low', 'medium', 'high', 'xhigh']
+
+    const formatCtx = (tokens?: number): string | undefined => {
+      if (!tokens || tokens <= 0) return undefined
+      if (tokens >= 1000000) return `${Math.round(tokens / 100000) / 10}M`.replace('.0M', 'M')
+      return `${Math.round(tokens / 1000)}K`
+    }
+
+    const formatNiceModelName = (slug: string): string => {
+      return slug
+        .replace(/^claude-opus-(\d+)-(\d+)$/i, 'Claude Opus $1.$2')
+        .replace(/^claude-sonnet-(\d+)-(\d+)$/i, 'Claude Sonnet $1.$2')
+        .replace(/^gemini-pro-orchestrator-?(.*)$/i, (_, tail) => (tail ? `Gemini Pro Orchestrator (${tail[0].toUpperCase()}${tail.slice(1)})` : 'Gemini Pro Orchestrator'))
+        .replace(/^gemini-(\d+(?:\.\d+)?)-([a-z]+)$/i, (_, v, fam) => `Gemini ${v} ${fam[0].toUpperCase()}${fam.slice(1)}`)
+        .replace(/^gpt-oss-(\d+b)$/i, (_, sz) => `GPT-OSS ${sz.toUpperCase()}`)
+        .replace(/^gpt-(\d+(?:\.\d+)?)-([a-z0-9-]+)$/i, (_, v, fam) => `GPT-${v} ${fam.split('-').map((p: string) => p[0].toUpperCase() + p.slice(1)).join(' ')}`)
+        .replace(/^grok-(\d+(?:\.\d+)?)(.*)$/i, (_, v, rest) => `Grok ${v}${rest ? rest.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : ''}`)
+    }
+
+    const makeSuffixEfforts = (prefix: string, levels: EffortLevel[] = ['low', 'medium', 'high', 'xhigh']) =>
+      levels.map(level => ({ level, label: EFFORT_LABELS[level], value: `${prefix}@${level}` }))
+
     const defaultModel = config.studio?.planner?.model
       || config.ai.draftGeneration.planner.defaultModel
       || 'agy:default'
-    const map = new Map<string, { value: string, label: string, provider: string, tag?: string }>()
-    const push = (item: { value: string, label: string, provider: string, tag?: string }) => {
+    const map = new Map<string, TextModelItem>()
+    const push = (item: TextModelItem) => {
       if (!item.value || map.has(item.value)) return
       map.set(item.value, item)
     }
 
+    let agyReady = false
+    let codexReady = false
+    let grokReady = false
+    let workbuddyReady = false
+
     try {
       const bridge = this.localBridgeService ? await this.localBridgeService.getEngines() : null
       if (bridge?.reachable) {
+        // 1. Antigravity — collapse -low/-medium/-high/-xhigh into unified rows with real effortOptions
         if (bridge.engines.agy?.installed) {
-          push({ value: 'agy:default', label: 'Antigravity CLI (默认)', provider: 'agy', tag: '本机 LLM' })
-          for (const m of (bridge.engines.agy.models || []).slice(0, 10)) {
-            if (!m || m === 'default') continue
-            push({ value: `agy:${m}`, label: `Antigravity · ${m}`, provider: 'agy', tag: '本机 LLM' })
+          agyReady = true
+          push({
+            value: 'agy:default',
+            label: 'Antigravity CLI (默认)',
+            shortLabel: '自动默认',
+            provider: 'agy',
+            groupId: 'agy',
+            groupLabel: 'Antigravity',
+            tag: '本机 LLM',
+            tierBadge: '默认推荐',
+            description: '自动跟随本机 Antigravity CLI 默认模型配置，兼顾文案速度与稳定度。',
+            costRate: '本机订阅 · 0 平台积分',
+            costShort: '0 积分',
+            contextWindow: '1M',
+            supportsImages: true,
+            supportsReasoning: true,
+            configured: true,
+          })
+
+          const agyGroups = new Map<string, {
+            base: string
+            variants: Partial<Record<EffortLevel, string>>
+            plain?: string
+          }>()
+          for (const rawModel of (bridge.engines.agy.models || [])) {
+            if (!rawModel || rawModel === 'default') continue
+            const match = rawModel.match(/^(.+)-(low|medium|high|xhigh)$/i)
+            if (match) {
+              const base = match[1]
+              const lvl = match[2].toLowerCase() as EffortLevel
+              const entry = agyGroups.get(base) || { base, variants: {} }
+              entry.variants[lvl] = rawModel
+              agyGroups.set(base, entry)
+            }
+            else {
+              const entry = agyGroups.get(rawModel) || { base: rawModel, variants: {} }
+              entry.plain = rawModel
+              agyGroups.set(rawModel, entry)
+            }
+          }
+
+          for (const entry of agyGroups.values()) {
+            const availLevels = EFFORT_ORDER.filter(l => Boolean(entry.variants[l]))
+            const preferredLevel: EffortLevel | undefined = entry.variants.high
+              ? 'high'
+              : entry.variants.medium
+                ? 'medium'
+                : entry.variants.low
+                  ? 'low'
+                  : entry.variants.xhigh
+                    ? 'xhigh'
+                    : undefined
+            const primaryRaw = preferredLevel ? entry.variants[preferredLevel]! : (entry.plain || entry.base)
+            const nice = formatNiceModelName(entry.base)
+            const lower = entry.base.toLowerCase()
+            const isClaude = lower.includes('claude')
+            const isFlagship = lower.includes('opus') || lower.includes('neon') || lower.includes('hydrogen')
+            const isFast = lower.includes('flash') || lower.includes('argon')
+            const effortOptions = availLevels.length > 1
+              ? availLevels.map(level => ({
+                  level,
+                  label: EFFORT_LABELS[level],
+                  value: `agy:${entry.variants[level]!}`,
+                }))
+              : undefined
+
+            push({
+              value: `agy:${primaryRaw}`,
+              label: `Antigravity · ${nice}`,
+              shortLabel: nice,
+              provider: 'agy',
+              groupId: 'agy',
+              groupLabel: 'Antigravity',
+              tag: '本机 LLM',
+              tierBadge: isFlagship ? '旗舰推理' : isFast ? '高速轻量' : '均衡主力',
+              description: isClaude
+                ? '细腻长文案与品牌语气把控力强，适合深度种草笔记与高转化脚本。'
+                : isFast
+                  ? '响应极快、成本低，适合批量起草标题、话题标签与短文案。'
+                  : '原生多模态深度推理，适合爆款选题策划、视觉理解与全案脚本。',
+              costRate: '本机订阅 · 0 平台积分',
+              costShort: '0 积分',
+              contextWindow: isClaude ? '200K' : '1M',
+              supportsImages: !lower.includes('gpt-oss'),
+              supportsReasoning: true,
+              effortOptions,
+              defaultEffort: preferredLevel,
+              configured: true,
+            })
           }
         }
+
+        // 2. Codex CLI
         if (bridge.engines.codex?.installed && bridge.engines.codex.loggedIn !== false) {
+          codexReady = true
           const eff = bridge.engines.codex.effectiveDefaultModel
-          push({ value: 'codex:default', label: eff ? `Codex CLI (${eff})` : 'Codex CLI (默认)', provider: 'codex', tag: '本机 LLM' })
-          for (const m of (bridge.engines.codex.models || []).slice(0, 8)) {
+          push({
+            value: 'codex:default',
+            label: eff ? `Codex CLI (${eff})` : 'Codex CLI (默认)',
+            shortLabel: eff ? `默认 (${formatNiceModelName(eff)})` : '自动默认',
+            provider: 'codex',
+            groupId: 'codex',
+            groupLabel: 'Codex',
+            tag: '本机 LLM',
+            tierBadge: '默认推荐',
+            description: '复用本机 ChatGPT / Codex 账号额度，自动选用当前账号最优推理模型。',
+            costRate: 'ChatGPT 订阅 · 0 平台积分',
+            costShort: '0 积分',
+            contextWindow: '256K',
+            supportsImages: true,
+            supportsReasoning: true,
+            effortOptions: makeSuffixEfforts('codex:default'),
+            defaultEffort: 'medium',
+            configured: true,
+          })
+          for (const m of (bridge.engines.codex.models || []).slice(0, 12)) {
             if (!m || m === 'default') continue
-            push({ value: `codex:${m}`, label: `Codex · ${m}`, provider: 'codex', tag: '本机 LLM' })
+            const nice = formatNiceModelName(m)
+            const lower = m.toLowerCase()
+            const isFlagship = lower.includes('astra') || lower.includes('6.2')
+            push({
+              value: `codex:${m}`,
+              label: `Codex · ${nice}`,
+              shortLabel: nice,
+              provider: 'codex',
+              groupId: 'codex',
+              groupLabel: 'Codex',
+              tag: '本机 LLM',
+              tierBadge: isFlagship ? '旗舰推理' : '主力推荐',
+              description: isFlagship
+                ? '强逻辑结构化策划与多模态理解能力，适合复杂品牌全案与分镜脚本。'
+                : '高性价比日常文案与结构化 JSON 草稿规划，速度与准确度兼备。',
+              costRate: 'ChatGPT 订阅 · 0 平台积分',
+              costShort: '0 积分',
+              contextWindow: '256K',
+              supportsImages: true,
+              supportsReasoning: true,
+              effortOptions: makeSuffixEfforts(`codex:${m}`),
+              defaultEffort: 'medium',
+              configured: true,
+            })
           }
         }
+
+        // 3. Grok CLI
         if (bridge.engines.grok?.installed && bridge.engines.grok.loggedIn !== false) {
+          grokReady = true
           const eff = bridge.engines.grok.effectiveDefaultModel
-          push({ value: 'grok:default', label: eff ? `Grok CLI (${eff})` : 'Grok CLI (默认)', provider: 'grok', tag: '本机 LLM' })
-          for (const m of (bridge.engines.grok.models || []).slice(0, 8)) {
+          push({
+            value: 'grok:default',
+            label: eff ? `Grok CLI (${eff})` : 'Grok CLI (默认)',
+            shortLabel: eff ? `默认 (${formatNiceModelName(eff)})` : '自动默认',
+            provider: 'grok',
+            groupId: 'grok',
+            groupLabel: 'Grok',
+            tag: '本机 LLM',
+            tierBadge: '默认推荐',
+            description: '直连本机已网页登录的 xAI Grok CLI，网感犀利，适合热点社媒文案与英文出海内容。',
+            costRate: 'xAI 账号额度 · 0 平台积分',
+            costShort: '0 积分',
+            contextWindow: '256K',
+            supportsImages: true,
+            supportsReasoning: true,
+            configured: true,
+          })
+          for (const m of (bridge.engines.grok.models || []).slice(0, 12)) {
             if (!m || m === 'default') continue
-            push({ value: `grok:${m}`, label: `Grok · ${m}`, provider: 'grok', tag: '本机 LLM' })
+            const nice = formatNiceModelName(m)
+            const isFast = m.toLowerCase().includes('fast')
+            push({
+              value: `grok:${m}`,
+              label: `Grok · ${nice}`,
+              shortLabel: nice,
+              provider: 'grok',
+              groupId: 'grok',
+              groupLabel: 'Grok',
+              tag: '本机 LLM',
+              tierBadge: isFast ? '极速响应' : '热点网感',
+              description: isFast
+                ? '低延迟快出稿，适合快速批量改写标题、钩子句与社媒短评。'
+                : '表达鲜活有张力，擅长小红书/X/Instagram 爆款口播与品牌故事。',
+              costRate: 'xAI 账号额度 · 0 平台积分',
+              costShort: '0 积分',
+              contextWindow: '256K',
+              supportsImages: true,
+              supportsReasoning: !isFast,
+              configured: true,
+            })
           }
         }
+
+        // 4. WorkBuddy — real live credits, contextWindow & effortOptions from ACP
         if (bridge.engines.workbuddy?.installed && bridge.engines.workbuddy.loggedIn) {
-          push({ value: 'workbuddy:default', label: 'WorkBuddy (自动路由)', provider: 'workbuddy', tag: '本机 LLM' })
-          for (const m of (bridge.engines.workbuddy.models || []).slice(0, 8)) {
-            if (!m || m === 'default') continue
-            push({ value: `workbuddy:${m}`, label: `WorkBuddy · ${m}`, provider: 'workbuddy', tag: '本机 LLM' })
+          workbuddyReady = true
+          const eff = bridge.engines.workbuddy.effectiveDefaultModel
+          const wbLabels = bridge.engines.workbuddy.modelLabels || {}
+          const wbMeta = bridge.engines.workbuddy.modelMeta || {}
+          push({
+            value: 'workbuddy:default',
+            label: eff && eff !== 'auto' ? `WorkBuddy (自动路由 · ${eff})` : 'WorkBuddy (自动路由)',
+            shortLabel: eff && eff !== 'auto' ? `自动路由 (${eff})` : '自动路由',
+            provider: 'workbuddy',
+            groupId: 'workbuddy',
+            groupLabel: 'WorkBuddy',
+            tag: '本机 LLM',
+            tierBadge: '智能路由',
+            description: '自动根据任务复杂度在 WorkBuddy 最新旗舰模型间路由调度。',
+            costRate: '按所选模型动态倍率',
+            costShort: 'Auto',
+            contextWindow: '960K',
+            supportsImages: true,
+            supportsReasoning: true,
+            effortOptions: makeSuffixEfforts('workbuddy:default'),
+            defaultEffort: 'high',
+            configured: true,
+          })
+          for (const m of (bridge.engines.workbuddy.models || []).slice(0, 24)) {
+            if (!m || m === 'default' || m === 'auto') continue
+            const meta = wbMeta[m] || {}
+            const displayName = wbLabels[m] || meta.label || m
+            const rawCredits = String(meta.credits || '').trim()
+            const creditNumMatch = rawCredits.match(/(\d+(?:\.\d+)?)/)
+            const creditNum = creditNumMatch ? Number(creditNumMatch[1]) : null
+            const isFree = /free$/i.test(m) || (creditNum !== null && creditNum === 0)
+            const isFlash = /flash/i.test(m)
+            const isFlagship = /(pro|5\.3(?!-flash)|k3-1|k3\.1|hy4std|step-5)/i.test(m)
+            const costShort = isFree
+              ? '0.00x'
+              : creditNum !== null
+                ? `${creditNum.toFixed(2)}x`
+                : '按倍率'
+            const costRate = isFree
+              ? '0.00x 限时免费'
+              : creditNum !== null
+                ? `${creditNum.toFixed(2)}x 积分倍率`
+                : 'WorkBuddy 账号积分'
+            const ctxStr = formatCtx(meta.maxInputTokens) || (m.startsWith('hy4') ? '960K' : '1M')
+            const cleanShort = displayName.replace(/\s*\(免费\)\s*$/, '')
+            const allowedEfforts: EffortLevel[] = isFlagship
+              ? ['low', 'medium', 'high', 'xhigh']
+              : ['low', 'medium', 'high']
+            const wbDesc = isFree
+              ? 'WorkBuddy 限时免积分高速模型，适合大批量日常文案、标签与灵感发散。'
+              : m.startsWith('deepseek')
+                ? 'DeepSeek 最新旗舰推理架构，长上下文理解与中文表达极佳，适合干货长文与脚本。'
+                : m.startsWith('glm')
+                  ? '智谱 GLM-5 最新代际，中文语境与多模态理解均衡，适合小红书/抖音爆款创作。'
+                  : m.startsWith('kimi')
+                    ? 'Kimi 最新 K3 系列长文与营销文案利器，文风自然流畅、共情力强。'
+                    : m.startsWith('hy4')
+                      ? '腾讯混元最新 Hy4 系列，中文社媒生态适配度高、响应稳定。'
+                      : m.startsWith('minimax')
+                        ? 'MiniMax 新一代高速模型，节奏紧凑、口播台词自然生动。'
+                        : 'WorkBuddy 官方实时同步最新模型，支持中文创作与深度推理。'
+
+            push({
+              value: `workbuddy:${m}`,
+              label: `WorkBuddy · ${displayName}`,
+              shortLabel: cleanShort,
+              provider: 'workbuddy',
+              groupId: 'workbuddy',
+              groupLabel: 'WorkBuddy',
+              tag: '本机 LLM',
+              tierBadge: isFree ? '限时免费' : isFlagship ? '旗舰推理' : isFlash ? '高性价比' : '官方直连',
+              description: wbDesc,
+              costRate,
+              costShort,
+              contextWindow: ctxStr,
+              supportsImages: meta.supportsImages !== false,
+              supportsReasoning: meta.supportsReasoning !== false,
+              effortOptions: makeSuffixEfforts(`workbuddy:${m}`, allowedEfforts),
+              defaultEffort: 'high',
+              configured: true,
+            })
           }
         }
       }
     }
     catch {}
 
-    // Always include configured chat models whose provider is ready (or local bridge)
+    // 5. Third-party API models (OpenAI / Anthropic / Gemini / DeepSeek)
     const openaiReady = this.hasUsableApiKey(config.ai.openai?.apiKey)
     const anthropicReady = this.hasUsableApiKey(config.ai.anthropic?.apiKey)
     const geminiReady = this.hasUsableApiKey(config.ai.gemini?.apiKey)
+    let thirdPartyCount = 0
     for (const cm of config.ai.models.chat) {
-      if (isLocalBridgeChatModel(cm.name)) {
-        push({ value: cm.name, label: cm.description || cm.name, provider: 'local', tag: '本机 LLM' })
-      }
-      else if (cm.channel === AiLogChannel.Gemini && geminiReady) {
-        push({ value: cm.name, label: cm.description || cm.name, provider: 'gemini', tag: '第三方 API' })
-      }
-      else if (cm.channel === AiLogChannel.Anthropic && anthropicReady) {
-        push({ value: cm.name, label: cm.description || cm.name, provider: 'anthropic', tag: '第三方 API' })
-      }
-      else if ((cm.channel === AiLogChannel.OpenAI || cm.channel === AiLogChannel.DeepSeek) && openaiReady) {
-        push({ value: cm.name, label: cm.description || cm.name, provider: 'openai', tag: '第三方 API' })
-      }
+      if (isLocalBridgeChatModel(cm.name)) continue
+      const isGemini = cm.channel === AiLogChannel.Gemini && geminiReady
+      const isAnthropic = cm.channel === AiLogChannel.Anthropic && anthropicReady
+      const isOpenAI = (cm.channel === AiLogChannel.OpenAI || cm.channel === AiLogChannel.DeepSeek) && openaiReady
+      if (!isGemini && !isAnthropic && !isOpenAI) continue
+
+      thirdPartyCount++
+      const providerName = isGemini ? 'gemini' : isAnthropic ? 'anthropic' : cm.channel === AiLogChannel.DeepSeek ? 'deepseek' : 'openai'
+      const providerBadge = isGemini ? 'Gemini API' : isAnthropic ? 'Anthropic API' : cm.channel === AiLogChannel.DeepSeek ? 'DeepSeek API' : 'OpenAI API'
+      push({
+        value: cm.name,
+        label: cm.description || cm.name,
+        shortLabel: cm.description || cm.name,
+        provider: providerName,
+        groupId: 'thirdParty',
+        groupLabel: '第三方 API',
+        tag: '第三方 API',
+        tierBadge: providerBadge,
+        description: `通过您自行配置的 ${providerBadge} 端点直接调用，独立计费、无额外中转加价。`,
+        costRate: '按 API 用量计费',
+        costShort: 'API',
+        contextWindow: isGemini ? '1M' : isAnthropic ? '200K' : '128K',
+        supportsImages: true,
+        supportsReasoning: true,
+        configured: true,
+      })
     }
 
     if (map.size === 0) {
-      push({ value: 'agy:default', label: 'Antigravity CLI (默认)', provider: 'agy', tag: '本机 LLM' })
+      push({
+        value: 'agy:default',
+        label: 'Antigravity CLI (默认)',
+        shortLabel: '自动默认',
+        provider: 'agy',
+        groupId: 'agy',
+        groupLabel: 'Antigravity',
+        tag: '本机 LLM',
+        tierBadge: '默认推荐',
+        description: '默认本机 Antigravity CLI 引擎。',
+        costRate: '本机订阅 · 0 平台积分',
+        costShort: '0 积分',
+        contextWindow: '1M',
+        supportsImages: true,
+        supportsReasoning: true,
+        configured: true,
+      })
     }
 
-    const models = [...map.values()].sort((a, b) => (a.value === defaultModel ? -1 : b.value === defaultModel ? 1 : 0))
+    const models = [...map.values()]
+    const countByGroup = (gid: GroupId) => models.filter(m => m.groupId === gid).length
+    const groups: Array<{
+      id: GroupId
+      label: string
+      subtitle: string
+      kind: 'local' | 'api'
+      ready: boolean
+      modelCount: number
+    }> = [
+      { id: 'agy', label: 'Antigravity', subtitle: '本机多模态 CLI', kind: 'local', ready: agyReady, modelCount: countByGroup('agy') },
+      { id: 'codex', label: 'Codex', subtitle: 'ChatGPT 本机 CLI', kind: 'local', ready: codexReady, modelCount: countByGroup('codex') },
+      { id: 'grok', label: 'Grok', subtitle: 'xAI 网页登录 CLI', kind: 'local', ready: grokReady, modelCount: countByGroup('grok') },
+      { id: 'workbuddy', label: 'WorkBuddy', subtitle: '国产最新多模型', kind: 'local', ready: workbuddyReady, modelCount: countByGroup('workbuddy') },
+      { id: 'thirdParty', label: '第三方 API', subtitle: '自配 Key 端点', kind: 'api', ready: thirdPartyCount > 0, modelCount: thirdPartyCount },
+    ]
+
+    const defaultExists = models.some(m => m.value === defaultModel || m.effortOptions?.some(e => e.value === defaultModel))
     return {
-      defaultModel: map.has(defaultModel) ? defaultModel : models[0].value,
+      defaultModel: defaultExists ? defaultModel : models[0].value,
+      groups,
       models,
     }
   }

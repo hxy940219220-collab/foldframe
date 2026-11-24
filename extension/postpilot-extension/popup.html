@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PostPilot 社媒发布助手</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+      background: #f7f8fc;
+      color: #161823;
+      padding: 16px;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #e4e6f0;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 8px 20px -12px rgba(67, 56, 202, 0.18);
+    }
+    .head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .head img { width: 32px; height: 32px; border-radius: 8px; }
+    .title { font-size: 14px; font-weight: 700; }
+    .sub { font-size: 11px; color: #646a7a; margin-top: 2px; }
+    .status {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 12px; border-radius: 10px; background: #f4f5fb;
+      font-size: 12px; margin-bottom: 12px;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 99px; display: inline-block; margin-right: 6px; }
+    .dot.ok { background: #10b981; }
+    .dot.wait { background: #f59e0b; }
+    button {
+      width: 100%; border: none; border-radius: 10px; padding: 9px 12px;
+      font-size: 12px; font-weight: 600; cursor: pointer; transition: opacity .15s;
+    }
+    button:hover { opacity: 0.92; }
+    .primary {
+      background: linear-gradient(135deg, #1f1b4b 0%, #3730a3 54%, #5b21b6 100%);
+      color: #fff; margin-bottom: 8px;
+    }
+    .ghost {
+      background: #fff; color: #1f2433; border: 1px solid #dfe2ee;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="head">
+      <img src="icons/icon-48.png" alt="PostPilot" />
+      <div>
+        <div class="title">PostPilot 社媒发布助手</div>
+        <div class="sub">本地工作台安全桥接 · v1.0.0</div>
+      </div>
+    </div>
+    <div class="status">
+      <span id="statusText"><span class="dot wait"></span>未授权工作台</span>
+      <span style="color:#646a7a;font-size:11px;">Localhost</span>
+    </div>
+    <button id="authBtn" class="primary">立即授权当前 PostPilot 工作台</button>
+    <button id="openBtn" class="ghost">打开 PostPilot 工作台</button>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -8,8 +8,10 @@ import { z } from 'zod'
 export const UserInfoSchema = z.object({
   id: z.string().describe('用户 ID'),
   name: z.string().describe('用户名'),
-  mail: z.string().describe('邮箱'),
+  mail: z.string().optional().describe('邮箱'),
+  phone: z.string().optional().describe('手机号'),
   avatar: z.string().optional().describe('头像 URL'),
+  hasPassword: z.boolean().optional().describe('是否已设置登录密码'),
   status: z.number().describe('用户状态'),
   isDelete: z.boolean().describe('是否删除'),
   createdAt: z.coerce.date().describe('创建时间'),
@@ -26,7 +28,9 @@ export const UserInfoVoSchema = z.object({
   id: z.string().min(1).max(50).describe('用户ID'),
   name: z.string().min(1).max(50).describe('用户名'),
   mail: z.email().optional().describe('邮箱'),
+  phone: z.string().optional().describe('手机号'),
   avatar: z.string().optional().describe('头像 URL'),
+  hasPassword: z.boolean().optional().describe('是否已设置登录密码'),
   status: z.number().describe('用户状态，0-禁用，1-启用'),
   isDelete: z.boolean().describe('是否删除'),
 })

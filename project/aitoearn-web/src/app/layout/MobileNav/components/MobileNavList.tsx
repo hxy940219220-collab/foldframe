@@ -4,11 +4,11 @@
  */
 import type { MobileNavListProps } from '../types'
 import type { IRouterDataItem } from '@/app/layout/routerData'
-import { ChevronDown, ChevronUp, Code2, HelpCircle } from 'lucide-react'
+import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react'
+import Link from 'next/link'
 import { useShallow } from 'zustand/react/shallow'
 import { useTransClient } from '@/app/i18n/client'
-import { DOCS_URL, GITHUB_REPO } from '@/app/layout/shared/constants'
-import { useGitHubStars } from '@/app/layout/shared/hooks/useGitHubStars'
+import { DOCS_URL } from '@/app/layout/shared/constants'
 import { useVisibleRouterData } from '@/app/layout/shared/hooks/useVisibleRouterData'
 import { useSystemStore } from '@/store/system'
 import { cn } from '@/utils/className'
@@ -25,7 +25,6 @@ function isRouteActive(item: IRouterDataItem, currentRoute: string): boolean {
 
 export function MobileNavList({ currentRoute, onClose, onOpenMyChannels }: MobileNavListProps) {
   const { t } = useTransClient(['route', 'common'])
-  const starCount = useGitHubStars()
   const visibleRoutes = useVisibleRouterData()
 
   const { mobileNavExpanded, setMobileNavExpanded } = useSystemStore(
@@ -96,28 +95,9 @@ export function MobileNavList({ currentRoute, onClose, onOpenMyChannels }: Mobil
       )}
 
       {/* 功能导航项 - 始终显示 */}
-      <a
-        href={`https://github.com/${GITHUB_REPO}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={funcItemClassName}
-        data-testid="mobile-github-link"
-      >
-        <span className="flex items-center justify-center">
-          <Code2 size={20} />
-        </span>
-        <span>GitHub</span>
-        {starCount && (
-          <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-            {starCount}
-          </span>
-        )}
-      </a>
-
-      <a
+      <Link
         href={DOCS_URL}
-        target="_blank"
-        rel="noopener noreferrer"
+        onClick={onClose}
         className={funcItemClassName}
         data-testid="mobile-docs-link"
       >
@@ -125,7 +105,7 @@ export function MobileNavList({ currentRoute, onClose, onOpenMyChannels }: Mobil
           <HelpCircle size={20} />
         </span>
         <span>{t('common:helpDocs')}</span>
-      </a>
+      </Link>
     </nav>
   )
 }

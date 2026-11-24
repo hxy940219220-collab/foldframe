@@ -1,533 +1,248 @@
 /**
- * EcosystemDiagram - AiToEarn 生态系统图
- * 一图解释 AiToEarn 的核心功能和生态闭环
- * 设计风格：白色背景 + 宇宙行星动画 + 环形布局 + 自动轮播详情
+ * EcosystemDiagram - PostPilot AI 创作到多平台分发动态星环交互图
+ * 保留精致的星轨旋转、脉冲能量流与点击切换节点动效，内容完全重构为 PostPilot 核心闭环
  */
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useTransClient } from '@/app/i18n/client'
 import { cn } from '@/utils/className'
 
-/** 功能节点类型 */
-type FunctionKey = 'publish' | 'create' | 'manage' | 'analyze' | 'dashboard'
+type StageKey = 'models' | 'create' | 'layout' | 'queue'
+
+interface StageInfo {
+  key: StageKey
+  label: string
+  angle: number
+  title: string
+  bullets: string[]
+}
+
+const STAGES: StageInfo[] = [
+  {
+    key: 'models',
+    label: '多模型接入',
+    angle: -135,
+    title: '多模型直连 · 思考强度可控',
+    bullets: [
+      '直连 Antigravity、Codex、Grok、WorkBuddy（实时同步 Hy4 / DeepSeek-V4 / GLM-5.3 / Kimi-K3）',
+      '支持快捷接入国内外第三方 API，自由切换模型与推理深度',
+    ],
+  },
+  {
+    key: 'create',
+    label: '视觉生成二创',
+    angle: -45,
+    title: '商业大片与短视频一站产出',
+    bullets: [
+      '快捷工作台直出即梦 5.0 商业图与 Seedance 短视频',
+      '无限画布连线衍生 + 六维精准改图（支持自定义输入与真人/2D/3D 分类画风）',
+    ],
+  },
+  {
+    key: 'layout',
+    label: '仿真手机排版',
+    angle: 45,
+    title: '图文 / 视频分流 · 所见即所得',
+    bullets: [
+      '小红书、抖音、Instagram 高保真手机屏实时预览',
+      '竖排比例与自由裁剪控制栏，AI 一键润色标题、正文与话题标签',
+    ],
+  },
+  {
+    key: 'queue',
+    label: '发布待办排期',
+    angle: 135,
+    title: '全平台待办日历与任务追踪',
+    bullets: [
+      '排版定稿一键存入发布待办，统一管理多账号排期计划',
+      '支持小红书、抖音、视频号、B站、YouTube、TikTok、Instagram、X 等 13+ 平台',
+    ],
+  },
+]
 
 export function EcosystemDiagram() {
-  const { t } = useTransClient('home')
-  const [activeNode, setActiveNode] = useState<FunctionKey | null>('publish')
+  const [activeKey, setActiveKey] = useState<StageKey>('models')
   const [isAutoPlay, setIsAutoPlay] = useState(true)
-  const autoPlayTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const autoTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // 功能节点顺序
-  const nodeOrder: FunctionKey[] = ['publish', 'create', 'manage', 'analyze', 'dashboard']
-
-  // 自动轮播
   useEffect(() => {
-    if (!isAutoPlay)
-      return
-
-    autoPlayTimerRef.current = setInterval(() => {
-      setActiveNode((prev) => {
-        const currentIndex = prev ? nodeOrder.indexOf(prev) : -1
-        const nextIndex = (currentIndex + 1) % nodeOrder.length
-        return nodeOrder[nextIndex]
+    if (!isAutoPlay) return
+    autoTimerRef.current = setInterval(() => {
+      setActiveKey((prev) => {
+        const idx = STAGES.findIndex(s => s.key === prev)
+        return STAGES[(idx + 1) % STAGES.length].key
       })
-    }, 4000) // 每 4 秒切换
-
+    }, 4200)
     return () => {
-      if (autoPlayTimerRef.current) {
-        clearInterval(autoPlayTimerRef.current)
-      }
+      if (autoTimerRef.current) clearInterval(autoTimerRef.current)
     }
   }, [isAutoPlay])
 
-  // 手动点击节点
-  const handleNodeClick = (key: FunctionKey) => {
-    setIsAutoPlay(false) // 停止自动播放
-    setActiveNode(key)
-    // 8 秒后恢复自动播放
-    setTimeout(() => setIsAutoPlay(true), 8000)
+  useEffect(() => () => {
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current)
+  }, [])
+
+  const handleSelect = (key: StageKey) => {
+    setIsAutoPlay(false)
+    setActiveKey(key)
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current)
+    resumeTimerRef.current = setTimeout(() => setIsAutoPlay(true), 8000)
   }
 
-  // 获取节点详情
-  const getNodeDetails = (key: FunctionKey): string[] => {
-    const detailsKey = `ecosystem.${key}Details` as const
-    const details = t(detailsKey as any, { returnObjects: true })
-    if (Array.isArray(details)) {
-      return details.map(item => String(item))
-    }
-    // 如果不是数组，可能是字符串，尝试解析
-    if (typeof details === 'string' && details !== detailsKey) {
-      return [details]
-    }
-    return []
-  }
+  const currentStage = STAGES.find(s => s.key === activeKey) || STAGES[0]
 
   return (
-    <section className="py-16 md:py-24 px-4 relative overflow-hidden">
-      <div className="max-w-6xl mx-auto">
-        {/* 标题区域 */}
-        <div className="text-center mb-12 md:mb-16">
-          <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
-            {t('ecosystem.subtitle')}
+    <section className="relative overflow-hidden px-4 py-12 md:py-16">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-8 text-center">
+          <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+            PostPilot AI 创作到分发闭环
+          </h2>
+          <p className="mt-1.5 text-xs text-muted-foreground sm:text-sm">
+            点击星轨上的任意环节，了解 PostPilot 如何将创意直达全平台
           </p>
         </div>
 
-        {/* 生态系统图 - 白色背景容器 */}
-        <div className={cn('relative rounded-3xl overflow-hidden', 'bg-white dark:bg-background')}>
-          {/* 内容区域 */}
-          <div className="relative z-10 py-12 md:py-16 px-6 md:px-12">
-            {/* 桌面端布局 */}
-            <div className="hidden md:flex items-center justify-center gap-8 lg:gap-12">
-              {/* 左侧：内容创作者生态圈 - 宇宙行星风格 */}
-              <div className="relative">
-                <div className="relative w-[320px] h-[320px] lg:w-[380px] lg:h-[380px]">
-                  {/* 宇宙背景光晕 */}
-                  <div className="absolute inset-[-20px] rounded-full bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-cyan-500/5 blur-2xl animate-pulse" />
+        {/* 轻奢玻璃容器 */}
+        <div className="relative overflow-hidden rounded-3xl border border-border/80 bg-card/90 shadow-[0_12px_36px_-18px_rgba(67,56,202,0.18)] backdrop-blur-md">
+          <div className="relative z-10 px-6 py-10 md:px-12 md:py-12">
+            {/* 桌面端动态星环双核架构 */}
+            <div className="hidden items-center justify-center gap-10 md:flex lg:gap-14">
+              {/* 左侧主星环：PostPilot 创作引擎 */}
+              <div className="relative h-[300px] w-[300px] lg:h-[330px] lg:w-[330px]">
+                <div className="pointer-events-none absolute -inset-4 rounded-full bg-gradient-to-r from-indigo-500/8 via-violet-500/8 to-sky-500/8 blur-2xl animate-pulse" />
 
-                  {/* 最外层轨道环 - 缓慢旋转 */}
-                  <div className="absolute inset-0 rounded-full border border-dashed border-blue-300/30 dark:border-blue-400/20 animate-[spin_60s_linear_infinite]">
-                    {/* 轨道上的卫星点 */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-400/60 shadow-[0_0_8px_2px_rgba(59,130,246,0.4)]" />
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-1.5 h-1.5 rounded-full bg-purple-400/60 shadow-[0_0_6px_2px_rgba(168,85,247,0.4)]" />
-                  </div>
-
-                  {/* 第二层轨道环 - 反向旋转 */}
-                  <div className="absolute inset-6 rounded-full border border-purple-300/30 dark:border-purple-400/20 animate-[spin_45s_linear_infinite_reverse]">
-                    {/* 轨道上的卫星点 */}
-                    <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-cyan-400/70 shadow-[0_0_10px_3px_rgba(34,211,238,0.5)]" />
-                    <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-indigo-400/60 shadow-[0_0_6px_2px_rgba(129,140,248,0.4)]" />
-                  </div>
-
-                  {/* 第三层轨道环 - 正向旋转较快 */}
-                  <div className="absolute inset-12 rounded-full border border-cyan-300/30 dark:border-cyan-400/20 animate-[spin_30s_linear_infinite]">
-                    {/* 轨道上的卫星点 */}
-                    <div className="absolute bottom-1/4 right-0 translate-x-1/2 w-2 h-2 rounded-full bg-pink-400/60 shadow-[0_0_8px_2px_rgba(244,114,182,0.4)]" />
-                  </div>
-
-                  {/* 内层发光星球核心 */}
-                  <div className="absolute inset-[72px] lg:inset-20 rounded-full overflow-hidden">
-                    {/* 多层渐变光晕 */}
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-100 via-purple-50 to-cyan-100 dark:from-blue-900/40 dark:via-purple-900/30 dark:to-cyan-900/40" />
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/50 to-transparent dark:via-white/10 animate-[spin_20s_linear_infinite]" />
-                    {/* 核心光芒 */}
-                    <div className="absolute inset-2 rounded-full bg-white/80 dark:bg-background/80 shadow-[inset_0_0_30px_rgba(59,130,246,0.15),0_0_20px_rgba(139,92,246,0.1)]" />
-                    {/* 脉动光环 */}
-                    <div className="absolute inset-0 rounded-full border-2 border-blue-200/30 dark:border-blue-500/20 animate-ping opacity-30" />
-                  </div>
-
-                  {/* 中心文字 */}
-                  <div className="absolute inset-0 flex items-center justify-center z-10">
-                    <span className="text-foreground font-bold text-lg lg:text-xl drop-shadow-sm">
-                      {t('ecosystem.creator')}
-                    </span>
-                  </div>
-
-                  {/* 星星装饰粒子 */}
-                  <div className="absolute top-[10%] left-[15%] w-1 h-1 rounded-full bg-blue-400/80 animate-[twinkle_2s_ease-in-out_infinite]" />
-                  <div className="absolute top-[20%] right-[10%] w-0.5 h-0.5 rounded-full bg-purple-400/80 animate-[twinkle_3s_ease-in-out_infinite_0.5s]" />
-                  <div className="absolute bottom-[15%] left-[10%] w-1 h-1 rounded-full bg-cyan-400/80 animate-[twinkle_2.5s_ease-in-out_infinite_1s]" />
-                  <div className="absolute bottom-[25%] right-[15%] w-0.5 h-0.5 rounded-full bg-pink-400/80 animate-[twinkle_2s_ease-in-out_infinite_1.5s]" />
-
-                  {/* 功能节点 - 均匀分布在圆环周围 */}
-                  {nodeOrder.map((key, index) => {
-                    // 5 个节点均匀分布在圆周上
-                    // 起始角度从 -90° (顶部) 开始，顺时针分布
-                    const totalNodes = nodeOrder.length
-                    const angleStep = 360 / totalNodes
-                    // 从左上方开始，顺时针分布
-                    const startAngle = -126 // 起始角度（从正上方偏左开始）
-                    const angle = startAngle + index * angleStep
-                    // 半径比例（相对于容器尺寸的 50%，再往外偏移一点）
-                    const radius = 58 // 百分比
-
-                    return (
-                      <FunctionNode
-                        key={key}
-                        nodeKey={key}
-                        label={t(`ecosystem.${key}` as any)}
-                        angle={angle}
-                        radius={radius}
-                        isActive={activeNode === key}
-                        onClick={() => handleNodeClick(key)}
-                      />
-                    )
-                  })}
+                <div className="absolute inset-0 rounded-full border border-dashed border-indigo-400/30 animate-[spin_55s_linear_infinite]">
+                  <div className="absolute left-1/2 top-0 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-500/70 shadow-[0_0_8px_2px_rgba(99,102,241,0.45)]" />
                 </div>
+                <div className="absolute inset-7 rounded-full border border-violet-400/25 animate-[spin_40s_linear_infinite_reverse]">
+                  <div className="absolute right-0 top-1/2 h-2 w-2 translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/70 shadow-[0_0_8px_2px_rgba(139,92,246,0.45)]" />
+                </div>
+
+                {/* 内核星球 */}
+                <div className="absolute inset-[74px] flex items-center justify-center overflow-hidden rounded-full border border-primary/15 bg-gradient-to-br from-indigo-50/95 via-white to-violet-50/95 shadow-[inset_0_0_24px_rgba(79,70,229,0.12),0_10px_28px_-10px_rgba(67,56,202,0.22)]">
+                  <div className="text-center">
+                    <div className="text-[10.5px] font-semibold uppercase tracking-widest text-primary">PostPilot</div>
+                    <div className="mt-0.5 text-base font-bold text-foreground">创作核心</div>
+                  </div>
+                </div>
+
+                {/* 4 个可交互卫星节点 */}
+                {STAGES.map((stage) => {
+                  const rad = (stage.angle * Math.PI) / 180
+                  const radius = 52
+                  const x = 50 + radius * Math.cos(rad)
+                  const y = 50 + radius * Math.sin(rad)
+                  const isActive = activeKey === stage.key
+                  return (
+                    <button
+                      key={stage.key}
+                      type="button"
+                      onClick={() => handleSelect(stage.key)}
+                      style={{ left: `${x}%`, top: `${y}%` }}
+                      className={cn(
+                        'absolute z-20 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full px-3.5 py-2 text-xs font-semibold transition-all duration-300 cursor-pointer',
+                        isActive
+                          ? 'scale-105 bg-gradient-back text-white shadow-[0_8px_22px_-6px_rgba(67,56,202,0.55)]'
+                          : 'border border-border bg-background/95 text-foreground shadow-sm hover:scale-105 hover:border-primary/40 hover:text-primary',
+                      )}
+                    >
+                      {stage.label}
+                    </button>
+                  )
+                })}
               </div>
 
-              {/* 中间：内容交易 + 双向箭头 - 能量传输效果 */}
-              <div className="flex flex-col items-center gap-4">
-                <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                  <span>{t('ecosystem.sell')}</span>
-                  <div className="relative">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                      />
-                    </svg>
-                    {/* 能量粒子动画 */}
-                    <div className="absolute top-1/2 left-0 w-1 h-1 rounded-full bg-blue-400 animate-[energyFlow_1.5s_ease-in-out_infinite]" />
-                  </div>
+              {/* 中间脉冲分发流 */}
+              <div className="flex flex-col items-center gap-2.5">
+                <div className="relative flex items-center gap-2 rounded-full border border-primary/20 bg-primary/[0.06] px-4 py-2 text-xs font-semibold text-primary shadow-sm">
+                  <span>一键直达</span>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
                 </div>
-
-                <div className="relative px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-blue-200/50 dark:border-blue-700/30 shadow-md">
-                  <span className="text-foreground font-medium text-sm whitespace-nowrap">
-                    {t('ecosystem.trade')}
-                  </span>
-                  {/* 光晕效果 */}
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400/10 to-purple-400/10 animate-pulse" />
+                <div className="relative h-0.5 w-24 overflow-hidden rounded-full bg-border">
+                  <div className="absolute inset-y-0 left-0 w-10 rounded-full bg-gradient-to-r from-transparent via-primary to-transparent animate-[energyFlow_1.8s_linear_infinite]" />
                 </div>
-
-                <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                  <div className="relative">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 16l-4-4m0 0l4-4m-4 4h18"
-                      />
-                    </svg>
-                    {/* 能量粒子动画 */}
-                    <div className="absolute top-1/2 right-0 w-1 h-1 rounded-full bg-purple-400 animate-[energyFlowReverse_1.5s_ease-in-out_infinite]" />
-                  </div>
-                  <span>{t('ecosystem.buy')}</span>
-                </div>
+                <span className="text-[11px] text-muted-foreground">图文 / 视频智能适配</span>
               </div>
 
-              {/* 右侧：内容需求者 - 小行星风格 */}
-              <div>
-                <div className="relative w-32 h-32 lg:w-40 lg:h-40">
-                  {/* 外层光晕 */}
-                  <div className="absolute inset-[-10px] rounded-full bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-orange-500/10 blur-xl animate-pulse" />
-
-                  {/* 外层轨道环 - 缓慢旋转 */}
-                  <div className="absolute inset-[-8px] rounded-full border border-dashed border-purple-300/30 dark:border-purple-400/20 animate-[spin_40s_linear_infinite]">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-orange-400/70 shadow-[0_0_6px_2px_rgba(251,146,60,0.5)]" />
-                  </div>
-
-                  {/* 内层轨道 - 反向旋转 */}
-                  <div className="absolute inset-1 rounded-full border border-pink-300/25 dark:border-pink-400/15 animate-[spin_25s_linear_infinite_reverse]">
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-1 h-1 rounded-full bg-cyan-400/60 shadow-[0_0_4px_2px_rgba(34,211,238,0.4)]" />
-                  </div>
-
-                  {/* 星球本体 */}
-                  <div className="absolute inset-3 rounded-full overflow-hidden">
-                    {/* 渐变背景 */}
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-100 via-pink-50 to-orange-100 dark:from-purple-900/40 dark:via-pink-900/30 dark:to-orange-900/40" />
-                    {/* 光泽效果 */}
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/40 to-transparent dark:via-white/10 animate-[spin_15s_linear_infinite]" />
-                    {/* 核心 */}
-                    <div className="absolute inset-1 rounded-full bg-white/90 dark:bg-background/90 shadow-[inset_0_0_20px_rgba(168,85,247,0.15),0_0_15px_rgba(244,114,182,0.1)] flex items-center justify-center">
-                      <span className="text-foreground font-bold text-base lg:text-lg text-center px-2 drop-shadow-sm">
-                        {t('ecosystem.consumer')}
-                      </span>
-                    </div>
-                    {/* 脉动效果 */}
-                    <div className="absolute inset-0 rounded-full border border-purple-200/30 dark:border-purple-500/20 animate-ping opacity-20" />
-                  </div>
-
-                  {/* 星星装饰 */}
-                  <div className="absolute top-[5%] right-[10%] w-0.5 h-0.5 rounded-full bg-pink-400/80 animate-[twinkle_2s_ease-in-out_infinite]" />
-                  <div className="absolute bottom-[10%] left-[5%] w-0.5 h-0.5 rounded-full bg-purple-400/80 animate-[twinkle_2.5s_ease-in-out_infinite_0.5s]" />
+              {/* 右侧副星环：13+ 全平台触达 */}
+              <div className="relative h-36 w-36 lg:h-40 lg:w-40">
+                <div className="pointer-events-none absolute -inset-3 rounded-full bg-gradient-to-br from-indigo-500/10 to-violet-500/12 blur-xl animate-pulse" />
+                <div className="absolute -inset-2 rounded-full border border-dashed border-violet-400/35 animate-[spin_36s_linear_infinite]">
+                  <div className="absolute left-1/2 top-0 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-500/80" />
+                </div>
+                <div className="absolute inset-2 flex flex-col items-center justify-center rounded-full border border-primary/20 bg-gradient-to-br from-white via-indigo-50/70 to-violet-50/80 p-3 text-center shadow-[0_10px_28px_-12px_rgba(67,56,202,0.28)]">
+                  <span className="text-lg font-bold text-primary">13+</span>
+                  <span className="mt-0.5 text-xs font-semibold text-foreground">社媒平台矩阵</span>
+                  <span className="mt-0.5 text-[10px] text-muted-foreground">国内 + 出海</span>
                 </div>
               </div>
             </div>
 
-            {/* 移动端布局 */}
-            <div className="md:hidden space-y-6">
-              {/* 内容创作者 - 宇宙行星风格 */}
-              <div className="flex justify-center">
-                <div className="relative w-40 h-40">
-                  {/* 光晕 */}
-                  <div className="absolute inset-[-10px] rounded-full bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10 blur-xl animate-pulse" />
+            {/* 移动端紧凑切换胶囊 */}
+            <div className="flex flex-wrap justify-center gap-2 md:hidden">
+              {STAGES.map(stage => (
+                <button
+                  key={stage.key}
+                  type="button"
+                  onClick={() => handleSelect(stage.key)}
+                  className={cn(
+                    'rounded-full px-3.5 py-1.5 text-xs font-medium transition-all cursor-pointer',
+                    activeKey === stage.key
+                      ? 'bg-gradient-back text-white shadow-sm'
+                      : 'border border-border bg-background text-muted-foreground',
+                  )}
+                >
+                  {stage.label}
+                </button>
+              ))}
+            </div>
 
-                  {/* 轨道环 */}
-                  <div className="absolute inset-0 rounded-full border border-dashed border-blue-300/30 animate-[spin_40s_linear_infinite]">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-blue-400/60 shadow-[0_0_6px_2px_rgba(59,130,246,0.4)]" />
-                  </div>
-                  <div className="absolute inset-4 rounded-full border border-purple-300/25 animate-[spin_30s_linear_infinite_reverse]">
-                    <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-cyan-400/60 shadow-[0_0_4px_2px_rgba(34,211,238,0.4)]" />
-                  </div>
-
-                  {/* 星球核心 */}
-                  <div className="absolute inset-8 rounded-full bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-blue-200/30 dark:border-blue-700/20 shadow-md">
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/30 to-transparent animate-[spin_20s_linear_infinite]" />
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-foreground font-bold text-sm">
-                      {t('ecosystem.creator')}
-                    </span>
-                  </div>
-                </div>
+            {/* 底部动态详情面板 */}
+            <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-border/80 bg-background/80 p-4 backdrop-blur-xs">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                <h4 className="text-sm font-semibold text-foreground">{currentStage.title}</h4>
               </div>
+              <ul className="mt-2 space-y-1.5 pl-4 text-xs leading-5 text-muted-foreground">
+                {currentStage.bullets.map(b => (
+                  <li key={b} className="list-disc">{b}</li>
+                ))}
+              </ul>
 
-              {/* 功能节点网格 */}
-              <div className="grid grid-cols-2 gap-2">
-                {nodeOrder.map(key => (
-                  <MobileFunctionNode
-                    key={key}
-                    label={t(`ecosystem.${key}` as any)}
-                    isActive={activeNode === key}
-                    onClick={() => handleNodeClick(key)}
-                    className={key === 'dashboard' ? 'col-span-2' : ''}
+              {/* 进度指示点 */}
+              <div className="mt-3.5 flex items-center justify-center gap-1.5">
+                {STAGES.map(stage => (
+                  <button
+                    key={stage.key}
+                    type="button"
+                    aria-label={stage.label}
+                    onClick={() => handleSelect(stage.key)}
+                    className={cn(
+                      'h-1.5 rounded-full transition-all duration-300 cursor-pointer',
+                      activeKey === stage.key ? 'w-6 bg-primary' : 'w-1.5 bg-border hover:bg-muted-foreground/40',
+                    )}
                   />
                 ))}
               </div>
-
-              {/* 内容交易 */}
-              <div className="flex justify-center items-center gap-4">
-                <span className="text-muted-foreground text-xs">
-                  {t('ecosystem.sell')}
-                  {' '}
-                  →
-                </span>
-                <div className="relative px-4 py-2 rounded-full bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-blue-200/50 dark:border-blue-700/30 shadow-sm">
-                  <span className="text-foreground font-medium text-sm">
-                    {t('ecosystem.trade')}
-                  </span>
-                </div>
-                <span className="text-muted-foreground text-xs">
-                  ←
-                  {t('ecosystem.buy')}
-                </span>
-              </div>
-
-              {/* 内容需求者 - 小行星风格 */}
-              <div className="flex justify-center">
-                <div className="relative w-24 h-24">
-                  {/* 光晕 */}
-                  <div className="absolute inset-[-6px] rounded-full bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-orange-500/10 blur-lg animate-pulse" />
-
-                  {/* 轨道 */}
-                  <div className="absolute inset-[-4px] rounded-full border border-dashed border-purple-300/30 animate-[spin_30s_linear_infinite]">
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-orange-400/60" />
-                  </div>
-
-                  {/* 星球 */}
-                  <div className="absolute inset-2 rounded-full bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border border-purple-200/30 dark:border-purple-700/20 shadow-md flex items-center justify-center">
-                    <span className="text-foreground font-bold text-xs text-center px-2">
-                      {t('ecosystem.consumer')}
-                    </span>
-                  </div>
-                </div>
-              </div>
             </div>
-          </div>
-
-          {/* 底部详情展示区域 - 固定高度，宽度与上方内容对齐 */}
-          <div className="relative z-10 px-6 md:px-12 pb-8 max-w-4xl mx-auto">
-            <DetailPanel
-              activeNode={activeNode}
-              details={activeNode ? getNodeDetails(activeNode) : []}
-              nodeLabel={activeNode ? t(`ecosystem.${activeNode}` as any) : ''}
-            />
           </div>
         </div>
       </div>
 
-      {/* 全局样式 - 自定义动画 */}
-      <style jsx>
+      <style jsx global>
         {`
-          @keyframes twinkle {
-            0%,
-            100% {
-              opacity: 0.3;
-              transform: scale(1);
-            }
-            50% {
-              opacity: 1;
-              transform: scale(1.2);
-            }
-          }
-          @keyframes energyFlow {
-            0% {
-              transform: translateX(0) translateY(-50%);
-              opacity: 0;
-            }
-            50% {
-              opacity: 1;
-            }
-            100% {
-              transform: translateX(20px) translateY(-50%);
-              opacity: 0;
-            }
-          }
-          @keyframes energyFlowReverse {
-            0% {
-              transform: translateX(0) translateY(-50%);
-              opacity: 0;
-            }
-            50% {
-              opacity: 1;
-            }
-            100% {
-              transform: translateX(-20px) translateY(-50%);
-              opacity: 0;
-            }
-          }
+        @keyframes energyFlow {
+          0% { transform: translateX(-100%); opacity: 0.2; }
+          50% { opacity: 1; }
+          100% { transform: translateX(260%); opacity: 0.2; }
+        }
         `}
       </style>
     </section>
-  )
-}
-
-/** 功能节点组件 - 使用角度和半径计算位置 */
-interface FunctionNodeProps {
-  nodeKey: FunctionKey
-  label: string
-  /** 角度（度数），0° 为右侧，顺时针方向 */
-  angle: number
-  /** 半径百分比（相对于容器尺寸） */
-  radius: number
-  isActive: boolean
-  onClick: () => void
-}
-
-function FunctionNode({ label, angle, radius, isActive, onClick }: FunctionNodeProps) {
-  // 将角度转换为弧度，计算位置
-  const radian = (angle * Math.PI) / 180
-  const x = 50 + radius * Math.cos(radian) // 50% 是中心点
-  const y = 50 + radius * Math.sin(radian)
-
-  return (
-    <button
-      type="button"
-      className={cn(
-        'absolute cursor-pointer z-20',
-        // 居中定位节点
-        '-translate-x-1/2 -translate-y-1/2',
-      )}
-      style={{
-        left: `${x}%`,
-        top: `${y}%`,
-      }}
-      onClick={onClick}
-    >
-      <div
-        className={cn(
-          'px-5 py-2.5 rounded-full shadow-md border transition-all duration-300',
-          isActive
-            ? 'bg-gradient-back border-transparent text-gradient-foreground scale-110 shadow-lg shadow-primary/30'
-            : 'bg-white dark:bg-background border-border text-foreground hover:scale-105 hover:border-primary/50 hover:shadow-lg',
-        )}
-      >
-        <span className="font-medium text-sm whitespace-nowrap">{label}</span>
-      </div>
-    </button>
-  )
-}
-
-/** 移动端功能节点 */
-function MobileFunctionNode({
-  label,
-  isActive,
-  onClick,
-  className,
-}: {
-  label: string
-  isActive: boolean
-  onClick: () => void
-  className?: string
-}) {
-  return (
-    <button
-      type="button"
-      className={cn(
-        'px-4 py-2.5 rounded-full shadow-sm border text-center transition-all duration-300 cursor-pointer',
-        isActive
-          ? 'bg-gradient-back border-transparent text-gradient-foreground shadow-primary/20'
-          : 'bg-white dark:bg-background border-border text-foreground hover:border-primary/50',
-        className,
-      )}
-      onClick={onClick}
-    >
-      <span className="font-medium text-sm">{label}</span>
-    </button>
-  )
-}
-
-/** 详情面板组件 - 固定高度避免页面抖动 */
-function DetailPanel({
-  activeNode,
-  details,
-  nodeLabel,
-}: {
-  activeNode: FunctionKey | null
-  details: string[]
-  nodeLabel: string
-}) {
-  const hasContent = activeNode && details.length > 0
-
-  return (
-    <div
-      className={cn(
-        'rounded-2xl transition-all duration-500 ease-out',
-        // 固定高度，避免内容切换时高度变化导致抖动
-        'h-[180px] md:h-[160px]',
-        hasContent
-          ? 'bg-white/95 dark:bg-background/95 backdrop-blur-md p-4 md:p-6'
-          : 'bg-transparent',
-      )}
-    >
-      {hasContent ? (
-        <div className="h-full flex flex-col">
-          {/* 标题 */}
-          <div className="flex items-center gap-2 mb-3 shrink-0">
-            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <h3 className="font-semibold text-foreground">{nodeLabel}</h3>
-          </div>
-
-          {/* 详情列表 - 固定高度区域 */}
-          <div
-            className={cn(
-              'h-[220px] ',
-              'scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent',
-            )}
-          >
-            {details.map((detail, index) => (
-              <div key={`${activeNode}-${index}`} className="flex items-start gap-2 text-sm">
-                <span className="text-primary shrink-0 mt-0.5">•</span>
-                <span className="text-muted-foreground leading-relaxed">{detail}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* 进度指示器 */}
-          <div className="flex justify-center gap-1.5 mt-4 shrink-0">
-            {(['publish', 'create', 'manage', 'analyze', 'dashboard'] as FunctionKey[]).map(
-              key => (
-                <div
-                  key={key}
-                  className={cn(
-                    'h-2 rounded-full transition-all duration-300',
-                    activeNode === key ? 'bg-primary w-6' : 'bg-muted w-2',
-                  )}
-                />
-              ),
-            )}
-          </div>
-        </div>
-      ) : (
-        // 占位内容，保持高度一致
-        <div className="flex items-center justify-center h-full">
-          <div className="flex justify-center gap-1.5">
-            {(['publish', 'create', 'manage', 'analyze', 'dashboard'] as FunctionKey[]).map(
-              key => (
-                <div
-                  key={key}
-                  className="h-2 w-2 rounded-full bg-muted transition-all duration-300"
-                />
-              ),
-            )}
-          </div>
-        </div>
-      )}
-    </div>
   )
 }
 

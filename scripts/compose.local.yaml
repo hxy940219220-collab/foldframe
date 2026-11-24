@@ -42,6 +42,11 @@ services:
     volumes:
       - ./.local-run/ai.yaml:/app/config.yaml
   aitoearn-server:
+    image: aitoearn-workspace-server:local
+    pull_policy: build
+    build:
+      context: ./project/aitoearn-backend
+      dockerfile: Dockerfile.studio-server
     volumes:
       - ./.local-run/server.yaml:/app/config.yaml
   nginx:

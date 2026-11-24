@@ -3,10 +3,10 @@
   "allChannels": "All Channels",
   "publish": "Publish",
   "layout": {
-    "showContentManagement": "AI content creation",
-    "hideContentManagement": "Hide AI content creation",
+    "showContentManagement": "Draft Box",
+    "hideContentManagement": "Hide Draft Box",
     "closeDialog": "Close publish dialog",
-    "contentManagementTooltip": "Drag drafts/images/videos from the left content manager to the right to use them in one click"
+    "contentManagementTooltip": "One-click fill or drag formatted drafts and media from the Draft Box to publish"
   },
   "videoCover": {
     "title": "Set Cover",

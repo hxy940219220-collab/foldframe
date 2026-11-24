@@ -213,6 +213,12 @@ export interface TaskMessage {
   parent_tool_use_id?: string | null
   subtype?: string
   code?: number
+  usage?: {
+    input_tokens?: number
+    output_tokens?: number
+    cache_read_input_tokens?: number
+    cache_creation_input_tokens?: number
+  }
 }
 
 /**
@@ -267,6 +273,7 @@ export interface GetTaskListParams {
  */
 export interface CreateAgentTaskParams {
   prompt: string | any[] // 支持字符串或 Claude Prompt 格式数组
+  model?: string // 可选，指定使用的模型（如 agy:gemini-4-neon-medium / codex:gpt-6.2-astra@medium / workbuddy:glm-5.1@medium）
   taskId?: string // 可选，传入则继续上一次对话
   messageUuid?: string // 可选，重置到对应的消息继续
   includePartialMessages?: boolean // 使用流式消息

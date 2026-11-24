@@ -14,6 +14,7 @@ import {
   Loader2,
   Maximize2,
   Palette,
+  PenLine,
   RefreshCw,
   Shirt,
   Smile,
@@ -30,12 +31,15 @@ import { apiCreateDraftGeneration, apiCreateImageTextDraft } from '@/api/ai/ai.a
 import { batchDeleteMedia, uploadToOss } from '@/api/materials/material.api'
 import { MediaPreview } from '@/components/common/MediaPreview'
 import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/utils/className'
 import { getOssUrl } from '@/utils/oss'
 import { toast } from '@/utils/ui/toast'
 import { MediaDetailSidebar } from '../MediaDetailSidebar'
 import { StudioSelect } from './StudioSelect'
 import { useStudioModelsAndLibrary } from './useStudioModelsAndLibrary'
+
+const CUSTOM_VALUE = '__custom__'
 
 interface HistoryNode {
   id: string
@@ -47,9 +51,13 @@ interface HistoryNode {
   mediaId?: string
 }
 
+type StyleCategory = '真人' | '2D' | '3D'
+
 interface PresetOption {
   label: string
   prompt: string
+  category?: StyleCategory
+  tagline?: string
 }
 
 interface RemixDimension {
@@ -59,9 +67,12 @@ interface RemixDimension {
   accent: string
   badgeColor: string
   primaryLabel: string
+  primaryCustomPlaceholder: string
   primaryOptions: PresetOption[]
   secondaryLabel?: string
+  secondaryCustomPlaceholder?: string
   secondaryOptions?: PresetOption[]
+  categorized?: boolean
   buildPrompt: (p1: PresetOption, p2?: PresetOption) => string
 }
 
@@ -70,9 +81,10 @@ const REMIX_DIMENSIONS: RemixDimension[] = [
     id: 'camera',
     title: '换镜头角度',
     icon: Camera,
-    accent: 'border-border/80 bg-card hover:border-foreground/20',
-    badgeColor: 'text-violet-700 bg-violet-500/10',
+    accent: 'border-border/80 bg-card/92 hover:border-primary/30 shadow-[0_2px_10px_-6px_rgba(67,56,202,0.12)]',
+    badgeColor: 'text-indigo-700 bg-indigo-500/10',
     primaryLabel: '景别',
+    primaryCustomPlaceholder: '自定义景别，如：85mm 眼部极近特写、三分法全身构图…',
     primaryOptions: [
       { label: '半身构图', prompt: '半身中景构图，主体清晰居中' },
       { label: '近景特写', prompt: '面部与上半身近景特写，突出神态与细节' },
@@ -80,6 +92,7 @@ const REMIX_DIMENSIONS: RemixDimension[] = [
       { label: '远景大场面', prompt: '宏大远景环境构图，人物与背景空间呼应' },
     ],
     secondaryLabel: '角度',
+    secondaryCustomPlaceholder: '自定义视角，如：荷兰角倾斜构图、过肩镜头、鱼眼广角…',
     secondaryOptions: [
       { label: '平拍视角', prompt: '自然平视镜头，画面端正真实' },
       { label: '低机位仰拍', prompt: '电影感低机位微仰拍，突出人物气场与修长比例' },
@@ -87,15 +100,16 @@ const REMIX_DIMENSIONS: RemixDimension[] = [
       { label: '侧面轮廓', prompt: '三分之二侧面角度，勾勒精致五官与轮廓线条' },
       { label: '广角张力', prompt: '适度广角镜头透视，增强电影画面层次与空间感' },
     ],
-    buildPrompt: (p1, p2) => `保持参考图同一人物的面容、发型与核心特征，切换全新拍摄机位：${p1.prompt}，${p2?.prompt || ''}`,
+    buildPrompt: (p1, p2) => `保持参考图同一人物的面容、发型与核心特征，切换全新拍摄机位：${p1.prompt}${p2?.prompt ? `，${p2.prompt}` : ''}`,
   },
   {
     id: 'lighting',
     title: '换光影氛围',
     icon: Sun,
-    accent: 'border-border/80 bg-card hover:border-foreground/20',
+    accent: 'border-border/80 bg-card/92 hover:border-primary/30 shadow-[0_2px_10px_-6px_rgba(67,56,202,0.12)]',
     badgeColor: 'text-amber-700 bg-amber-500/10',
     primaryLabel: '光线',
+    primaryCustomPlaceholder: '自定义光线，如：丁达尔林间光束、王家卫港风冷暖慢门…',
     primaryOptions: [
       { label: '日落黄金逆光', prompt: '温暖的黄昏日落金色逆光，发丝泛起柔和金边光晕' },
       { label: '清透自然日光', prompt: '明亮通透的清晨自然光线，肤色干净通透有呼吸感' },
@@ -109,9 +123,10 @@ const REMIX_DIMENSIONS: RemixDimension[] = [
     id: 'scene',
     title: '换背景场景',
     icon: Sparkles,
-    accent: 'border-border/80 bg-card hover:border-foreground/20',
+    accent: 'border-border/80 bg-card/92 hover:border-primary/30 shadow-[0_2px_10px_-6px_rgba(67,56,202,0.12)]',
     badgeColor: 'text-sky-700 bg-sky-500/10',
     primaryLabel: '场景',
+    primaryCustomPlaceholder: '自定义场景，如：京都雨后青石板街、极简艺术美术馆…',
     primaryOptions: [
       { label: '雨夜霓虹街头', prompt: '细雨微湿的现代都市霓虹夜景街道，地面水洼倒映绚丽灯光' },
       { label: '极简纯色影棚', prompt: '干净高级的极简浅灰纯色摄影棚背景，突出主体人物' },
@@ -126,15 +141,33 @@ const REMIX_DIMENSIONS: RemixDimension[] = [
     id: 'style',
     title: '换画风质感',
     icon: Palette,
-    accent: 'border-border/80 bg-card hover:border-foreground/20',
-    badgeColor: 'text-rose-700 bg-rose-500/10',
+    accent: 'border-border/80 bg-card/92 hover:border-primary/30 shadow-[0_2px_10px_-6px_rgba(67,56,202,0.12)]',
+    badgeColor: 'text-violet-700 bg-violet-500/10',
     primaryLabel: '风格',
+    primaryCustomPlaceholder: '自定义画风，如：吉卜力手绘水粉、暗黑哥特插画、富士胶片…',
+    categorized: true,
     primaryOptions: [
-      { label: '精绘厚涂动漫', prompt: '大师级日系二次元厚涂插画，发丝与布料细节精致华丽' },
-      { label: '电影实拍写实', prompt: '超真实电影级真人摄影质感，自然皮肤纹理与浅景深虚化' },
-      { label: '3D 盲盒手办', prompt: '精致可爱的 3D 盲盒公仔渲染风格，细腻磨砂与柔和光泽' },
-      { label: '清新水彩手绘', prompt: '轻盈通透的手绘水彩插画质感，柔和笔触与晕染色彩' },
-      { label: '复古胶片摄影', prompt: '90 年代经典胶片相机色调，柔和对比度与细腻胶片颗粒' },
+      // 真人
+      { category: '真人', label: '电影级实拍写实', tagline: '自然肤质 · 电影景深', prompt: '超真实电影级真人实拍质感，自然皮肤纹理、真实光学镜头与浅景深虚化' },
+      { category: '真人', label: '韩系高颜值偶像剧', tagline: '清冷通透 · 韩剧柔焦', prompt: '韩系高颜值现代偶像剧画面质感，清冷高级色调、细腻柔和逆光与电影级磨皮光影' },
+      { category: '真人', label: '国产高颜值现偶', tagline: '明亮治愈 · 青春质感', prompt: '国产精品现偶剧摄影质感，自然通透日光、高颜值干净妆造与温暖空气感' },
+      { category: '真人', label: '古偶柔光滤镜风', tagline: '唯美仙气 · 柔光逆光', prompt: '精品古装偶像剧柔光滤镜风格，细腻纱质感、暖金逆光发丝与东方唯美氛围' },
+      { category: '真人', label: '复古胶片电影感', tagline: '35mm 颗粒 · 情绪色温', prompt: '经典 35mm 复古胶片电影摄影风格，迷人暗部青橙色调与自然细腻胶片颗粒' },
+      { category: '真人', label: '极简商业杂志大片', tagline: '时尚棚拍 · 高级质感', prompt: '国际一线时尚杂志商业棚拍大片，精准立体布光、高级莫兰迪影调与极致细节' },
+      // 2D
+      { category: '2D', label: '国漫精品二次元', tagline: '国漫番剧 · 精致光影', prompt: '一线国漫精品二次元动画画风，精致利落线条、通透赛璐璐光影与高颜值人物刻画' },
+      { category: '2D', label: '日系唯美动画电影', tagline: '通透云影 · 电影级作画', prompt: '日系唯美剧场版动画电影画风，绚丽通透光线层次、清澈色彩与电影感构图' },
+      { category: '2D', label: '黑白水墨国画风', tagline: '写意泼墨 · 东方留白', prompt: '东方写意黑白水墨国画艺术风格，飘逸毛笔飞白笔触、意境留白与水墨晕染' },
+      { category: '2D', label: '中国神话描金工笔', tagline: '鎏金重彩 · 仙侠美学', prompt: '中国神话重彩描金工笔插画风格，华丽细腻鎏金纹饰、柔和仙气光晕与典雅国色' },
+      { category: '2D', label: '90年代复古赛璐璐', tagline: '经典动画 · 怀旧胶片', prompt: '90 年代经典日本赛璐璐手绘动画风格，怀旧暖色胶片质感与鲜明复古人物气质' },
+      { category: '2D', label: '美式游戏概念原画', tagline: '强笔触 · 戏剧光影', prompt: '顶级欧美游戏厚涂概念原画风格，张力十足的笔触造型感与戏剧化光影对比' },
+      // 3D
+      { category: '3D', label: '国漫 3D 高清渲染', tagline: '次世代 CG · 丝滑发丝', prompt: '次世代国漫 3D 高清 CG 渲染风格，极细发丝与绸缎材质、梦幻仙侠体积光效' },
+      { category: '3D', label: '半写实精致 CG', tagline: '美型建模 · 通透光感', prompt: '高精度半写实 3D 美型 CG 风格，细腻玉质肤感、灵动眸光与电影级微光渲染' },
+      { category: '3D', label: '3D 卡通动画电影', tagline: '大厂动画 · 生动细腻', prompt: '院线级 3D 卡通动画电影渲染风格，生动表情神态、柔软织物毛发与温暖电影布光' },
+      { category: '3D', label: '欧美超现实游戏 CG', tagline: 'UE5 级材质 · 史诗氛围', prompt: '虚幻引擎 5 级欧美超现实游戏 CG 渲染，真实微距材质、史诗电影体积光影' },
+      { category: '3D', label: '动漫三渲二风格', tagline: '2.5D 立体 · 干净描边', prompt: '精致二次元动漫三渲二（Cel-shaded 3D）风格，立体镜头运镜叠加利落手绘光影' },
+      { category: '3D', label: '粘土定格动画风', tagline: '微缩手作 · 温暖治愈', prompt: '精致手作微缩粘土定格动画渲染风格，真实细腻指纹陶土质感与柔和棚拍柔光' },
     ],
     buildPrompt: p1 => `保留参考图人物特征与构图内容，将整体视觉风格重绘为：${p1.prompt}`,
   },
@@ -142,15 +175,18 @@ const REMIX_DIMENSIONS: RemixDimension[] = [
     id: 'outfit',
     title: '换穿搭造型',
     icon: Shirt,
-    accent: 'border-border/80 bg-card hover:border-foreground/20',
+    accent: 'border-border/80 bg-card/92 hover:border-primary/30 shadow-[0_2px_10px_-6px_rgba(67,56,202,0.12)]',
     badgeColor: 'text-emerald-700 bg-emerald-500/10',
     primaryLabel: '穿搭',
+    primaryCustomPlaceholder: '自定义穿搭，如：米白羊绒高领配驼色长款大衣、宋制汉服…',
     primaryOptions: [
+      { label: '老钱静奢风', prompt: '高级低调的老钱静奢风穿搭：米白羊绒针织内搭、利落剪裁驼色长款大衣与极简金属腕表' },
+      { label: '韩系清冷学院风', prompt: '韩系清冷知性学院风穿搭：挺括廓形深灰西装外套、干净白衬衫领带与层次感搭配' },
+      { label: '极简日常通勤', prompt: '高级感极简都市针织衫与风衣日常穿搭，清爽利落耐看' },
+      { label: '新中式国风', prompt: '现代剪裁融合东方刺绣盘扣与真丝提花的新中式气质穿搭' },
       { label: '高定机能风', prompt: '利落帅气的高定暗黑机能风外套与精致金属配饰' },
-      { label: '极简日常通勤', prompt: '高级感极简都市针织衫与风衣日常穿搭，清爽耐看' },
-      { label: '华丽暗夜礼服', prompt: '优雅华丽的暗色系轻纱礼服与精致首饰造型' },
-      { label: '街头潮酷卫衣', prompt: '宽松有型的潮流连帽卫衣与街头时尚单品搭配' },
-      { label: '新中式国风', prompt: '现代剪裁融合东方刺绣盘扣的新中式气质穿搭' },
+      { label: '街头潮酷卫衣', prompt: '宽松有型的潮流连帽卫衣、工装层次感与街头时尚单品搭配' },
+      { label: '华丽暗夜礼服', prompt: '优雅华丽的暗色系轻纱高定礼服与精致首饰造型' },
     ],
     buildPrompt: p1 => `保持参考图同一人物的面容、发型与气质一致，为其更换全新穿搭造型：${p1.prompt}`,
   },
@@ -158,9 +194,10 @@ const REMIX_DIMENSIONS: RemixDimension[] = [
     id: 'expression',
     title: '换表情动作',
     icon: Smile,
-    accent: 'border-border/80 bg-card hover:border-foreground/20',
-    badgeColor: 'text-indigo-700 bg-indigo-500/10',
+    accent: 'border-border/80 bg-card/92 hover:border-primary/30 shadow-[0_2px_10px_-6px_rgba(67,56,202,0.12)]',
+    badgeColor: 'text-violet-700 bg-violet-500/10',
     primaryLabel: '状态',
+    primaryCustomPlaceholder: '自定义表情动作，如：单手托腮若有所思、手持产品自然展示…',
     primaryOptions: [
       { label: '自信微笑看镜头', prompt: '自然自信地微笑直视镜头，眼神灵动有感染力' },
       { label: '冷酷侧眸回望', prompt: '微微侧身回眸望向镜头，神情清冷酷飒' },
@@ -208,13 +245,17 @@ export function VisualEvolutionStudio({ groupId }: { groupId: string }) {
   const [activeChips, setActiveChips] = useState<string[]>(['保持人物一致', '高清细节'])
   const [uploading, setUploading] = useState(false)
 
-  // Editable per-card presets & custom prompts (user MUST click 生成 explicitly; never auto-fires on card click)
-  const [primaryIdxMap, setPrimaryIdxMap] = useState<Record<string, number>>(() =>
-    Object.fromEntries(REMIX_DIMENSIONS.map(d => [d.id, 0])),
+  // Editable per-card presets & custom inputs (user MUST click 生成 explicitly; never auto-fires on card click)
+  const [primaryValMap, setPrimaryValMap] = useState<Record<string, string>>(() =>
+    Object.fromEntries(REMIX_DIMENSIONS.map(d => [d.id, '0'])),
   )
-  const [secondaryIdxMap, setSecondaryIdxMap] = useState<Record<string, number>>(() =>
-    Object.fromEntries(REMIX_DIMENSIONS.map(d => [d.id, 0])),
+  const [secondaryValMap, setSecondaryValMap] = useState<Record<string, string>>(() =>
+    Object.fromEntries(REMIX_DIMENSIONS.map(d => [d.id, '0'])),
   )
+  const [customPrimaryMap, setCustomPrimaryMap] = useState<Record<string, string>>({})
+  const [customSecondaryMap, setCustomSecondaryMap] = useState<Record<string, string>>({})
+  const [stylePickerOpen, setStylePickerOpen] = useState(false)
+  const [styleActiveTab, setStyleActiveTab] = useState<'全部' | StyleCategory>('全部')
   const [promptMap, setPromptMap] = useState<Record<string, string>>(() =>
     Object.fromEntries(
       REMIX_DIMENSIONS.map(d => [d.id, d.buildPrompt(d.primaryOptions[0], d.secondaryOptions?.[0])]),
@@ -405,16 +446,56 @@ export function VisualEvolutionStudio({ groupId }: { groupId: string }) {
     }
   }
 
-  const updateDimensionPreset = (dim: RemixDimension, nextP1Idx: number, nextP2Idx?: number) => {
-    const p1Idx = nextP1Idx
-    const p2Idx = nextP2Idx ?? (secondaryIdxMap[dim.id] ?? 0)
-    setPrimaryIdxMap(prev => ({ ...prev, [dim.id]: p1Idx }))
-    if (nextP2Idx !== undefined) {
-      setSecondaryIdxMap(prev => ({ ...prev, [dim.id]: p2Idx }))
-    }
-    const p1 = dim.primaryOptions[p1Idx] ?? dim.primaryOptions[0]
-    const p2 = dim.secondaryOptions?.[p2Idx]
+  const rebuildDimensionPrompt = (
+    dim: RemixDimension,
+    p1Val: string,
+    p2Val: string | undefined,
+    customP1Text: string,
+    customP2Text: string,
+  ) => {
+    const p1: PresetOption = p1Val === CUSTOM_VALUE
+      ? { label: customP1Text.trim() || '自定义', prompt: customP1Text.trim() || `自定义${dim.primaryLabel}效果` }
+      : (dim.primaryOptions[Number(p1Val)] ?? dim.primaryOptions[0])
+    const p2: PresetOption | undefined = dim.secondaryOptions
+      ? (p2Val === CUSTOM_VALUE
+          ? { label: customP2Text.trim() || '自定义', prompt: customP2Text.trim() }
+          : (dim.secondaryOptions[Number(p2Val ?? '0')] ?? dim.secondaryOptions[0]))
+      : undefined
     setPromptMap(prev => ({ ...prev, [dim.id]: dim.buildPrompt(p1, p2) }))
+  }
+
+  const updateDimensionPreset = (dim: RemixDimension, nextP1Val: string, nextP2Val?: string) => {
+    const p1Val = nextP1Val
+    const p2Val = nextP2Val ?? (secondaryValMap[dim.id] ?? '0')
+    setPrimaryValMap(prev => ({ ...prev, [dim.id]: p1Val }))
+    if (nextP2Val !== undefined) {
+      setSecondaryValMap(prev => ({ ...prev, [dim.id]: p2Val }))
+    }
+    rebuildDimensionPrompt(
+      dim,
+      p1Val,
+      p2Val,
+      customPrimaryMap[dim.id] || '',
+      customSecondaryMap[dim.id] || '',
+    )
+  }
+
+  const updateCustomText = (dim: RemixDimension, slot: 'primary' | 'secondary', nextText: string) => {
+    const nextP1Text = slot === 'primary' ? nextText : (customPrimaryMap[dim.id] || '')
+    const nextP2Text = slot === 'secondary' ? nextText : (customSecondaryMap[dim.id] || '')
+    if (slot === 'primary') {
+      setCustomPrimaryMap(prev => ({ ...prev, [dim.id]: nextText }))
+    }
+    else {
+      setCustomSecondaryMap(prev => ({ ...prev, [dim.id]: nextText }))
+    }
+    rebuildDimensionPrompt(
+      dim,
+      primaryValMap[dim.id] ?? '0',
+      secondaryValMap[dim.id] ?? '0',
+      nextP1Text,
+      nextP2Text,
+    )
   }
 
   const runDimension = async (dim: RemixDimension) => {
@@ -461,7 +542,10 @@ export function VisualEvolutionStudio({ groupId }: { groupId: string }) {
       const mediaId = (resp['mediaIds'] as string[] | undefined)?.[0]
       if (!outImg) throw new Error('未返回图片结果')
 
-      const p1Label = dim.primaryOptions[primaryIdxMap[dim.id] ?? 0]?.label || dim.title
+      const p1Val = primaryValMap[dim.id] ?? '0'
+      const p1Label = p1Val === CUSTOM_VALUE
+        ? ((customPrimaryMap[dim.id] || '').trim().slice(0, 12) || '自定义')
+        : (dim.primaryOptions[Number(p1Val)]?.label || dim.title)
       const child: HistoryNode = {
         id: `gen:${dim.id}:${Date.now()}`,
         parentId: activeNode.id,
@@ -551,19 +635,25 @@ export function VisualEvolutionStudio({ groupId }: { groupId: string }) {
     const isRunning = Boolean(runningIds[dim.id])
     const output = cardOutputs[dim.id]
     const isExpanded = expandedCardId === dim.id
-    const p1Idx = primaryIdxMap[dim.id] ?? 0
-    const p2Idx = secondaryIdxMap[dim.id] ?? 0
+    const p1Val = primaryValMap[dim.id] ?? '0'
+    const p2Val = secondaryValMap[dim.id] ?? '0'
+    const isP1Custom = p1Val === CUSTOM_VALUE
+    const isP2Custom = p2Val === CUSTOM_VALUE
+    const selectedStyleOpt = dim.categorized && !isP1Custom
+      ? (dim.primaryOptions[Number(p1Val)] ?? dim.primaryOptions[0])
+      : null
 
     return (
       <div
         key={dim.id}
+        data-testid={`remix-card-${dim.id}`}
         className={cn(
-          'rounded-2xl border p-3 transition-all',
+          'rounded-2xl border p-3 transition-all backdrop-blur-xs',
           dim.accent,
           isExpanded ? 'ring-1 ring-primary/35 shadow-sm' : 'hover:border-primary/35',
         )}
       >
-        {/* 卡片头部：通俗名称 + 参考下拉选择器 + 展开提示词按钮 */}
+        {/* 卡片头部：通俗名称 + 提示词开关 + 生成 */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg', dim.badgeColor)}>
@@ -594,17 +684,135 @@ export function VisualEvolutionStudio({ groupId }: { groupId: string }) {
           </div>
         </div>
 
-        {/* 参考选项下拉行（自定义自然下滑菜单，绝不遮挡按钮，左右间距对称） */}
+        {/* 参考选项下拉行（支持「自定义」自由输入 + 画风支持真人/2D/3D分类选择） */}
         <div className="mt-2.5 flex flex-wrap items-center gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-1.5 text-[11px] text-muted-foreground">
             <span className="shrink-0 font-medium">{dim.primaryLabel}</span>
-            <StudioSelect
-              className="min-w-0 flex-1"
-              triggerClassName="h-8 text-xs"
-              value={String(p1Idx)}
-              options={dim.primaryOptions.map((opt, idx) => ({ value: String(idx), label: opt.label }))}
-              onChange={val => updateDimensionPreset(dim, Number(val))}
-            />
+            {dim.categorized
+              ? (
+                  <Popover open={stylePickerOpen} onOpenChange={setStylePickerOpen}>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        data-testid="remix-style-picker-trigger"
+                        className={cn(
+                          'inline-flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-border bg-background pl-2.5 pr-2.5 text-xs font-medium text-foreground transition-colors hover:border-primary/50 focus:outline-none cursor-pointer',
+                          stylePickerOpen && 'border-primary ring-2 ring-primary/15',
+                        )}
+                      >
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <span className="shrink-0 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                            {isP1Custom ? '自定义' : (selectedStyleOpt?.category || '真人')}
+                          </span>
+                          <span className="truncate">
+                            {isP1Custom
+                              ? ((customPrimaryMap[dim.id] || '').trim() || '自定义画风…')
+                              : (selectedStyleOpt?.label || '选择画风')}
+                          </span>
+                        </span>
+                        <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-150', stylePickerOpen && 'rotate-180 text-primary')} />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      side="bottom"
+                      align="end"
+                      sideOffset={6}
+                      allowInnerScroll
+                      className="w-[min(92vw,408px)] rounded-2xl border border-border bg-popover/98 p-0 shadow-2xl backdrop-blur-md"
+                    >
+                      {/* 顶部画风分类 Tabs：全部 / 真人 / 2D / 3D / 自定义 */}
+                      <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
+                        <div className="flex items-center gap-1">
+                          {(['全部', '真人', '2D', '3D'] as const).map(tab => (
+                            <button
+                              key={tab}
+                              type="button"
+                              data-testid={`style-tab-${tab}`}
+                              onClick={() => setStyleActiveTab(tab)}
+                              className={cn(
+                                'rounded-lg px-2.5 py-1 text-xs font-medium transition-all cursor-pointer',
+                                styleActiveTab === tab
+                                  ? 'bg-gradient-back text-white shadow-xs'
+                                  : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                              )}
+                            >
+                              {tab}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          data-testid="style-tab-custom"
+                          onClick={() => {
+                            updateDimensionPreset(dim, CUSTOM_VALUE)
+                            setStylePickerOpen(false)
+                          }}
+                          className={cn(
+                            'inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors cursor-pointer',
+                            isP1Custom
+                              ? 'border-primary/40 bg-primary/10 text-primary'
+                              : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-primary',
+                          )}
+                        >
+                          <PenLine className="h-3 w-3" />
+                          自定义
+                        </button>
+                      </div>
+
+                      {/* 分类精选画风卡片网格（不堆砌，只保留高质量主流爆款风） */}
+                      <div className="max-h-[300px] overflow-y-auto p-2.5">
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {dim.primaryOptions
+                            .map((opt, idx) => ({ opt, idx }))
+                            .filter(({ opt }) => styleActiveTab === '全部' || opt.category === styleActiveTab)
+                            .map(({ opt, idx }) => {
+                              const isSelected = !isP1Custom && p1Val === String(idx)
+                              return (
+                                <button
+                                  key={opt.label}
+                                  type="button"
+                                  onClick={() => {
+                                    updateDimensionPreset(dim, String(idx))
+                                    setStylePickerOpen(false)
+                                  }}
+                                  className={cn(
+                                    'flex flex-col items-start rounded-xl border p-2.5 text-left transition-all cursor-pointer',
+                                    isSelected
+                                      ? 'border-primary/50 bg-primary/[0.08] ring-1 ring-primary/25'
+                                      : 'border-border/70 bg-background/70 hover:border-primary/35 hover:bg-muted/45',
+                                  )}
+                                >
+                                  <div className="flex w-full items-center justify-between gap-1">
+                                    <span className="truncate text-xs font-semibold text-foreground">{opt.label}</span>
+                                    <span className="shrink-0 rounded bg-muted px-1.5 py-0 text-[9.5px] font-medium text-muted-foreground">
+                                      {opt.category}
+                                    </span>
+                                  </div>
+                                  {opt.tagline && (
+                                    <span className="mt-1 truncate text-[10.5px] text-muted-foreground">
+                                      {opt.tagline}
+                                    </span>
+                                  )}
+                                </button>
+                              )
+                            })}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )
+              : (
+                  <StudioSelect
+                    className="min-w-0 flex-1"
+                    triggerClassName="h-8 text-xs"
+                    value={p1Val}
+                    options={[
+                      ...dim.primaryOptions.map((opt, idx) => ({ value: String(idx), label: opt.label })),
+                      { value: CUSTOM_VALUE, label: '自定义…', badge: '自由输入', isCustom: true },
+                    ]}
+                    onChange={val => updateDimensionPreset(dim, val)}
+                  />
+                )}
           </div>
 
           {dim.secondaryOptions && dim.secondaryLabel && (
@@ -613,13 +821,48 @@ export function VisualEvolutionStudio({ groupId }: { groupId: string }) {
               <StudioSelect
                 className="min-w-0 flex-1"
                 triggerClassName="h-8 text-xs"
-                value={String(p2Idx)}
-                options={dim.secondaryOptions.map((opt, idx) => ({ value: String(idx), label: opt.label }))}
-                onChange={val => updateDimensionPreset(dim, p1Idx, Number(val))}
+                value={p2Val}
+                options={[
+                  ...dim.secondaryOptions.map((opt, idx) => ({ value: String(idx), label: opt.label })),
+                  { value: CUSTOM_VALUE, label: '自定义…', badge: '自由输入', isCustom: true },
+                ]}
+                onChange={val => updateDimensionPreset(dim, p1Val, val)}
               />
             </div>
           )}
         </div>
+
+        {/* 当任一下拉框选择「自定义」时，紧跟下方展开精致自定义输入框 */}
+        {(isP1Custom || isP2Custom) && (
+          <div className="mt-2 space-y-1.5">
+            {isP1Custom && (
+              <div className="flex items-center gap-1.5">
+                <PenLine className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <input
+                  type="text"
+                  data-testid={`remix-custom-primary-${dim.id}`}
+                  value={customPrimaryMap[dim.id] || ''}
+                  onChange={e => updateCustomText(dim, 'primary', e.target.value)}
+                  placeholder={dim.primaryCustomPlaceholder}
+                  className="h-8 flex-1 rounded-lg border border-primary/40 bg-primary/[0.03] px-2.5 text-xs text-foreground outline-none focus:border-primary focus:bg-background"
+                />
+              </div>
+            )}
+            {isP2Custom && dim.secondaryLabel && (
+              <div className="flex items-center gap-1.5">
+                <PenLine className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <input
+                  type="text"
+                  data-testid={`remix-custom-secondary-${dim.id}`}
+                  value={customSecondaryMap[dim.id] || ''}
+                  onChange={e => updateCustomText(dim, 'secondary', e.target.value)}
+                  placeholder={dim.secondaryCustomPlaceholder || `输入自定义${dim.secondaryLabel}…`}
+                  className="h-8 flex-1 rounded-lg border border-primary/40 bg-primary/[0.03] px-2.5 text-xs text-foreground outline-none focus:border-primary focus:bg-background"
+                />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 可编辑提示词区（展开即可自由修改） */}
         {isExpanded && (

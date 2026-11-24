@@ -3,12 +3,15 @@
 import type { CropResult, NormalizedRect } from './ImageCropModal'
 import type { ImageModelType } from '@/api/ai/ai.types'
 import {
+  BadgeCheck,
   BatteryFull,
   Bookmark,
   Bot,
+  CalendarPlus,
   Check,
   ChevronLeft,
   ChevronRight,
+  CircleDollarSign,
   Crop,
   Expand,
   Film,
@@ -21,35 +24,41 @@ import {
   MessageCircle,
   Minimize2,
   MoreHorizontal,
+  Play,
   Plus,
   RefreshCw,
+  Repeat2,
   Send,
   Share2,
   SlidersHorizontal,
   Sparkles,
   Star,
+  ThumbsUp,
   Upload,
   WandSparkles,
   Wifi,
   X,
 } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   apiCreateImageTextDraft,
   apiDraftTextAssist,
 } from '@/api/ai/ai.api'
-import { apiCreateMaterial, uploadToOss } from '@/api/materials/material.api'
+import { apiCreateMaterial, apiGetDraftInfo, uploadToOss } from '@/api/materials/material.api'
 import { PubType } from '@/app/config/publishConfig'
+import { getDraftPlatformMeta, SCHEDULE_DRAFT_STORAGE_KEY } from '@/components/PublishDialog/draftSchedule.util'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/className'
 import { getOssUrl } from '@/utils/oss'
 import { toast } from '@/utils/ui/toast'
 import { ImageCropModal } from './ImageCropModal'
 import { StudioSelect } from './StudioSelect'
+import { TextModelPicker } from '../TextModelPicker'
 import { useStudioModelsAndLibrary } from './useStudioModelsAndLibrary'
 
 type PublishKind = 'image' | 'video'
-type PreviewPlatform = 'xhs' | 'douyin' | 'instagram'
+type PreviewPlatform = 'xhs' | 'douyin' | 'bilibili' | 'twitter' | 'instagram' | 'youtube' | 'wxSph'
 type PhonePreviewTab = 'post' | 'cover'
 
 interface RatioOption {
@@ -101,6 +110,30 @@ const PLATFORM_META: Record<PreviewPlatform, {
     ],
     accountType: 'douyin',
   },
+  bilibili: {
+    label: 'B站',
+    defaultRatioId: '16:9',
+    ratios: [
+      { id: '16:9', label: '16:9', ratioValue: 16 / 9, aspectClass: 'aspect-video' },
+      { id: '3:4', label: '3:4', ratioValue: 3 / 4, aspectClass: 'aspect-[3/4]' },
+      { id: '4:3', label: '4:3', ratioValue: 4 / 3, aspectClass: 'aspect-[4/3]' },
+      { id: '1:1', label: '1:1', ratioValue: 1, aspectClass: 'aspect-square' },
+      { id: 'original', label: '原图', ratioValue: null },
+    ],
+    accountType: 'bilibili',
+  },
+  twitter: {
+    label: 'X',
+    defaultRatioId: '16:9',
+    ratios: [
+      { id: '16:9', label: '16:9', ratioValue: 16 / 9, aspectClass: 'aspect-video' },
+      { id: '4:3', label: '4:3', ratioValue: 4 / 3, aspectClass: 'aspect-[4/3]' },
+      { id: '1:1', label: '1:1', ratioValue: 1, aspectClass: 'aspect-square' },
+      { id: '4:5', label: '4:5', ratioValue: 4 / 5, aspectClass: 'aspect-[4/5]' },
+      { id: 'original', label: '原图', ratioValue: null },
+    ],
+    accountType: 'twitter',
+  },
   instagram: {
     label: 'Instagram',
     defaultRatioId: '4:5',
@@ -111,6 +144,27 @@ const PLATFORM_META: Record<PreviewPlatform, {
       { id: 'original', label: '原图', ratioValue: null },
     ],
     accountType: 'instagram',
+  },
+  youtube: {
+    label: 'YouTube',
+    defaultRatioId: '16:9',
+    ratios: [
+      { id: '16:9', label: '16:9', ratioValue: 16 / 9, aspectClass: 'aspect-video' },
+      { id: '9:16', label: '9:16', ratioValue: 9 / 16, aspectClass: 'aspect-[9/16]' },
+      { id: 'original', label: '原图', ratioValue: null },
+    ],
+    accountType: 'youtube',
+  },
+  wxSph: {
+    label: '视频号',
+    defaultRatioId: '9:16',
+    ratios: [
+      { id: '9:16', label: '9:16', ratioValue: 9 / 16, aspectClass: 'aspect-[9/16]' },
+      { id: '3:4', label: '3:4', ratioValue: 3 / 4, aspectClass: 'aspect-[3/4]' },
+      { id: '16:9', label: '16:9', ratioValue: 16 / 9, aspectClass: 'aspect-video' },
+      { id: 'original', label: '原图', ratioValue: null },
+    ],
+    accountType: 'wxSph',
   },
 }
 
@@ -208,6 +262,76 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
       setImageModel(catalog.imageModels[0].model)
     }
   }, [catalog, imageModel])
+
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const hydratedDraftIdRef = useRef<string | null>(null)
+  const [schedulingPublish, setSchedulingPublish] = useState(false)
+
+  // 支持从「排版草稿箱」点「精修」回到排版工坊继续编辑
+  useEffect(() => {
+    const draftId = searchParams?.get('draftId')
+    if (!draftId || hydratedDraftIdRef.current === draftId) return
+    hydratedDraftIdRef.current = draftId
+
+    const loadDraft = async () => {
+      try {
+        const res = await apiGetDraftInfo(draftId)
+        const draft = res?.data
+        if (!draft) return
+
+        if (draft.title) setTitle(draft.title)
+        if (draft.desc !== undefined) setCaption(draft.desc)
+        if (Array.isArray(draft.topics) && draft.topics.length > 0) {
+          setHashtags(draft.topics.map(tag => tag.replace(/^#+/, '')))
+        }
+        if (draft.accountTypes?.[0]) {
+          const meta = getDraftPlatformMeta(draft.accountTypes[0])
+          setPlatform(meta.composerKey)
+        }
+
+        const mediaList = draft.mediaList || []
+        const firstVideo = mediaList.find(m => m.type === 'video')
+        if (firstVideo) {
+          videoSeededRef.current = true
+          const fullUrl = getOssUrl(firstVideo.url)
+          setPublishKind('video')
+          setVideoAsset({
+            type: 'video',
+            url: fullUrl,
+            rawUrl: firstVideo.url,
+            originalUrl: fullUrl,
+            originalRawUrl: firstVideo.url,
+            fitMode: 'contain',
+          })
+        }
+        else {
+          const imgList = mediaList.filter(m => m.type === 'img')
+          if (imgList.length > 0) {
+            imageSeededRef.current = true
+            setPublishKind('image')
+            setImageSlides(imgList.map((m) => {
+              const fullUrl = getOssUrl(m.url)
+              return {
+                type: 'image' as const,
+                url: fullUrl,
+                rawUrl: m.url,
+                originalUrl: fullUrl,
+                originalRawUrl: m.url,
+                fitMode: 'cover' as const,
+                focalX: 50,
+                focalY: 50,
+              }
+            }))
+            setActiveSlideIdx(0)
+          }
+        }
+        toast.info('已载入排版草稿，可直接精修或一键排期发布')
+      }
+      catch {}
+    }
+    void loadDraft()
+  }, [searchParams])
 
   // Seed default first image / video once from material library
   useEffect(() => {
@@ -586,10 +710,10 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
     setTagInput('')
   }
 
-  const handleSaveAsDraft = async () => {
+  const saveCurrentDraftRecord = async () => {
     if (!title.trim()) {
       toast.warning('请填写标题')
-      return
+      return null
     }
     const mediaPayload = publishKind === 'video'
       ? (videoAsset ? [{ url: videoAsset.rawUrl, type: 'video' as const }] : [])
@@ -597,25 +721,45 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
 
     if (mediaPayload.length === 0) {
       toast.warning(publishKind === 'video' ? '请先添加视频素材' : '请先添加至少一张图片')
-      return
+      return null
     }
 
+    const cover = publishKind === 'image' ? imageSlides[0]?.rawUrl : undefined
+    const res = await apiCreateMaterial({
+      groupId,
+      title: title.trim(),
+      desc: caption.trim(),
+      topics: hashtags,
+      type: publishKind === 'video' ? PubType.VIDEO : PubType.ImageText,
+      ...(cover ? { coverUrl: cover } : {}),
+      mediaList: mediaPayload,
+      accountTypes: [platCfg.accountType],
+    })
+    if (res?.code !== 0) throw new Error(res?.message || '保存草稿失败')
+    await refreshLibrary()
+
+    const createdId = (res?.data as any)?.id || (res?.data as any)?._id || `draft-${Date.now()}`
+    return {
+      id: String(createdId),
+      groupId,
+      title: title.trim(),
+      desc: caption.trim(),
+      topics: hashtags,
+      type: publishKind === 'video' ? PubType.VIDEO : PubType.ImageText,
+      coverUrl: cover,
+      mediaList: mediaPayload.map(m => ({ ...m })),
+      status: 0 as const,
+      accountTypes: [platCfg.accountType],
+      createdAt: new Date().toISOString(),
+    }
+  }
+
+  const handleSaveAsDraft = async () => {
     setSavingDraft(true)
     try {
-      const cover = publishKind === 'image' ? imageSlides[0]?.rawUrl : undefined
-      const res = await apiCreateMaterial({
-        groupId,
-        title: title.trim(),
-        desc: caption.trim(),
-        topics: hashtags,
-        type: publishKind === 'video' ? PubType.VIDEO : PubType.ImageText,
-        ...(cover ? { coverUrl: cover } : {}),
-        mediaList: mediaPayload,
-        accountTypes: [platCfg.accountType],
-      })
-      if (res?.code !== 0) throw new Error(res?.message || '保存草稿失败')
-      await refreshLibrary()
-      toast.success('已存入发布待办草稿箱')
+      const saved = await saveCurrentDraftRecord()
+      if (!saved) return
+      toast.success('已存入排版草稿箱，可在发布排期随时一键选用')
     }
     catch (err) {
       toast.error(err instanceof Error ? err.message : '保存草稿失败')
@@ -625,11 +769,25 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
     }
   }
 
-  const textModelOptions = useMemo(() => (
-    catalog.textModels.length > 0
-      ? catalog.textModels.map(m => ({ value: m.value, label: m.label }))
-      : [{ value: textModel, label: textModel === 'agy:default' ? 'Antigravity CLI (默认)' : textModel }]
-  ), [catalog.textModels, textModel])
+  const handleOneClickSchedulePublish = async () => {
+    setSchedulingPublish(true)
+    try {
+      const saved = await saveCurrentDraftRecord()
+      if (!saved) return
+      try {
+        sessionStorage.setItem(SCHEDULE_DRAFT_STORAGE_KEY, JSON.stringify(saved))
+      }
+      catch {}
+      toast.success('已同步到排版草稿箱，正在打开排期发布…')
+      router.push(`/accounts?action=scheduleDraft&draftId=${encodeURIComponent(saved.id)}`)
+    }
+    catch (err) {
+      toast.error(err instanceof Error ? err.message : '保存并跳转排期失败')
+    }
+    finally {
+      setSchedulingPublish(false)
+    }
+  }
 
   const imageModelOptions = useMemo(() => (
     catalog.imageModels.length > 0
@@ -935,23 +1093,26 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
               </div>
               <div className="space-y-1">
                 <label className="text-[11px] font-medium text-muted-foreground">文案模型</label>
-                <StudioSelect
-                  className="w-full"
-                  triggerClassName="h-8.5"
+                <TextModelPicker
+                  variant="field"
                   value={textModel}
-                  options={textModelOptions}
+                  models={catalog.textModels}
+                  groups={catalog.textModelGroups}
                   onChange={setTextModel}
+                  side="top"
+                  align="end"
+                  testId="live-preview-text-model"
                 />
               </div>
             </div>
 
-            {/* 底部主操作 */}
-            <div className="flex items-center justify-end gap-3 border-t border-border/70 pt-4">
+            {/* 底部主操作：AI 一键写文案 + 存入草稿箱 + 一键排期发布 */}
+            <div className="flex flex-wrap items-center justify-end gap-2.5 border-t border-border/70 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-9.5 gap-1.5 rounded-full px-5 text-xs font-medium"
+                className="h-9.5 gap-1.5 rounded-full px-4 text-xs font-medium cursor-pointer"
                 disabled={busySlot !== null}
                 onClick={async () => {
                   await handleTextAssist('title')
@@ -964,13 +1125,26 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
               </Button>
               <Button
                 type="button"
+                variant="outline"
                 size="sm"
-                className="h-9.5 gap-1.5 rounded-full px-7 text-xs font-semibold shadow-md"
-                disabled={savingDraft}
+                data-testid="composer-save-draft"
+                className="h-9.5 gap-1.5 rounded-full px-5 text-xs font-medium cursor-pointer"
+                disabled={savingDraft || schedulingPublish}
                 onClick={() => void handleSaveAsDraft()}
               >
-                {savingDraft ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                {savingDraft ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bookmark className="h-3.5 w-3.5 text-primary" />}
                 存入草稿箱
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                data-testid="composer-oneclick-publish"
+                className="h-9.5 gap-1.5 rounded-full px-6 text-xs font-semibold shadow-md cursor-pointer"
+                disabled={savingDraft || schedulingPublish}
+                onClick={() => void handleOneClickSchedulePublish()}
+              >
+                {schedulingPublish ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CalendarPlus className="h-3.5 w-3.5" />}
+                一键排期发布
               </Button>
             </div>
           </div>
@@ -978,47 +1152,53 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
 
         {/* ================= 右侧：精简顶部 + 完整可见仿真手机 + 右侧竖排比例工具栏 ================= */}
         <div className="flex flex-col items-center space-y-3 lg:sticky lg:top-16">
-          {/* 单行清爽顶部切换栏：仅保留平台 + 笔记/封面预览（比例移至手机右侧竖栏） */}
-          <div className="flex w-full items-center justify-between gap-2 px-1">
-            <div className="inline-flex items-center rounded-full border border-border bg-card p-0.5 shadow-2xs">
-              {(['xhs', 'douyin', 'instagram'] as const).map(key => (
+          {/* 顶部平台切换 + 帖子/封面预览 */}
+          <div className="flex w-full flex-col gap-2 px-1">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div
+                data-testid="composer-platform-switcher"
+                className="inline-flex flex-wrap items-center gap-0.5 rounded-2xl border border-border bg-card p-0.5 shadow-2xs"
+              >
+                {(['xhs', 'douyin', 'bilibili', 'twitter', 'instagram', 'youtube', 'wxSph'] as const).map(key => (
+                  <button
+                    key={key}
+                    type="button"
+                    data-testid={`composer-platform-${key}`}
+                    onClick={() => setPlatform(key)}
+                    className={cn(
+                      'rounded-xl px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer',
+                      platform === key
+                        ? 'bg-primary text-primary-foreground font-semibold shadow-2xs'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    {PLATFORM_META[key].label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="inline-flex shrink-0 items-center rounded-full border border-border bg-muted/70 p-0.5">
                 <button
-                  key={key}
                   type="button"
-                  onClick={() => setPlatform(key)}
+                  onClick={() => setPhoneTab('post')}
                   className={cn(
-                    'rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer',
-                    platform === key
-                      ? 'bg-primary text-primary-foreground font-semibold'
-                      : 'text-muted-foreground hover:text-foreground',
+                    'rounded-full px-2.5 py-1 text-[11px] font-medium transition-all cursor-pointer',
+                    phoneTab === 'post' ? 'bg-card text-foreground shadow-xs font-semibold' : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
-                  {PLATFORM_META[key].label}
+                  成片预览
                 </button>
-              ))}
-            </div>
-
-            <div className="inline-flex items-center rounded-full border border-border bg-muted/70 p-0.5">
-              <button
-                type="button"
-                onClick={() => setPhoneTab('post')}
-                className={cn(
-                  'rounded-full px-3 py-1 text-[11px] font-medium transition-all cursor-pointer',
-                  phoneTab === 'post' ? 'bg-card text-foreground shadow-xs font-semibold' : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                笔记预览
-              </button>
-              <button
-                type="button"
-                onClick={() => setPhoneTab('cover')}
-                className={cn(
-                  'rounded-full px-3 py-1 text-[11px] font-medium transition-all cursor-pointer',
-                  phoneTab === 'cover' ? 'bg-card text-foreground shadow-xs font-semibold' : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                封面预览
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setPhoneTab('cover')}
+                  className={cn(
+                    'rounded-full px-2.5 py-1 text-[11px] font-medium transition-all cursor-pointer',
+                    phoneTab === 'cover' ? 'bg-card text-foreground shadow-xs font-semibold' : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  封面流
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1034,7 +1214,7 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
               <div
                 className={cn(
                   'relative flex flex-col overflow-hidden rounded-[31px]',
-                  platform === 'douyin' && phoneTab === 'post'
+                  (platform === 'douyin' || platform === 'wxSph') && phoneTab === 'post'
                     ? 'bg-[#0b0c10] text-white'
                     : 'bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100',
                 )}
@@ -1110,8 +1290,8 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
                       </div>
                     </div>
                   </div>
-                ) : platform === 'douyin' ? (
-                  /* ================= 抖音沉浸全屏预览 ================= */
+                ) : (platform === 'douyin' || platform === 'wxSph') ? (
+                  /* ================= 抖音 / 微信视频号 沉浸全屏预览 ================= */
                   <div className="relative flex h-[578px] flex-col justify-between bg-black text-white">
                     <div
                       onMouseDown={handlePreviewMouseDown}
@@ -1143,7 +1323,7 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
                         ) : (
                           <img
                             src={currentSlide.url}
-                            alt="douyin"
+                            alt={platform === 'wxSph' ? 'wechat channels' : 'douyin'}
                             draggable={false}
                             onLoad={(e) => {
                               const nw = e.currentTarget.naturalWidth
@@ -1164,29 +1344,312 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
                     </div>
 
                     <div className="relative z-10 flex items-center justify-center gap-4 pt-2 text-[11px] font-semibold drop-shadow">
-                      <span className="opacity-65">关注</span>
-                      <span className="border-b-2 border-white pb-0.5">推荐</span>
+                      {platform === 'wxSph' ? (
+                        <>
+                          <span className="opacity-65">关注</span>
+                          <span className="opacity-65">朋友</span>
+                          <span className="border-b-2 border-emerald-400 pb-0.5">推荐</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="opacity-65">关注</span>
+                          <span className="border-b-2 border-white pb-0.5">推荐</span>
+                        </>
+                      )}
                     </div>
 
                     <div className="relative z-10 mt-auto flex items-end justify-between bg-gradient-to-t from-black/80 via-black/30 to-transparent px-3.5 pb-4 pt-14 pointer-events-none">
                       <div className="max-w-[78%] space-y-1">
-                        <div className="text-xs font-bold">@PostPilot 创作者</div>
+                        <div className="text-xs font-bold">{platform === 'wxSph' ? 'PostPilot 创作者 · 视频号' : '@PostPilot 创作者'}</div>
                         <div className="text-[11px] font-semibold leading-snug">{title.trim() || '短视频标题预览'}</div>
                         <div className="line-clamp-2 text-[10px] leading-relaxed text-white/85">
                           {caption.trim() || '短视频文案预览…'}
                         </div>
                         {hashtags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 text-[10px] font-medium text-amber-300">
+                          <div className={cn('flex flex-wrap gap-1 text-[10px] font-medium', platform === 'wxSph' ? 'text-emerald-300' : 'text-amber-300')}>
                             {hashtags.map((t, i) => <span key={i}>#{t}</span>)}
                           </div>
                         )}
                       </div>
                       <div className="flex flex-col items-center gap-3 text-[9px]">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-primary text-[11px] font-bold">P</div>
-                        <div className="flex flex-col items-center gap-0.5"><Heart className="h-5 w-5 fill-rose-500 text-rose-500" />1.2w</div>
+                        <div className={cn('flex h-8 w-8 items-center justify-center rounded-full border-2 border-white text-[11px] font-bold', platform === 'wxSph' ? 'bg-emerald-600' : 'bg-primary')}>P</div>
+                        <div className="flex flex-col items-center gap-0.5"><Heart className={cn('h-5 w-5', platform === 'wxSph' ? 'fill-amber-400 text-amber-400' : 'fill-rose-500 text-rose-500')} />1.2w</div>
                         <div className="flex flex-col items-center gap-0.5"><MessageCircle className="h-5 w-5" />326</div>
                         <div className="flex flex-col items-center gap-0.5"><Star className="h-5 w-5" />1.8k</div>
-                        <div className="flex flex-col items-center gap-0.5"><Share2 className="h-4.5 w-4.5" />分享</div>
+                        <div className="flex flex-col items-center gap-0.5"><Share2 className="h-4.5 w-4.5" />转发</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : platform === 'twitter' ? (
+                  /* ================= X (Twitter) 原生信息流高保真预览 ================= */
+                  <div className="flex h-[578px] flex-col bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+                    {/* X 顶部栏 */}
+                    <div className="flex items-center justify-between border-b border-border/50 px-3.5 py-2">
+                      <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs font-bold tracking-tight">帖子</span>
+                      <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-[9px] font-semibold text-white dark:bg-white dark:text-zinc-900">
+                        X
+                      </span>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto px-3.5 py-3 space-y-2.5">
+                      {/* 作者头 */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white">
+                            P
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1 text-xs font-bold leading-tight">
+                              <span>PostPilot Studio</span>
+                              <BadgeCheck className="h-3.5 w-3.5 fill-[#1D9BF0] text-white" />
+                            </div>
+                            <div className="text-[10.5px] text-muted-foreground">@PostPilot_AI</div>
+                          </div>
+                        </div>
+                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                      </div>
+
+                      {/* 推文正文与话题 */}
+                      <div className="space-y-1.5 text-[12.5px] leading-relaxed">
+                        {title.trim() && <div className="font-semibold">{title.trim()}</div>}
+                        <div className="whitespace-pre-line text-foreground/90 line-clamp-5">
+                          {caption.trim() || <span className="text-muted-foreground/55">在左侧输入推文文案，支持自动适配 X 语感与话题标签…</span>}
+                        </div>
+                        {hashtags.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 pt-0.5">
+                            {hashtags.slice(0, 6).map((tag, idx) => (
+                              <span key={idx} className="text-[11.5px] font-medium text-[#1D9BF0]">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* X 圆角媒体卡片 */}
+                      <div
+                        onMouseDown={handlePreviewMouseDown}
+                        className={cn(
+                          'group/stage relative w-full overflow-hidden rounded-2xl border border-border/70 bg-zinc-100 dark:bg-zinc-900 select-none',
+                          activeRatioObj.aspectClass
+                            ? cn(activeRatioObj.aspectClass, 'max-h-[270px]')
+                            : 'h-[210px]',
+                          publishKind === 'image' && currentSlide?.type === 'image'
+                            ? (isDraggingFocus ? 'cursor-grabbing' : 'cursor-pointer')
+                            : '',
+                        )}
+                      >
+                        {currentSlide ? (
+                          currentSlide.type === 'video' ? (
+                            <video src={currentSlide.url} controls autoPlay loop muted playsInline className="h-full w-full bg-black object-contain" />
+                          ) : (
+                            <img
+                              src={currentSlide.url}
+                              alt="x post media"
+                              draggable={false}
+                              style={activeRatioObj.aspectClass && (currentSlide.fitMode ?? 'cover') === 'cover' ? { objectPosition: `${currentSlide.focalX ?? 50}% ${currentSlide.focalY ?? 50}%` } : undefined}
+                              className={cn('h-full w-full', activeRatioObj.aspectClass && (currentSlide.fitMode ?? 'cover') === 'cover' ? 'object-cover' : 'object-contain')}
+                            />
+                          )
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-[11px] text-muted-foreground">待添加配图或视频</div>
+                        )}
+                        {publishKind === 'image' && imageSlides.length > 1 && (
+                          <span className="absolute right-2 top-2 rounded-full bg-black/65 px-2 py-0.5 text-[10px] font-medium text-white">
+                            {activeSlideIdx + 1}/{imageSlides.length}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 时间戳与字数提示 */}
+                      <div className="flex items-center justify-between border-b border-border/60 pb-2 text-[10.5px] text-muted-foreground">
+                        <span>上午 9:41 · PostPilot Web</span>
+                        <span className="tabular-nums font-medium">{(title + caption).length} / 280 字</span>
+                      </div>
+
+                      {/* X 原生互动栏 */}
+                      <div className="flex items-center justify-between px-1 text-[11px] text-muted-foreground">
+                        <span className="inline-flex items-center gap-1"><MessageCircle className="h-3.5 w-3.5" /> 42</span>
+                        <span className="inline-flex items-center gap-1"><Repeat2 className="h-3.5 w-3.5" /> 128</span>
+                        <span className="inline-flex items-center gap-1"><Heart className="h-3.5 w-3.5" /> 1.4K</span>
+                        <span className="inline-flex items-center gap-1"><Bookmark className="h-3.5 w-3.5" /> 316</span>
+                        <Share2 className="h-3.5 w-3.5" />
+                      </div>
+                    </div>
+                  </div>
+                ) : platform === 'bilibili' ? (
+                  /* ================= B站 (Bilibili) 视频/动态高保真预览 ================= */
+                  <div className="flex h-[578px] flex-col bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+                    {/* B站 播放器 / 封面区 */}
+                    <div
+                      onMouseDown={handlePreviewMouseDown}
+                      className={cn(
+                        'group/stage relative w-full overflow-hidden bg-zinc-950 select-none',
+                        activeRatioObj.aspectClass
+                          ? cn(activeRatioObj.aspectClass, 'max-h-[260px]')
+                          : 'h-[205px]',
+                        publishKind === 'image' && currentSlide?.type === 'image'
+                          ? (isDraggingFocus ? 'cursor-grabbing' : 'cursor-pointer')
+                          : '',
+                      )}
+                    >
+                      {currentSlide ? (
+                        currentSlide.type === 'video' ? (
+                          <video src={currentSlide.url} controls autoPlay loop muted playsInline className="h-full w-full bg-black object-contain" />
+                        ) : (
+                          <img
+                            src={currentSlide.url}
+                            alt="bilibili cover"
+                            draggable={false}
+                            style={activeRatioObj.aspectClass && (currentSlide.fitMode ?? 'cover') === 'cover' ? { objectPosition: `${currentSlide.focalX ?? 50}% ${currentSlide.focalY ?? 50}%` } : undefined}
+                            className={cn('h-full w-full', activeRatioObj.aspectClass && (currentSlide.fitMode ?? 'cover') === 'cover' ? 'object-cover' : 'object-contain')}
+                          />
+                        )
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-[11px] text-white/60">待添加 B站 封面或视频</div>
+                      )}
+                      <span className="absolute left-2.5 top-2.5 rounded bg-[#FB7299] px-1.5 py-0.5 text-[9.5px] font-bold text-white shadow">
+                        bilibili
+                      </span>
+                      <span className="absolute bottom-2 right-2.5 inline-flex items-center gap-1 rounded bg-black/65 px-1.5 py-0.5 text-[9.5px] text-white backdrop-blur">
+                        <Play className="h-2.5 w-2.5 fill-white" /> 2.4万播放 · 186弹幕
+                      </span>
+                    </div>
+
+                    {/* B站 简介 / 评论 Tab 条 */}
+                    <div className="flex items-center gap-6 border-b border-border/60 px-4 py-2 text-[11px] font-semibold">
+                      <span className="border-b-2 border-[#FB7299] pb-1 text-[#FB7299]">简介</span>
+                      <span className="pb-1 text-muted-foreground">评论 128</span>
+                      <span className="ml-auto rounded-full bg-muted px-2.5 py-0.5 text-[10px] font-normal text-muted-foreground">点我发弹幕</span>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto px-3.5 py-3 space-y-3">
+                      {/* UP主栏 */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FB7299] text-xs font-bold text-white">P</div>
+                          <div>
+                            <div className="text-xs font-semibold text-foreground">PostPilot 创作者</div>
+                            <div className="text-[10px] text-muted-foreground">12.6万粉丝 · 48投稿</div>
+                          </div>
+                        </div>
+                        <span className="rounded-full bg-[#FB7299] px-3 py-1 text-[10.5px] font-semibold text-white">
+                          + 关注
+                        </span>
+                      </div>
+
+                      {/* 标题与简介 */}
+                      <div className="space-y-1.5">
+                        <div className="text-[13px] font-bold leading-snug line-clamp-2">
+                          {title.trim() || <span className="font-normal text-muted-foreground/55">B站高点击标题实时预览…</span>}
+                        </div>
+                        <div className="text-[11px] leading-relaxed text-muted-foreground whitespace-pre-line line-clamp-3">
+                          {caption.trim() || '视频简介与分P说明会同步显示在这里…'}
+                        </div>
+                        {hashtags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-0.5">
+                            {hashtags.slice(0, 5).map((tag, idx) => (
+                              <span key={idx} className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground/80">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* B站一键三连栏 */}
+                      <div className="grid grid-cols-4 gap-2 rounded-xl border border-border/60 bg-muted/30 py-2.5 text-center text-[10px] text-muted-foreground">
+                        <div className="flex flex-col items-center gap-1 text-[#FB7299] font-medium">
+                          <ThumbsUp className="h-4 w-4" />
+                          <span>3.6千</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <CircleDollarSign className="h-4 w-4" />
+                          <span>1.2千</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <Star className="h-4 w-4" />
+                          <span>2.8千</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <Share2 className="h-4 w-4" />
+                          <span>转发</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : platform === 'youtube' ? (
+                  /* ================= YouTube 移动端高保真预览 ================= */
+                  <div className="flex h-[578px] flex-col bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
+                    <div
+                      onMouseDown={handlePreviewMouseDown}
+                      className={cn(
+                        'group/stage relative w-full overflow-hidden bg-black select-none',
+                        activeRatioObj.aspectClass
+                          ? cn(activeRatioObj.aspectClass, 'max-h-[270px]')
+                          : 'h-[205px]',
+                        publishKind === 'image' && currentSlide?.type === 'image'
+                          ? (isDraggingFocus ? 'cursor-grabbing' : 'cursor-pointer')
+                          : '',
+                      )}
+                    >
+                      {currentSlide ? (
+                        currentSlide.type === 'video' ? (
+                          <video src={currentSlide.url} controls autoPlay loop muted playsInline className="h-full w-full bg-black object-contain" />
+                        ) : (
+                          <img
+                            src={currentSlide.url}
+                            alt="youtube preview"
+                            draggable={false}
+                            style={activeRatioObj.aspectClass && (currentSlide.fitMode ?? 'cover') === 'cover' ? { objectPosition: `${currentSlide.focalX ?? 50}% ${currentSlide.focalY ?? 50}%` } : undefined}
+                            className={cn('h-full w-full', activeRatioObj.aspectClass && (currentSlide.fitMode ?? 'cover') === 'cover' ? 'object-cover' : 'object-contain')}
+                          />
+                        )
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-[11px] text-white/60">待添加 YouTube 封面或视频</div>
+                      )}
+                      <span className="absolute bottom-2 right-2 rounded bg-black/75 px-1.5 py-0.5 text-[9.5px] font-medium text-white">
+                        00:15
+                      </span>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto px-3.5 py-3 space-y-3">
+                      <div className="space-y-1">
+                        <div className="text-[13.5px] font-bold leading-snug line-clamp-2">
+                          {title.trim() || <span className="font-normal text-muted-foreground/55">YouTube Video Title Preview</span>}
+                        </div>
+                        <div className="text-[10.5px] text-muted-foreground">18K views · Just now</div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">P</div>
+                          <div>
+                            <div className="text-xs font-semibold">PostPilot Studio</div>
+                            <div className="text-[10px] text-muted-foreground">45.2K subscribers</div>
+                          </div>
+                        </div>
+                        <span className="rounded-full bg-zinc-900 px-3 py-1 text-[10.5px] font-semibold text-white dark:bg-white dark:text-zinc-900">
+                          Subscribe
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 overflow-x-auto text-[10.5px] font-medium">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5"><ThumbsUp className="h-3.5 w-3.5" /> 1.6K</span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5"><Share2 className="h-3.5 w-3.5" /> Share</span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5"><Bookmark className="h-3.5 w-3.5" /> Save</span>
+                      </div>
+
+                      <div className="rounded-xl bg-muted/60 p-2.5 text-[11px] leading-relaxed text-foreground/85 space-y-1">
+                        <div className="whitespace-pre-line line-clamp-4">
+                          {caption.trim() || '视频简介与时间戳将同步呈现在 YouTube 详情卡片中…'}
+                        </div>
+                        {hashtags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-0.5 text-[#065FD4]">
+                            {hashtags.slice(0, 5).map((tag, idx) => <span key={idx}>#{tag}</span>)}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1366,7 +1829,7 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
 
                 {/* iPhone 底部手势横条 */}
                 <div className="flex h-4 shrink-0 items-center justify-center">
-                  <div className={cn('h-1 w-24 rounded-full', platform === 'douyin' && phoneTab === 'post' ? 'bg-white/40' : 'bg-zinc-900/25 dark:bg-white/25')} />
+                  <div className={cn('h-1 w-24 rounded-full', (platform === 'douyin' || platform === 'wxSph') && phoneTab === 'post' ? 'bg-white/40' : 'bg-zinc-900/25 dark:bg-white/25')} />
                 </div>
               </div>
             </div>
@@ -1604,7 +2067,7 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
                   </div>
                 ) : (
                   <div className="py-16 text-center text-xs text-muted-foreground">
-                    资产库暂无图片素材，请先在「内容创作」生成或从本地上传
+                    资产库暂无图片素材，请先在「视觉创作」生成或从本地上传
                   </div>
                 )
               ) : (
@@ -1637,7 +2100,7 @@ export function LivePreviewStudio({ groupId }: { groupId: string }) {
                   </div>
                 ) : (
                   <div className="py-16 text-center text-xs text-muted-foreground">
-                    资产库暂无视频素材，请先在「内容创作」生成或从本地上传
+                    资产库暂无视频素材，请先在「视觉创作」生成或从本地上传
                   </div>
                 )
               )}

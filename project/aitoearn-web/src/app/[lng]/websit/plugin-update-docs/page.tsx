@@ -1,6 +1,6 @@
 /**
  * PluginUpdateDocsPage - 浏览器插件更新图文教学页面
- * 用于指导用户手动升级 AiToEarn 浏览器插件到最新版本
+ * 用于指导用户手动升级 PostPilot 浏览器插件到最新版本
  */
 import type { Metadata } from 'next'
 import { useTranslation } from '@/app/i18n'

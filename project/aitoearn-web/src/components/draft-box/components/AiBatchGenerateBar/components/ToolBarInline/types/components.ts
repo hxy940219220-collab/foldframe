@@ -25,6 +25,7 @@ export interface GenerationModeSelectLabels {
 export interface GenerationModeSelectProps {
   contentType: DraftContentType
   hideNonDraftModes: boolean
+  hideDraftModes?: boolean
   isDraftMode: boolean
   isVideoMode: boolean
   labels: GenerationModeSelectLabels

@@ -39,7 +39,7 @@ const state: ISystemStore = {
   calendarShowSolarTerms: true,
   dismissSeedanceBanner: false,
   myTasksTab: 'accepted',
-  githubStars: '11.5k',
+  githubStars: '',
   githubStarsUpdatedAt: 0,
   mobileNavExpanded: false,
   dismissShopifyGuideBanner: false,

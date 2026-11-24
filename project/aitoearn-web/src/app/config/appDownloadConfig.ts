@@ -38,11 +38,11 @@ interface AppReleaseResponse {
   message: string
 }
 
-// 主应用下载配置（默认英文）
-export const MAIN_APP_DOWNLOAD_URL = 'https://docs.aitoearn.ai/en/downloads'
+// 主应用帮助文档入口
+export const MAIN_APP_DOWNLOAD_URL = '/websit/help-docs'
 
-// API端点
-const APP_RELEASE_API = 'https://aitoearn.ai/api/app-release/latest'
+// 本地部署默认不请求第三方发布检查接口
+const APP_RELEASE_API = ''
 
 // 缓存最新下载地址
 let cachedDownloadUrl: string | null = null
@@ -55,6 +55,9 @@ let inflightRequest: Promise<string | null> | null = null
  * @returns 最新的下载地址，如果获取失败则返回null
  */
 export async function fetchLatestDownloadUrl(): Promise<string | null> {
+  if (!APP_RELEASE_API) {
+    return null
+  }
   try {
     // 检查缓存
     const now = Date.now()
@@ -104,10 +107,8 @@ export async function getMainAppDownloadUrl(lng?: string): Promise<string> {
     return latestUrl
   }
 
-  // 如果API获取失败，使用默认地址
-  const lang = (lng || useUserStore.getState().lang || 'en').toLowerCase()
-  const isZh = lang.startsWith('zh')
-  return isZh ? 'https://docs.aitoearn.ai/zh/downloads' : 'https://docs.aitoearn.ai/en/downloads'
+  // 如果API获取失败，使用默认帮助文档地址
+  return MAIN_APP_DOWNLOAD_URL
 }
 
 /**
@@ -115,19 +116,13 @@ export async function getMainAppDownloadUrl(lng?: string): Promise<string> {
  * 会先返回缓存的URL，如果没有缓存则返回默认URL
  * 同时在后台触发API请求更新缓存
  */
-export function getMainAppDownloadUrlSync(lng?: string): string {
-  // 后台更新缓存
-  fetchLatestDownloadUrl().catch(console.error)
-
+export function getMainAppDownloadUrlSync(_lng?: string): string {
   // 如果有缓存，返回缓存的URL
   if (cachedDownloadUrl) {
     return cachedDownloadUrl
   }
 
-  // 否则返回默认URL
-  const lang = (lng || useUserStore.getState().lang || 'en').toLowerCase()
-  const isZh = lang.startsWith('zh')
-  return isZh ? 'https://docs.aitoearn.ai/zh/downloads' : 'https://docs.aitoearn.ai/en/downloads'
+  return MAIN_APP_DOWNLOAD_URL
 }
 
 export const APP_DOWNLOAD_CONFIGS: Record<string, AppDownloadConfig> = {

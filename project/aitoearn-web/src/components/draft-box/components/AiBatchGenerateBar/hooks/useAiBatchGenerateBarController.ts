@@ -1,5 +1,5 @@
 import type { AiBatchGenerateBarProps } from '../types'
-import type { DraftTextModelOption } from '@/api/ai/ai.api'
+import type { DraftTextModelGroup, DraftTextModelOption } from '@/api/ai/ai.api'
 import type { DraftContentType, ImageModelInfo, VideoModelInfo, VideoModelType } from '@/api/ai/ai.types'
 import { apiGetDraftTextModels } from '@/api/ai/ai.api'
 import type { PlatType } from '@/app/config/platConfig'
@@ -612,11 +612,14 @@ export function useAiBatchGenerateBarController({
   }, [configKey, _hasHydrated, clearMedias, getConfig, replaceWithConfig, setMedias])
 
   useEffect(() => {
-    if (!forceDraftMode || !_hasHydrated)
+    if (!_hasHydrated)
       return
-    setIsDraftMode(true)
-    updateConfig(configKey, { isDraftMode: true })
-  }, [_hasHydrated, configKey, forceDraftMode, updateConfig])
+    const enforcedDraftMode = forceDraftMode
+    setIsDraftMode(enforcedDraftMode)
+    if (config.isDraftMode !== enforcedDraftMode) {
+      updateConfig(configKey, { isDraftMode: enforcedDraftMode })
+    }
+  }, [_hasHydrated, config.isDraftMode, configKey, forceDraftMode, setIsDraftMode, updateConfig])
 
   // 响应外部对 persistedMedias 的追加（例如图片资源卡片一键添加到参考文件）
   useEffect(() => {
@@ -823,7 +826,7 @@ export function useAiBatchGenerateBarController({
       setQuantity(configSnapshot.quantity)
     }
 
-    const nextIsDraftMode = forceDraftMode ? true : (configSnapshot.isDraftMode ?? true)
+    const nextIsDraftMode = forceDraftMode
     if (nextIsDraftMode !== isDraftMode) {
       setIsDraftMode(nextIsDraftMode)
     }
@@ -1390,15 +1393,16 @@ export function useAiBatchGenerateBarController({
 
   const handleDraftModeChange = useCallback(
     (isDraft: boolean) => {
-      if (forceDraftMode) {
-        setIsDraftMode(true)
-        updateConfig(configKey, { isDraftMode: true })
+      const nextDraft = forceDraftMode ? true : false
+      if (isDraft !== nextDraft) {
+        setIsDraftMode(nextDraft)
+        updateConfig(configKey, { isDraftMode: nextDraft })
         return
       }
-      setIsDraftMode(isDraft)
-      updateConfig(configKey, { isDraftMode: isDraft })
+      setIsDraftMode(nextDraft)
+      updateConfig(configKey, { isDraftMode: nextDraft })
     },
-    [configKey, forceDraftMode, updateConfig],
+    [configKey, forceDraftMode, setIsDraftMode, updateConfig],
   )
 
   const handleCaptionSystemPromptChange = useCallback(
@@ -1441,7 +1445,7 @@ export function useAiBatchGenerateBarController({
             },
           }
         : {},
-      contentType: 'video' as const,
+      contentType: 'image_text' as const,
       imageModel: firstImageModel?.model ?? 'nb2',
       selectedImageModels: firstImageModel?.model ? [firstImageModel.model] : [],
       imageModelSelectionMode: 'single' as const,
@@ -1454,7 +1458,7 @@ export function useAiBatchGenerateBarController({
       captionPromptOpen: true,
       captionSystemPrompt: defaultCaptionSystemPrompt,
       captionSystemPromptDefault: defaultCaptionSystemPrompt,
-      isDraftMode: true,
+      isDraftMode: forceDraftMode,
     }
 
     updateConfig(configKey, nextConfig)
@@ -1506,6 +1510,7 @@ export function useAiBatchGenerateBarController({
   } = useDragUploadHandlers(handleLocalUpload)
 
   const [textModelOptions, setTextModelOptions] = useState<DraftTextModelOption[]>([])
+  const [textModelGroups, setTextModelGroups] = useState<DraftTextModelGroup[]>([])
   const [selectedTextModel, setSelectedTextModel] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       return window.localStorage.getItem('foldframe:draft-text-model') || 'agy:default'
@@ -1519,8 +1524,11 @@ export function useAiBatchGenerateBarController({
       .then((res) => {
         if (!active || !res?.data?.models?.length) return
         setTextModelOptions(res.data.models)
+        setTextModelGroups(res.data.groups || [])
         setSelectedTextModel((prev) => {
-          const valid = res.data!.models.some(m => m.value === prev)
+          const valid = res.data!.models.some(
+            m => m.value === prev || Boolean(m.effortOptions?.some(e => e.value === prev)),
+          )
           return valid ? prev : (res.data!.defaultModel || res.data!.models[0].value)
         })
       })
@@ -1669,6 +1677,7 @@ export function useAiBatchGenerateBarController({
       configKey,
       fallbackState: initialLocalState,
       textModelOptions,
+      textModelGroups,
       selectedTextModel,
       imageAspectRatios: currentImageAspectRatios,
       imageModelOptions,
@@ -1683,6 +1692,7 @@ export function useAiBatchGenerateBarController({
       inputVideoDuration,
       isLoading: isGeneratingBatch || isUploading,
       hideNonDraftModes: forceDraftMode,
+      hideDraftModes: !forceDraftMode,
       effectiveLimitsDetailed,
       disabledPlatforms: incompatiblePlatforms,
       actions: {

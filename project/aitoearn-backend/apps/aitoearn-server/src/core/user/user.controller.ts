@@ -11,6 +11,7 @@ import {
   SwitchUserTypeDtoSchema,
   UpdateLocaleDto,
   UpdateLocaleDtoSchema,
+  UpdatePasswordDto,
   UpdateUserInfoDto,
 } from './user.dto'
 import { UserService } from './user.service'
@@ -49,6 +50,19 @@ export class UserController {
 
     const res = await this.userService.updateUserInfo(token.id, body)
     return res
+  }
+
+  @ApiDoc({
+    summary: 'Update User Password',
+    description: 'Set or update the login password of the authenticated user.',
+    body: UpdatePasswordDto.schema,
+  })
+  @Put('password/update')
+  async updatePassword(
+    @GetToken() token: TokenInfo,
+    @Body() body: UpdatePasswordDto,
+  ) {
+    return this.userService.updatePassword(token.id, body)
   }
 
   @ApiDoc({

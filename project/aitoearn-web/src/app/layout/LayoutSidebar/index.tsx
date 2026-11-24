@@ -1,6 +1,6 @@
 /**
  * LayoutSidebar - 左侧侧边栏布局组件
- * 包含 Logo、主导航、底部功能区（余额、插件）、用户下拉菜单
+ * 精简清爽布局：Logo + 主导航 + 底部统一账号管理入口（配置管理、我的频道、浏览器插件均收纳至账号管理中）
  * 支持展开/收缩两种状态
  */
 'use client'
@@ -12,9 +12,7 @@ import { useNavigationLogic, useVisibleRouterData } from '@/app/layout/shared'
 import { useSettingsModalStore } from '@/store/settingsModal'
 import { useUserStore } from '@/store/user'
 import { cn } from '@/utils/className'
-import { BottomSection, LogoSection, NavSection, UserDropdownMenu } from './components'
-import { ConfigManagerEntry } from './components/BottomSection/ConfigManagerEntry'
-import { MyChannelsEntry } from './components/BottomSection/MyChannelsEntry'
+import { LogoSection, NavSection, UserDropdownMenu } from './components'
 
 /**
  * 侧边栏主组件
@@ -63,25 +61,9 @@ function LayoutSidebar() {
         <NavSection items={navItems} currentRoute={currRouter!} collapsed={collapsed} />
       </div>
 
-      {/* 底部固定区域 - 不随滚动 */}
-      <div className="flex-shrink-0">
-        {/* 配置管理入口 */}
-        <div className="pb-1 flex flex-1">
-          <ConfigManagerEntry collapsed={collapsed} />
-        </div>
-
-        {/* 我的频道入口 */}
-        <div className="pb-1 flex flex-1">
-          <MyChannelsEntry collapsed={collapsed} />
-        </div>
-
-        {/* 底部功能区 */}
-        <BottomSection collapsed={collapsed} onOpenSettings={openSettings} />
-
-        {/* 用户下拉菜单 */}
-        <div className="mt-2 border-t border-sidebar-border pt-2">
-          <UserDropdownMenu collapsed={collapsed} onOpenSettings={openSettings} />
-        </div>
+      {/* 底部固定区域：统一账号管理入口 */}
+      <div className="mt-2 flex-shrink-0 border-t border-sidebar-border pt-2.5">
+        <UserDropdownMenu collapsed={collapsed} onOpenSettings={openSettings} />
       </div>
     </aside>
   )

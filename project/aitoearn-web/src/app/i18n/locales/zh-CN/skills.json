@@ -16,6 +16,7 @@
     "library": "分析与素材"
   },
   "names": {
+    "planning-social-content": "多平台运营策划",
     "generating-images": "图像生成",
     "generating-videos": "视频生成",
     "generating-drama-recaps": "短剧解说",
@@ -31,6 +32,7 @@
     "crawling-social-media": "社交媒体素材采集"
   },
   "summaries": {
+    "planning-social-content": "内置一鱼多吃跨平台改写、短视频分镜全案、商品种草转化与一周热点排期四大策划模板。",
     "generating-images": "根据描述或参考图生成新图像。",
     "generating-videos": "从文本或参考图像生成视频。",
     "generating-drama-recaps": "为短剧片段撰写并合成解说配音。",

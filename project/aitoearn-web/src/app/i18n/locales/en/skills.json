@@ -16,6 +16,7 @@
     "library": "Analysis & media"
   },
   "names": {
+    "planning-social-content": "Multi-Platform Content Planning",
     "generating-images": "Image generation",
     "generating-videos": "Video generation",
     "generating-drama-recaps": "Drama recaps",
@@ -31,6 +32,7 @@
     "crawling-social-media": "Social media collection"
   },
   "summaries": {
+    "planning-social-content": "Creator playbooks for cross-platform repurposing, short-video storyboards, product seeding, and 7-day calendars.",
     "generating-images": "Generate images from a prompt or a reference.",
     "generating-videos": "Generate video from text or reference images.",
     "generating-drama-recaps": "Create narrated recaps from short drama clips.",

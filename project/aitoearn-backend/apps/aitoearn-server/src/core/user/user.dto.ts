@@ -12,9 +12,18 @@ import { z } from 'zod'
 const UpdateUserInfoSchema = z.object({
   name: z.string({ message: '昵称' }).optional(),
   avatar: z.string({ message: '头像' }).optional(),
+  phone: z.string({ message: '手机号' }).max(32).optional(),
+  mail: z.string({ message: '邮箱' }).max(120).optional(),
 })
 
 export class UpdateUserInfoDto extends createZodDto(UpdateUserInfoSchema) {}
+
+const UpdatePasswordSchema = z.object({
+  currentPassword: z.string().max(128).optional(),
+  newPassword: z.string().min(6, '新密码至少 6 位').max(64, '新密码最多 64 位'),
+})
+
+export class UpdatePasswordDto extends createZodDto(UpdatePasswordSchema) {}
 
 export const SetAiConfigSchema = z.object({
   image: z.object({

@@ -104,11 +104,38 @@ export class User extends WithTimestampSchema {
   mail?: string
 
   @Prop({
+    type: String,
+    required: false,
+    index: true,
+  })
+  phone?: string
+
+  @Prop({
+    type: String,
     required: false,
   })
   avatar?: string
 
   @Prop({
+    type: String,
+    required: false,
+  })
+  passwordHash?: string
+
+  @Prop({
+    type: String,
+    required: false,
+  })
+  passwordSalt?: string
+
+  @Prop({
+    type: Date,
+    required: false,
+  })
+  passwordUpdatedAt?: Date
+
+  @Prop({
+    type: Number,
     required: true,
     enum: UserStatus,
     default: UserStatus.OPEN,
@@ -116,6 +143,7 @@ export class User extends WithTimestampSchema {
   status: UserStatus
 
   @Prop({
+    type: String,
     required: true,
     enum: UserType,
     default: UserType.CREATOR,

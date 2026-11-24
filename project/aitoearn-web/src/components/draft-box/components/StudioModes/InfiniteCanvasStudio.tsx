@@ -5,7 +5,6 @@ import type { DraftGenerationTask, ImageModelType, SSEMessage, VideoModelType } 
 import type { MediaPreviewItem } from '@/components/common/MediaPreview'
 import {
   ArrowUp,
-  Bot,
   Check,
   Clock,
   Copy,
@@ -21,11 +20,8 @@ import {
   Maximize2,
   Minus,
   MousePointerClick,
-  PanelRightClose,
-  PanelRightOpen,
   Play,
   Plus,
-  Send,
   Sparkles,
   Trash2,
   Upload,
@@ -46,8 +42,11 @@ import { usePlanDetailStore } from '@/store/draft-box/planDetailStore'
 import { cn } from '@/utils/className'
 import { getOssUrl } from '@/utils/oss'
 import { toast } from '@/utils/ui/toast'
+import type { AgentAttachmentItem, AgentMediaConfig, CanvasAgentMsgItem } from './CanvasAgentDrawer'
+import { AgentPrismMark, CanvasAgentDrawer } from './CanvasAgentDrawer'
 import { MediaDetailSidebar } from '../MediaDetailSidebar'
 import { StudioSelect } from './StudioSelect'
+import { TextModelPicker } from '../TextModelPicker'
 import { useStudioModelsAndLibrary } from './useStudioModelsAndLibrary'
 
 interface CanvasPos {
@@ -85,14 +84,7 @@ interface PeerLink {
   toId: string
 }
 
-interface CanvasAgentMsg {
-  id: string
-  role: 'user' | 'assistant'
-  text: string
-  tools?: string[]
-  mediaUrls?: string[]
-  streaming?: boolean
-}
+type CanvasAgentMsg = CanvasAgentMsgItem
 
 interface DraggingWire {
   sourceId: string
@@ -258,15 +250,26 @@ export function InfiniteCanvasStudio({
   const [agentInput, setAgentInput] = useState('')
   const [agentTaskId, setAgentTaskId] = useState<string | undefined>(undefined)
   const [agentBusy, setAgentBusy] = useState(false)
-  const [agentMessages, setAgentMessages] = useState<CanvasAgentMsg[]>([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      text: '你好！选中画布上的任意图片或视频后，直接告诉我需要衍生新图、转视频或写分镜文案即可。',
-    },
-  ])
+  const [agentAttachments, setAgentAttachments] = useState<AgentAttachmentItem[]>([])
+  const [agentTextModel, setAgentTextModel] = useState<string>('agy:default')
+  const [agentMediaConfig, setAgentMediaConfig] = useState<AgentMediaConfig>({
+    activeTab: 'image',
+    imageModel: 'auto',
+    videoModel: 'auto',
+    aspectRatio: 'auto',
+    imageQuality: 'auto',
+    videoQuality: 'auto',
+    videoDuration: 5,
+  })
+  const [agentMessages, setAgentMessages] = useState<CanvasAgentMsg[]>([])
   const agentAbortRef = useRef<(() => void) | null>(null)
   const agentScrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (catalog.defaultTextModel && agentTextModel === 'agy:default') {
+      setAgentTextModel(catalog.defaultTextModel)
+    }
+  }, [catalog.defaultTextModel, agentTextModel])
 
   // Unified library nodes
   const libraryNodes = useMemo(() => {
@@ -1126,20 +1129,50 @@ export function InfiniteCanvasStudio({
   // Embedded Native Agent Chat via SSE
   const sendAgentMessage = async (customText?: string) => {
     const text = (customText ?? agentInput).trim()
-    if (!text || agentBusy) return
+    if ((!text && agentAttachments.length === 0) || agentBusy) return
 
+    const snapshotAttachments = [...agentAttachments]
     const contextLines: string[] = []
-    if (selectedNode) {
-      if (selectedNode.kind === 'image') contextLines.push(`画布选中图片（${selectedNode.title}）：${selectedNode.url}`)
-      else if (selectedNode.kind === 'video') contextLines.push(`画布选中视频（${selectedNode.title}）：${selectedNode.url}`)
-      else contextLines.push(`画布选中草稿（${selectedNode.title}）：${(selectedNode.desc || '').slice(0, 260)}`)
+    for (const att of snapshotAttachments) {
+      const kindLabel = att.kind === 'video' ? '视频' : '图片'
+      const srcLabel = att.source === 'canvas' ? '画布@引用' : '本地上传附件'
+      contextLines.push(`${srcLabel}${kindLabel}（${att.title}）：${att.rawUrl || att.url}`)
+    }
+    if (selectedNode && !snapshotAttachments.some(a => a.nodeId === selectedNode.id)) {
+      if (selectedNode.kind === 'image') contextLines.push(`画布当前选中图片（${selectedNode.title}）：${selectedNode.rawUrl || selectedNode.url}`)
+      else if (selectedNode.kind === 'video') contextLines.push(`画布当前选中视频（${selectedNode.title}）：${selectedNode.rawUrl || selectedNode.url}`)
+      else contextLines.push(`画布当前选中草稿（${selectedNode.title}）：${(selectedNode.desc || '').slice(0, 260)}`)
     }
 
-    const finalPrompt = contextLines.length > 0
-      ? `[画布上下文]\n${contextLines.join('\n')}\n\n[用户指令]\n${text}`
-      : text
+    const prefLines: string[] = []
+    if (agentTextModel && agentTextModel !== 'agy:default') {
+      prefLines.push(`文本偏好模型：${agentTextModel}`)
+    }
+    if (agentMediaConfig.imageModel !== 'auto') prefLines.push(`优先图片模型：${agentMediaConfig.imageModel}`)
+    if (agentMediaConfig.videoModel !== 'auto') prefLines.push(`优先视频模型：${agentMediaConfig.videoModel}`)
+    if (agentMediaConfig.aspectRatio !== 'auto') prefLines.push(`画面比例：${agentMediaConfig.aspectRatio}`)
+    if (agentMediaConfig.activeTab === 'image' && agentMediaConfig.imageQuality !== 'auto') {
+      prefLines.push(`图片清晰度：${agentMediaConfig.imageQuality}`)
+    }
+    if (agentMediaConfig.activeTab === 'video') {
+      if (agentMediaConfig.videoQuality !== 'auto') prefLines.push(`视频清晰度：${agentMediaConfig.videoQuality}`)
+      prefLines.push(`视频时长：${agentMediaConfig.videoDuration}秒`)
+    }
 
-    const userMsg: CanvasAgentMsg = { id: `u-${Date.now()}`, role: 'user', text }
+    const headerParts: string[] = []
+    if (contextLines.length > 0) headerParts.push(`[参考素材与画布上下文]\n${contextLines.join('\n')}`)
+    if (prefLines.length > 0) headerParts.push(`[生成参数偏好]\n${prefLines.join('；')}`)
+    const effectiveUserText = text || '请基于我附带的参考素材帮我构思并生成高质量视觉延展方案'
+    const finalPrompt = headerParts.length > 0
+      ? `${headerParts.join('\n\n')}\n\n[用户指令]\n${effectiveUserText}`
+      : effectiveUserText
+
+    const userMsg: CanvasAgentMsg = {
+      id: `u-${Date.now()}`,
+      role: 'user',
+      text: effectiveUserText,
+      attachments: snapshotAttachments,
+    }
     const botId = `a-${Date.now()}`
     setAgentMessages(prev => [
       ...prev,
@@ -1147,6 +1180,7 @@ export function InfiniteCanvasStudio({
       { id: botId, role: 'assistant', text: '', tools: [], mediaUrls: [], streaming: true },
     ])
     setAgentInput('')
+    setAgentAttachments([])
     setAgentBusy(true)
 
     try {
@@ -1561,11 +1595,12 @@ export function InfiniteCanvasStudio({
             <Button
               type="button"
               size="sm"
+              data-testid="open-canvas-agent-btn"
               className="h-8 gap-1.5 rounded-xl px-3 text-xs shadow-sm"
               onClick={() => setAgentOpen(true)}
             >
-              <PanelRightOpen className="h-3.5 w-3.5" />
-              AI Agent
+              <AgentPrismMark className="h-3.5 w-3.5" />
+              创作副驾
             </Button>
           )}
         </div>
@@ -1868,26 +1903,37 @@ export function InfiniteCanvasStudio({
                   />
 
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <StudioSelect
-                      className="min-w-[120px] flex-1"
-                      triggerClassName="h-7.5 text-[11px]"
-                      menuMinWidth={190}
-                      value={gen.model}
-                      options={
-                        gen.kind === 'image'
-                          ? (catalog.imageModels.length > 0
-                              ? catalog.imageModels.map(m => ({ value: m.model, label: m.displayName || m.model }))
-                              : [{ value: gen.model, label: gen.model === 'dreamina-5.0' ? '即梦 5.0 Lite (CLI)' : gen.model }])
-                          : gen.kind === 'video'
-                            ? (catalog.videoModels.length > 0
-                                ? catalog.videoModels.map(m => ({ value: m.name, label: m.description || m.name }))
-                                : [{ value: gen.model, label: gen.model }])
-                            : (catalog.textModels.length > 0
-                                ? catalog.textModels.map(m => ({ value: m.value, label: m.label }))
-                                : [{ value: gen.model, label: gen.model }])
-                      }
-                      onChange={val => setGenNodes(prev => prev.map(n => (n.id === gen.id ? { ...n, model: val } : n)))}
-                    />
+                    {gen.kind === 'draft'
+                      ? (
+                          <TextModelPicker
+                            variant="compact"
+                            triggerClassName="min-w-[140px] flex-1"
+                            value={gen.model}
+                            models={catalog.textModels}
+                            groups={catalog.textModelGroups}
+                            onChange={val => setGenNodes(prev => prev.map(n => (n.id === gen.id ? { ...n, model: val } : n)))}
+                            side="bottom"
+                            align="start"
+                          />
+                        )
+                      : (
+                          <StudioSelect
+                            className="min-w-[120px] flex-1"
+                            triggerClassName="h-7.5 text-[11px]"
+                            menuMinWidth={190}
+                            value={gen.model}
+                            options={
+                              gen.kind === 'image'
+                                ? (catalog.imageModels.length > 0
+                                    ? catalog.imageModels.map(m => ({ value: m.model, label: m.displayName || m.model }))
+                                    : [{ value: gen.model, label: gen.model === 'dreamina-5.0' ? '即梦 5.0 Lite (CLI)' : gen.model }])
+                                : (catalog.videoModels.length > 0
+                                    ? catalog.videoModels.map(m => ({ value: m.name, label: m.description || m.name }))
+                                    : [{ value: gen.model, label: gen.model }])
+                            }
+                            onChange={val => setGenNodes(prev => prev.map(n => (n.id === gen.id ? { ...n, model: val } : n)))}
+                          />
+                        )}
 
                     {gen.kind !== 'draft' && (
                       <>
@@ -2328,94 +2374,46 @@ export function InfiniteCanvasStudio({
         </div>
       </div>
 
-      {/* 右侧可折叠 Agent 抽屉 */}
+      {/* 右侧可折叠创作副驾 Agent 抽屉（轻奢玻璃 + 棱镜图标 + 附件/拖拽/@引用 + 文本&视觉双模型切换） */}
       {agentOpen && (
-        <aside className="flex w-[336px] shrink-0 flex-col border-l border-border bg-card">
-          <div className="flex items-center justify-between border-b border-border px-3.5 py-2.5">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/12 text-primary">
-                <Bot className="h-4 w-4" />
-              </div>
-              <span className="text-xs font-semibold text-foreground">AI Agent</span>
-            </div>
-            <button
-              type="button"
-              className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
-              onClick={() => setAgentOpen(false)}
-            >
-              <PanelRightClose className="h-4 w-4" />
-            </button>
-          </div>
-
-          {selectedNode && (
-            <div className="flex items-center justify-between border-b border-border/70 bg-primary/[0.05] px-3.5 py-2 text-[11px]">
-              <span className="truncate font-medium text-primary">已选中：{selectedNode.title}</span>
-              <button type="button" className="shrink-0 text-muted-foreground hover:text-foreground cursor-pointer" onClick={() => setSelectedNodeId(null)}>取消</button>
-            </div>
-          )}
-
-          <div ref={agentScrollRef} data-canvas-scroll="true" className="flex-1 space-y-3 overflow-y-auto p-3.5">
-            {agentMessages.map(msg => (
-              <div key={msg.id} className={cn('flex flex-col gap-1.5', msg.role === 'user' ? 'items-end' : 'items-start')}>
-                <div
-                  className={cn(
-                    'max-w-[92%] rounded-2xl px-3 py-2 text-xs leading-relaxed whitespace-pre-wrap',
-                    msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground rounded-tr-sm'
-                      : 'border border-border/80 bg-muted/40 text-foreground rounded-tl-sm',
-                  )}
-                >
-                  {msg.tools && msg.tools.length > 0 && (
-                    <div className="mb-1.5 flex flex-wrap gap-1">
-                      {msg.tools.map((toolName, i) => (
-                        <span key={i} className="inline-flex items-center gap-1 rounded bg-background/80 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                          <Sparkles className="h-2.5 w-2.5" />
-                          {toolName}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {msg.text || (msg.streaming ? '正在执行…' : '完成')}
-                  {msg.streaming && <Loader2 className="ml-1.5 inline h-3 w-3 animate-spin" />}
-                </div>
-                {msg.mediaUrls && msg.mediaUrls.length > 0 && (
-                  <div className="grid grid-cols-2 gap-1.5 max-w-[92%]">
-                    {msg.mediaUrls.slice(0, 4).map((u, idx) => (
-                      <img key={idx} src={u} alt="agent media" className="h-24 w-full rounded-lg border border-border object-cover" />
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div className="border-t border-border p-3 space-y-2">
-            <div className="flex items-end gap-1.5">
-              <textarea
-                rows={2}
-                value={agentInput}
-                onChange={e => setAgentInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    void sendAgentMessage()
-                  }
-                }}
-                placeholder="输入指令…"
-                className="flex-1 resize-none rounded-xl border border-border bg-background px-3 py-2 text-xs outline-none focus:border-primary"
-              />
-              <Button
-                type="button"
-                size="icon"
-                className="h-9 w-9 shrink-0 rounded-xl"
-                disabled={agentBusy || !agentInput.trim()}
-                onClick={() => void sendAgentMessage()}
-              >
-                {agentBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </Button>
-            </div>
-          </div>
-        </aside>
+        <CanvasAgentDrawer
+          messages={agentMessages}
+          input={agentInput}
+          onInputChange={setAgentInput}
+          busy={agentBusy}
+          onSend={override => void sendAgentMessage(override)}
+          onResetSession={() => {
+            agentAbortRef.current?.()
+            setAgentTaskId(undefined)
+            setAgentMessages([])
+            setAgentAttachments([])
+            setAgentInput('')
+            setAgentBusy(false)
+          }}
+          onClose={() => setAgentOpen(false)}
+          selectedNode={selectedNode}
+          onClearSelectedNode={() => setSelectedNodeId(null)}
+          canvasMediaNodes={libraryNodes
+            .filter((n): n is typeof n & { kind: 'image' | 'video', url: string } => (n.kind === 'image' || n.kind === 'video') && Boolean(n.url))
+            .map(n => ({
+              id: n.id,
+              kind: n.kind,
+              title: n.title,
+              url: n.url,
+              rawUrl: n.rawUrl,
+            }))}
+          attachments={agentAttachments}
+          onAttachmentsChange={setAgentAttachments}
+          textModel={agentTextModel}
+          onTextModelChange={setAgentTextModel}
+          textModels={catalog.textModels}
+          textModelGroups={catalog.textModelGroups}
+          imageModels={catalog.imageModels}
+          videoModels={catalog.videoModels}
+          mediaConfig={agentMediaConfig}
+          onMediaConfigChange={setAgentMediaConfig}
+          scrollRef={agentScrollRef}
+        />
       )}
 
       <MediaPreview

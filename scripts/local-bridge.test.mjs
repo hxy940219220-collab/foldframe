@@ -264,3 +264,46 @@ test('Dreamina 1.4.22 normalizers support 5.0Pro 1.5k, seedance2.5 1080p, and co
   }))
   assert.equal(parsed.creditsCost, 0)
 })
+
+test('normalizeWorkBuddyCatalog deduplicates auto/default and formats free/latest labels', () => {
+  const catalog = bridge.normalizeWorkBuddyCatalog([
+    { modelId: 'auto', name: 'Auto', description: '' },
+    { modelId: 'hy4std', name: 'Hy4', description: 'x0.29 credits' },
+    { modelId: 'hy4flash-free', name: 'Hy4 flash', description: 'x0.00 credits' },
+    { modelId: 'deepseek-v4.1-flash', name: 'DeepSeek-V4.1-Flash', description: 'x0.11 credits' },
+    { modelId: 'glm-5.3', name: 'GLM-5.3', description: 'x0.69 credits' },
+    { modelId: 'glm-5.3', name: 'GLM-5.3', description: 'duplicate' },
+  ], 'hy4std')
+  assert.deepEqual(catalog.models, ['hy4std', 'hy4flash-free', 'deepseek-v4.1-flash', 'glm-5.3'])
+  assert.equal(catalog.modelLabels['hy4std'], 'Hy4')
+  assert.equal(catalog.modelLabels['hy4flash-free'], 'Hy4 flash (免费)')
+  assert.equal(catalog.modelLabels['glm-5.3'], 'GLM-5.3')
+  assert.equal(catalog.effectiveDefaultModel, 'Hy4')
+})
+
+test('extractWorkBuddyJsonResult extracts result entry from WorkBuddy JSON array output', () => {
+  const sample = JSON.stringify([
+    { type: 'message', role: 'user', content: [{ type: 'input_text', text: 'hi' }] },
+    { type: 'message', role: 'assistant', content: [{ type: 'output_text', text: 'OK' }] },
+    { type: 'result', subtype: 'success', is_error: false, result: 'OK', usage: { input_tokens: 10, output_tokens: 2 } },
+  ])
+  const parsed = bridge.extractWorkBuddyJsonResult(sample)
+  assert.equal(parsed?.result, 'OK')
+  assert.equal(parsed?.is_error, false)
+})
+
+test('parseLocalModelTarget supports optional @effort suffix for workbuddy and codex', () => {
+  assert.deepEqual(bridge.parseLocalModelTarget('workbuddy:glm-5.3@high'), { engine: 'workbuddy', model: 'glm-5.3', effort: 'high' })
+  assert.deepEqual(bridge.parseLocalModelTarget('codex:gpt-6.2-astra@xhigh'), { engine: 'codex', model: 'gpt-6.2-astra', effort: 'xhigh' })
+  assert.deepEqual(bridge.parseLocalModelTarget('codex:default@low'), { engine: 'codex', model: undefined, effort: 'low' })
+  const catalog = bridge.normalizeWorkBuddyCatalog([
+    {
+      modelId: 'deepseek-v4.1-flash',
+      name: 'DeepSeek-V4.1-Flash',
+      description: 'x0.11',
+      _meta: { credits: 'x0.11', maxInputTokens: 1000000, supportsImages: true, supportsReasoning: true, effortOptions: [{ value: 'high' }] },
+    },
+  ], 'deepseek-v4.1-flash')
+  assert.equal(catalog.modelMeta['deepseek-v4.1-flash']?.credits, 'x0.11')
+  assert.equal(catalog.modelMeta['deepseek-v4.1-flash']?.maxInputTokens, 1000000)
+})

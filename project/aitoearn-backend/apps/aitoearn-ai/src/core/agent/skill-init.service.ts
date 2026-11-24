@@ -3,6 +3,7 @@ import * as path from 'node:path'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 
 const SKILL_DIRECTORIES = [
+  'planning-social-content',
   'generating-images',
   'generating-videos',
   'editing-videos',

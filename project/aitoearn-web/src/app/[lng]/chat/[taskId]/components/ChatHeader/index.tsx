@@ -4,10 +4,11 @@
  */
 'use client'
 
-import { ArrowLeft, Bot, Heart, Loader2, Pencil, Share2, Star, X } from 'lucide-react'
+import type { IDisplayMessage } from '@/store/agent'
+import { ArrowLeft, Bot, Heart, Loader2, Pencil, Share2, X } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { useTransClient } from '@/app/i18n/client'
-import RatingModal from '@/components/Chat/Rating'
+import { ChatExportMenu } from '@/components/Chat/ChatExportMenu'
 import ShareModal from '@/components/Chat/Share/ShareModal'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/className'
@@ -101,15 +102,15 @@ export interface IChatHeaderProps {
   progress: number
   /** 思考中文案 */
   thinkingText: string
-  /** 任务ID（用于评分） */
+  /** 任务ID */
   taskId?: string
-  /** 任务评分（用于显示实星） */
-  rating?: number | null
-  /** 是否已收藏 */
+  /** 当前对话消息列表（用于多格式打包导出） */
+  messages?: IDisplayMessage[]
+  /** 是否已点赞 */
   isFavorited?: boolean
-  /** 收藏加载中 */
+  /** 点赞加载中 */
   isFavoriteLoading?: boolean
-  /** 收藏切换回调 */
+  /** 点赞切换回调 */
   onFavoriteToggle?: () => void | Promise<void>
   /** 编辑标题回调 */
   onEditTitle?: () => void
@@ -125,14 +126,13 @@ export function ChatHeader({
   thinkingText,
   onBack,
   taskId,
-  rating,
+  messages = [],
   isFavorited = false,
   isFavoriteLoading = false,
   onFavoriteToggle,
   onEditTitle,
 }: IChatHeaderProps) {
   const { t } = useTransClient('chat')
-  const [ratingOpen, setRatingOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   return (
     <header className="flex items-center gap-3 px-4 py-3 shrink-0" id="chatHeader">
@@ -156,23 +156,24 @@ export function ChatHeader({
       {/* PC 端公告提示 */}
       <DesktopAnnouncementTip />
 
-      {/* 右侧区域：生成状态 + 收藏 + 分享 + 评分 */}
+      {/* 右侧区域：点赞 + 分享 + 导出汇总 */}
       <div className="ml-auto flex items-center gap-2">
-        <div className="flex items-center gap-2.5">
-          {/* 收藏按钮 */}
+        <div className="flex items-center gap-2">
+          {/* 点赞按钮 */}
           <Button
             variant="ghost"
+            data-testid="chat-like-button"
             onClick={onFavoriteToggle}
             disabled={isFavoriteLoading}
-            className="ml-1 text-sm text-muted-foreground flex items-center gap-1 h-8 px-2 cursor-pointer"
+            className="ml-1 text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 h-8 px-2 cursor-pointer"
             aria-label={isFavorited ? t('task.unfavorite') : t('task.favorite')}
           >
             {isFavoriteLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-4.5 h-4.5 animate-spin" />
             ) : (
               <Heart
                 className={cn(
-                  'w-5 h-5 transition-colors',
+                  'w-4.5 h-4.5 transition-colors',
                   isFavorited && 'text-red-500 fill-red-500',
                 )}
               />
@@ -182,35 +183,15 @@ export function ChatHeader({
           <Button
             variant="ghost"
             onClick={() => setShareOpen(true)}
-            className="ml-1 text-sm text-muted-foreground flex items-center gap-1 h-8 px-2 cursor-pointer"
+            className="ml-1 text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 h-8 px-2 cursor-pointer"
           >
-            <Share2 className="w-5 h-5" />
+            <Share2 className="w-4.5 h-4.5" />
             <span>{t('task.share')}</span>
           </Button>
-          {/* 文本提示，移动端隐藏以节省空间 */}
-          <Button
-            variant="ghost"
-            onClick={() => setRatingOpen(true)}
-            className="ml-1 text-sm text-muted-foreground flex items-center gap-1 h-8 px-2 cursor-pointer"
-            aria-label={t('task.rate')}
-          >
-            <Star
-              className={`w-5 h-5 ${rating ? 'text-amber-400' : 'text-muted-foreground'}`}
-              {...(rating ? { fill: 'currentColor' } : {})}
-            />
-            <span>{t('task.rate') || '评分'}</span>
-          </Button>
+          <ChatExportMenu title={title || defaultTitle} messages={messages} />
         </div>
       </div>
       <ShareModal taskId={taskId ?? ''} open={shareOpen} onOpenChange={v => setShareOpen(v)} />
-      <RatingModal
-        taskId={taskId ?? ''}
-        open={ratingOpen}
-        onClose={() => setRatingOpen(false)}
-        onSaved={() => {
-          setRatingOpen(false)
-        }}
-      />
     </header>
   )
 }

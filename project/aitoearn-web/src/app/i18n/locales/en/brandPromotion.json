@@ -1,7 +1,7 @@
 {
   "studio": {
-    "home": "Home",
-    "title": "Creation studio",
+    "home": "Default Space",
+    "title": "Visual Studio",
     "compose": "Creative prompt",
     "library": "Media library",
     "reference": "Add reference",
@@ -401,9 +401,9 @@
     "platformIssueHint": "If this draft does not need to support {{platform}}, you can deselect it from target platforms."
   },
   "planTab": {
-    "more": "More",
-    "moreTitle": "All Draft Boxes",
-    "newPlan": "New",
+    "more": "Manage",
+    "moreTitle": "All Workspaces",
+    "newPlan": "New Space",
     "totalCount": "{{count}} total",
     "loadMore": "Load More",
     "editPlan": "Edit",

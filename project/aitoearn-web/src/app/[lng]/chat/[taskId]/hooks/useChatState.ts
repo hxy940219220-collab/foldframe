@@ -1,6 +1,6 @@
 import type { TaskDetail, TaskMessage } from '@/api/ai/ai.types'
-import type { IDisplayMessage, IWorkflowStep } from '@/store/agent'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import type { IDisplayMessage, ITaskContextUsage, IWorkflowStep } from '@/store/agent'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { agentApi } from '@/api/ai/ai.api'
 import { useAgentStore } from '@/store/agent'
@@ -32,12 +32,39 @@ export interface IChatStateReturn {
   progress: number
   /** 是否为活跃任务 */
   isActiveTask: boolean
+  /** 实时或历史上下文 Token 用量 */
+  contextUsage?: ITaskContextUsage
   /** 更新本地消息（供子组件使用） */
   setLocalMessages: React.Dispatch<React.SetStateAction<IDisplayMessage[]>>
   /** 设置本地生成状态 */
   setLocalIsGenerating: React.Dispatch<React.SetStateAction<boolean>>
   /** 更新任务标题 */
   updateTaskTitle: (newTitle: string) => void
+}
+
+function extractLatestUsageFromRawMessages(rawMessages: TaskMessage[]): ITaskContextUsage | undefined {
+  for (let i = rawMessages.length - 1; i >= 0; i--) {
+    const item: any = rawMessages[i]
+    const rawUsage = item?.usage || item?.message?.usage
+    if (rawUsage && typeof rawUsage === 'object') {
+      const inputTokens = Number(rawUsage.input_tokens || 0) || 0
+      const outputTokens = Number(rawUsage.output_tokens || 0) || 0
+      const cacheReadTokens = Number(rawUsage.cache_read_input_tokens || 0) || 0
+      const cacheCreationTokens = Number(rawUsage.cache_creation_input_tokens || 0) || 0
+      const totalTokens = inputTokens + outputTokens + cacheReadTokens + cacheCreationTokens
+      if (totalTokens > 0) {
+        return {
+          inputTokens,
+          outputTokens,
+          cacheReadTokens,
+          cacheCreationTokens,
+          totalTokens,
+          model: item?.message?.model || undefined,
+        }
+      }
+    }
+  }
+  return undefined
 }
 
 /**
@@ -76,6 +103,7 @@ export function useChatState(options: IChatStateOptions): IChatStateReturn {
   // 本地状态
   const [task, setTask] = useState<TaskDetail | null>(null)
   const [localMessages, setLocalMessages] = useState<IDisplayMessage[]>([])
+  const [localContextUsage, setLocalContextUsage] = useState<ITaskContextUsage | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
   const [localIsGenerating, setLocalIsGenerating] = useState(false)
 
@@ -92,6 +120,7 @@ export function useChatState(options: IChatStateOptions): IChatStateReturn {
     // 清空本地 task 与消息状态，显示 loading，等待新的加载逻辑触发
     setTask(null)
     setLocalMessages([])
+    setLocalContextUsage(undefined)
     setIsLoading(true)
     // 注意：不主动调用 startPolling，这里只做重置，后续 loadTask 会根据新任务情况自行决定是否启动轮询
   }, [taskId])
@@ -110,6 +139,10 @@ export function useChatState(options: IChatStateOptions): IChatStateReturn {
       (messages, rawMessages) => {
         rawMessagesRef.current = rawMessages
         setLocalMessages(messages)
+        const extractedUsage = extractLatestUsageFromRawMessages(rawMessages)
+        if (extractedUsage) {
+          setLocalContextUsage(extractedUsage)
+        }
 
         // 防御性检查：只有当新消息数量 >= 当前消息数量时才更新 store
         // 防止轮询返回的不完整数据覆盖 SSE 实时追加的消息
@@ -180,6 +213,10 @@ export function useChatState(options: IChatStateOptions): IChatStateReturn {
 
           if (result.data.messages) {
             rawMessagesRef.current = result.data.messages
+            const extractedUsage = extractLatestUsageFromRawMessages(result.data.messages)
+            if (extractedUsage) {
+              setLocalContextUsage(extractedUsage)
+            }
             const converted = convertMessages(result.data.messages)
             setLocalMessages(converted)
             setMessages(converted, taskId)
@@ -235,6 +272,13 @@ export function useChatState(options: IChatStateOptions): IChatStateReturn {
     return isActiveTask || isDebugMode ? storeWorkflowSteps : []
   })()
 
+  const contextUsage = useMemo<ITaskContextUsage | undefined>(() => {
+    if (taskId === 'new') {
+      return taskMessages[currentTaskId]?.contextUsage
+    }
+    return currentTaskData.contextUsage || localContextUsage
+  }, [taskId, taskMessages, currentTaskId, currentTaskData.contextUsage, localContextUsage])
+
   /**
    * 更新任务标题（用于编辑标题成功后更新本地状态）
    */
@@ -250,6 +294,7 @@ export function useChatState(options: IChatStateOptions): IChatStateReturn {
     isGenerating,
     progress: storeProgress,
     isActiveTask,
+    contextUsage,
     setLocalMessages,
     setLocalIsGenerating,
     updateTaskTitle,

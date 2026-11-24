@@ -1,22 +1,29 @@
 'use client'
 
+import type { PromotionMaterial } from '@/api/materials/material.types'
+import type { AccountsViewMode } from '@/app/[lng]/accounts/components/AccountsTopNav'
 import type { IPublishDialogRef } from '@/components/PublishDialog'
 import { NoSSR } from '@kwooshung/react-no-ssr'
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
+import { apiGetDraftInfo, apiGetMaterialGroupList, apiGetMaterialList } from '@/api/materials/material.api'
 import AccountsTopNav from '@/app/[lng]/accounts/components/AccountsTopNav'
 import CalendarTiming from '@/app/[lng]/accounts/components/CalendarTiming'
+import ScheduledDraftBoxView from '@/app/[lng]/accounts/components/ScheduledDraftBoxView'
 import { AccountStatus } from '@/app/config/accountConfig'
 import { PlatType } from '@/app/config/platConfig'
 import { useTransClient } from '@/app/i18n/client'
 import rightArrow from '@/assets/images/jiantou.png'
 import { useChannelManagerStore } from '@/components/ChannelManager'
 import PublishDialog from '@/components/PublishDialog'
+import { applyDraftToPublishDialog, SCHEDULE_DRAFT_STORAGE_KEY } from '@/components/PublishDialog/draftSchedule.util'
 import { VideoGrabFrame } from '@/components/PublishDialog/PublishDialog.util'
 import { usePublishDialog } from '@/components/PublishDialog/usePublishDialog'
 import { useAccountStore } from '@/store/account'
 import { generateUUID } from '@/utils/common'
+import { toast } from '@/utils/ui/toast'
 import { useCalendarTiming } from './components/CalendarTiming/useCalendarTiming'
 import { useNewWork } from './hooks/useNewWork'
 import 'driver.js/dist/driver.css'
@@ -27,7 +34,9 @@ interface AccountPageCoreProps {
     spaceId?: string
     addChannel?: string // 添加频道引导参数
     updateChannel?: string // 更新频道授权参数
-    action?: string // 动作类型：publish 等
+    action?: string // 动作类型：publish / scheduleDraft 等
+    view?: string // calendar | drafts
+    draftId?: string // 排版工坊一键排期草稿 ID
     // AI生成的内容参数
     aiGenerated?: string
     accountId?: string
@@ -49,6 +58,7 @@ export default function AccountPageCore({ searchParams }: AccountPageCoreProps) 
   )
 
   const { t } = useTransClient('account')
+  const urlSearchParams = useSearchParams()
 
   // 频道管理器相关方法
   const { openConnectList, openAndAuth } = useChannelManagerStore(
@@ -60,11 +70,19 @@ export default function AccountPageCore({ searchParams }: AccountPageCoreProps) 
 
   // 微信浏览器提示弹窗开关
   const [showWechatBrowserTip, setShowWechatBrowserTip] = useState(false)
+  // 视图切换：排期日历 | 排版草稿箱
+  const [activeView, setActiveView] = useState<AccountsViewMode>(
+    searchParams?.view === 'drafts' ? 'drafts' : 'calendar',
+  )
+  const [draftCount, setDraftCount] = useState<number>(0)
+  // 待预填的排版草稿
+  const [pendingScheduleDraft, setPendingScheduleDraft] = useState<PromotionMaterial | null>(null)
   // 发布弹窗状态
   const [publishDialogOpen, setPublishDialogOpen] = useState(false)
   const [defaultAccountIds, setDefaultAccountIds] = useState<string[]>()
   const [aiGeneratedData, setAiGeneratedData] = useState<any>(null)
   const publishDialogRef = useRef<IPublishDialogRef>(null)
+  const handledDraftQueryRef = useRef<string | null>(null)
   const accountListInitialLoading = accountLoading && !accountListInitialized
 
   // 使用新建作品 hook
@@ -77,6 +95,140 @@ export default function AccountPageCore({ searchParams }: AccountPageCoreProps) 
   useEffect(() => {
     accountInit()
   }, [])
+
+  // 加载排版草稿箱数量（供顶部角标展示）
+  const refreshDraftCount = useCallback(async () => {
+    try {
+      const groupRes = await apiGetMaterialGroupList(1, 20)
+      const groups = groupRes?.data?.list || []
+      if (groups.length === 0) {
+        setDraftCount(0)
+        return
+      }
+      const lists = await Promise.all(
+        groups.slice(0, 5).map(async (g) => {
+          const res = await apiGetMaterialList(g.id, 1, 50)
+          return res?.data?.list || []
+        }),
+      )
+      const uniqueIds = new Set(lists.flat().map(item => item.id))
+      setDraftCount(uniqueIds.size)
+    }
+    catch {}
+  }, [])
+
+  useEffect(() => {
+    void refreshDraftCount()
+  }, [refreshDraftCount])
+
+  // 从排版草稿箱或排版工坊一键排期发布
+  const handleScheduleDraft = useCallback((draft: PromotionMaterial) => {
+    setPendingScheduleDraft(draft)
+
+    // 优先匹配草稿目标平台账号
+    const targetTypes = new Set(draft.accountTypes || [])
+    let matched = allAccounts.filter(
+      acc => targetTypes.has(acc.type) && acc.status === AccountStatus.USABLE,
+    )
+    if (matched.length === 0 && targetTypes.size > 0) {
+      matched = allAccounts.filter(acc => targetTypes.has(acc.type))
+    }
+    if (matched.length === 0) {
+      matched = allAccounts.filter(acc => acc.status === AccountStatus.USABLE)
+    }
+    if (matched.length === 0 && allAccounts.length > 0) {
+      matched = [allAccounts[0]]
+    }
+    setDefaultAccountIds(matched.length > 0 ? matched.map(a => a.id) : undefined)
+    setPublishDialogOpen(true)
+  }, [allAccounts])
+
+  // 响应 URL 参数：?view=drafts 或 ?action=scheduleDraft&draftId=...
+  useEffect(() => {
+    const viewParam = urlSearchParams?.get('view') || searchParams?.view
+    if (viewParam === 'drafts') {
+      setActiveView('drafts')
+    }
+
+    const actionParam = urlSearchParams?.get('action') || searchParams?.action
+    const draftIdParam = urlSearchParams?.get('draftId') || searchParams?.draftId
+    if (actionParam === 'scheduleDraft') {
+      const key = `${actionParam}:${draftIdParam || 'session'}`
+      if (handledDraftQueryRef.current === key) return
+      handledDraftQueryRef.current = key
+
+      const hydrateAndOpen = async () => {
+        let draft: PromotionMaterial | null = null
+        try {
+          const raw = sessionStorage.getItem(SCHEDULE_DRAFT_STORAGE_KEY)
+          if (raw) {
+            const parsed = JSON.parse(raw) as PromotionMaterial
+            if (!draftIdParam || parsed.id === draftIdParam || parsed.title) {
+              draft = parsed
+            }
+            sessionStorage.removeItem(SCHEDULE_DRAFT_STORAGE_KEY)
+          }
+        }
+        catch {}
+
+        if (!draft && draftIdParam) {
+          try {
+            const res = await apiGetDraftInfo(draftIdParam)
+            if (res?.code === 0 && res.data) {
+              draft = res.data
+            }
+          }
+          catch {}
+        }
+
+        if (draft) {
+          handleScheduleDraft(draft)
+        }
+        else {
+          setPublishDialogOpen(true)
+        }
+
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href)
+          url.searchParams.delete('action')
+          url.searchParams.delete('draftId')
+          window.history.replaceState({}, '', url.toString())
+        }
+      }
+
+      void hydrateAndOpen()
+    }
+  }, [urlSearchParams, searchParams?.view, searchParams?.action, searchParams?.draftId, handleScheduleDraft])
+
+  // PublishDialog 打开后自动填充待排期草稿
+  useEffect(() => {
+    if (!pendingScheduleDraft || !publishDialogOpen) return
+    let cancelled = false
+
+    const timer = setTimeout(async () => {
+      if (cancelled) return
+      try {
+        const result = await applyDraftToPublishDialog(pendingScheduleDraft)
+        if (!cancelled) {
+          if (result.hasAccounts) {
+            toast.success('已自动填入排版工坊草稿，选择时间即可排期发布')
+          }
+          else {
+            toast.info('已带入排版草稿内容，先绑定渠道后即可一键排期发布')
+          }
+          setPendingScheduleDraft(null)
+        }
+      }
+      catch (err) {
+        console.error('[AccountPageCore] Failed to apply pending draft:', err)
+      }
+    }, 380)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [pendingScheduleDraft, publishDialogOpen])
 
   // 处理URL参数
   useEffect(() => {
@@ -518,11 +670,24 @@ export default function AccountPageCore({ searchParams }: AccountPageCoreProps) 
         {/* SEO: h1 标题 - 视觉隐藏但对搜索引擎可见 */}
         <h1 className="sr-only">{t('title')}</h1>
 
-        {/* Row 1: 顶部导航栏 */}
-        <AccountsTopNav onNewWork={() => openNewWork()} onAddAccount={() => openConnectList()} />
+        {/* Row 1: 顶部导航栏（含 排期日历 / 排版草稿箱 切换） */}
+        <AccountsTopNav
+          onNewWork={() => openNewWork()}
+          onAddAccount={() => openConnectList()}
+          activeView={activeView}
+          onViewChange={setActiveView}
+          draftCount={draftCount}
+        />
 
-        {/* 主内容区域: CalendarTiming (包含 Row 2 工具栏和日历/列表视图) */}
-        <CalendarTiming />
+        {/* 主内容区域: 排期日历 或 专用排版草稿箱 */}
+        {activeView === 'drafts' ? (
+          <ScheduledDraftBoxView
+            onScheduleDraft={handleScheduleDraft}
+            onDraftCountChange={setDraftCount}
+          />
+        ) : (
+          <CalendarTiming />
+        )}
 
         {/* 微信浏览器提示（遮罩 + 箭头指向右上角） */}
         {showWechatBrowserTip && (
@@ -587,6 +752,7 @@ export default function AccountPageCore({ searchParams }: AccountPageCoreProps) 
           onClose={() => {
             setPublishDialogOpen(false)
             setAiGeneratedData(null)
+            setPendingScheduleDraft(null)
             setDefaultAccountIds(undefined)
           }}
           accounts={allAccounts}
@@ -595,7 +761,10 @@ export default function AccountPageCore({ searchParams }: AccountPageCoreProps) 
           onPubSuccess={() => {
             setPublishDialogOpen(false)
             setAiGeneratedData(null)
+            setPendingScheduleDraft(null)
             setDefaultAccountIds(undefined)
+            setActiveView('calendar')
+            void refreshDraftCount()
             useCalendarTiming.getState().getPubRecord()
           }}
         />

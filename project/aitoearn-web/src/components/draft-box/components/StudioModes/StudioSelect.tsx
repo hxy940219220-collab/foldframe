@@ -8,6 +8,8 @@ import { cn } from '@/utils/className'
 export interface StudioSelectOption {
   value: string
   label: string
+  badge?: string
+  isCustom?: boolean
 }
 
 interface StudioSelectProps {
@@ -19,6 +21,7 @@ interface StudioSelectProps {
   triggerClassName?: string
   menuMinWidth?: number
   disabled?: boolean
+  testId?: string
 }
 
 export function StudioSelect({
@@ -30,6 +33,7 @@ export function StudioSelect({
   triggerClassName,
   menuMinWidth,
   disabled = false,
+  testId,
 }: StudioSelectProps) {
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -37,6 +41,7 @@ export function StudioSelect({
     top: number
     left: number
     width: number
+    maxHeight: number
     openUpward: boolean
   } | null>(null)
 
@@ -51,15 +56,18 @@ export function StudioSelect({
     const btn = triggerRef.current
     if (!btn) return
     const rect = btn.getBoundingClientRect()
-    const estimatedH = Math.min(260, options.length * 36 + 12)
-    const spaceBelow = window.innerHeight - rect.bottom - 12
-    const openUpward = spaceBelow < estimatedH && rect.top > estimatedH + 16
+    const estimatedH = Math.min(264, options.length * 36 + 12)
+    const spaceBelow = window.innerHeight - rect.bottom - 14
+    const spaceAbove = rect.top - 14
+    const openUpward = spaceBelow < Math.min(estimatedH, 180) && spaceAbove > spaceBelow
+    const maxHeight = Math.max(120, Math.min(272, (openUpward ? spaceAbove : spaceBelow) - 6))
     const width = Math.max(rect.width, menuMinWidth ?? 0)
     const maxLeft = window.innerWidth - width - 12
     setMenuPos({
       top: openUpward ? rect.top - 6 : rect.bottom + 6,
       left: Math.max(12, Math.min(rect.left, maxLeft)),
       width,
+      maxHeight,
       openUpward,
     })
   }
@@ -102,6 +110,7 @@ export function StudioSelect({
       <button
         ref={triggerRef}
         type="button"
+        data-testid={testId}
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -110,7 +119,7 @@ export function StudioSelect({
           if (!disabled) setOpen(v => !v)
         }}
         className={cn(
-          'inline-flex h-8 w-full min-w-0 items-center justify-between gap-2.5 rounded-lg border border-border bg-background pl-3 pr-2.5 text-xs font-medium text-foreground transition-colors hover:border-primary/50 focus:outline-none focus:border-primary disabled:opacity-50 cursor-pointer',
+          'inline-flex h-8 w-full min-w-0 items-center justify-between gap-3 rounded-lg border border-border bg-background pl-3.5 pr-3 text-xs font-medium text-foreground transition-colors hover:border-primary/50 focus:outline-none focus:border-primary disabled:opacity-50 cursor-pointer',
           open && 'border-primary ring-2 ring-primary/15',
           triggerClassName,
         )}
@@ -135,12 +144,13 @@ export function StudioSelect({
             top: menuPos.top,
             left: menuPos.left,
             width: menuPos.width,
+            maxHeight: menuPos.maxHeight,
             transform: menuPos.openUpward ? 'translateY(-100%)' : undefined,
           }}
           onMouseDown={e => e.stopPropagation()}
           onClick={e => e.stopPropagation()}
           className={cn(
-            'z-[120] max-h-64 overflow-y-auto rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-xl backdrop-blur',
+            'z-[120] overflow-y-auto rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-xl backdrop-blur',
             'animate-in fade-in-0 duration-150 ease-out',
             menuPos.openUpward ? 'slide-in-from-bottom-1.5' : 'slide-in-from-top-1.5',
           )}
@@ -148,25 +158,36 @@ export function StudioSelect({
           {options.map((opt) => {
             const isSelected = opt.value === value
             return (
-              <button
-                key={opt.value}
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                onClick={() => {
-                  onChange(opt.value)
-                  setOpen(false)
-                }}
-                className={cn(
-                  'flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-xs transition-colors cursor-pointer',
-                  isSelected
-                    ? 'bg-primary/10 font-semibold text-primary'
-                    : 'text-foreground hover:bg-muted',
-                )}
-              >
-                <span className="truncate">{opt.label}</span>
-                {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
-              </button>
+              <div key={opt.value}>
+                {opt.isCustom && <div className="my-1 h-px bg-border/80" />}
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  onClick={() => {
+                    onChange(opt.value)
+                    setOpen(false)
+                  }}
+                  className={cn(
+                    'flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-xs transition-colors cursor-pointer',
+                    isSelected
+                      ? 'bg-primary/10 font-semibold text-primary'
+                      : opt.isCustom
+                        ? 'font-medium text-primary/90 hover:bg-primary/8'
+                        : 'text-foreground hover:bg-muted',
+                  )}
+                >
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="truncate">{opt.label}</span>
+                    {opt.badge && (
+                      <span className="shrink-0 rounded-full bg-muted px-1.5 py-0 text-[9.5px] font-medium text-muted-foreground">
+                        {opt.badge}
+                      </span>
+                    )}
+                  </span>
+                  {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                </button>
+              </div>
             )
           })}
           {options.length === 0 && (

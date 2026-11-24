@@ -43,8 +43,8 @@
       "failed": "失败"
     },
     "rate": "评分",
-    "favorite": "收藏",
-    "unfavorite": "取消收藏",
+    "favorite": "点赞",
+    "unfavorite": "已点赞",
     "editTitle": "编辑标题",
     "share": "分享",
     "titleLabel": "任务标题",
@@ -125,8 +125,8 @@
       "secondsUnit": "秒"
     },
     "searchPlaceholder": "搜索任务标题...",
-    "favoriteOnly": "我的收藏",
-    "emptyFavorites": "暂无收藏的任务",
+    "favoriteOnly": "我的点赞",
+    "emptyFavorites": "暂无点赞的内容",
     "emptySearch": "未找到匹配的任务",
     "clearFilters": "清除筛选"
   },

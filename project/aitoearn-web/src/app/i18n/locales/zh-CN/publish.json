@@ -3,10 +3,10 @@
   "allChannels": "全部频道",
   "publish": "发布",
   "layout": {
-    "showContentManagement": "AI内容创作",
-    "hideContentManagement": "收起AI内容创作",
+    "showContentManagement": "排版草稿箱",
+    "hideContentManagement": "收起排版草稿箱",
     "closeDialog": "关闭发布弹框",
-    "contentManagementTooltip": "拖拽左侧内容创作 草稿/图片/视频 到右侧即可一键使用"
+    "contentManagementTooltip": "从左侧排版草稿箱点击一键填入，或拖拽草稿/素材到右侧直接发布"
   },
   "videoCover": {
     "title": "设置封面",

@@ -4,3 +4,4 @@
 
 export * from './GeneralTab'
 export * from './ProfileTab'
+export * from './WorkspaceToolsTab'

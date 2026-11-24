@@ -216,6 +216,18 @@ export interface IWorkflowStep {
 export interface IPendingTask {
   prompt: string
   medias: IUploadedMedia[]
+  /** 指定的文本模型标识 */
+  model?: string
+}
+
+/** 单任务上下文 Token 统计 */
+export interface ITaskContextUsage {
+  inputTokens: number
+  outputTokens: number
+  cacheReadTokens: number
+  cacheCreationTokens: number
+  totalTokens: number
+  model?: string
 }
 
 /** 单个任务的消息数据（按任务ID隔离存储） */
@@ -232,6 +244,8 @@ export interface ITaskMessageData {
   progress: number
   /** 是否正在生成 */
   isGenerating: boolean
+  /** 实时上下文 Token 消耗统计 */
+  contextUsage?: ITaskContextUsage
   /** 最后更新时间戳 */
   lastUpdated: number
 }
@@ -311,6 +325,8 @@ export interface ICreateTaskParams {
   prompt: string
   /** 媒体文件列表 */
   medias?: IUploadedMedia[]
+  /** 指定使用的文本模型标识 */
+  model?: string
   /** 翻译函数 */
   t: (key: string) => string
   /** taskId 获取成功回调 */

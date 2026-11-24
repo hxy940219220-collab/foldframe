@@ -1,0 +1,33 @@
+# Compile locally changed server modules onto the matching aitoearn-server Nest runtime.
+FROM node:22-alpine AS compiler
+WORKDIR /src
+RUN npm install --prefix /opt/compiler typescript@5.9.3
+COPY apps/aitoearn-server/src/core/user/ apps/aitoearn-server/src/core/user/
+COPY libs/mongodb/src/schemas/user.schema.ts libs/mongodb/src/schemas/
+COPY libs/aitoearn-server-shared/src/vos/user.vo.ts libs/aitoearn-server-shared/src/vos/
+RUN node <<'NODE'
+const fs = require('node:fs')
+const path = require('node:path')
+const ts = require('/opt/compiler/node_modules/typescript')
+for (const file of fs.readdirSync('.', { recursive: true }).filter(file => file.endsWith('.ts') && !file.endsWith('.spec.ts'))) {
+  const { outputText, diagnostics } = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
+    fileName: file,
+    reportDiagnostics: true,
+    compilerOptions: {
+      target: ts.ScriptTarget.ES2022,
+      module: ts.ModuleKind.CommonJS,
+      experimentalDecorators: true,
+      emitDecoratorMetadata: true,
+      esModuleInterop: true,
+      useDefineForClassFields: false,
+    },
+  })
+  if (diagnostics.length) throw new Error(ts.formatDiagnosticsWithColorAndContext(diagnostics, ts.sys))
+  const destination = path.join('/out', file.replace(/\.ts$/, '.js'))
+  fs.mkdirSync(path.dirname(destination), { recursive: true })
+  fs.writeFileSync(destination, outputText)
+}
+NODE
+
+FROM aitoearn/aitoearn-server:latest
+COPY --from=compiler /out /app

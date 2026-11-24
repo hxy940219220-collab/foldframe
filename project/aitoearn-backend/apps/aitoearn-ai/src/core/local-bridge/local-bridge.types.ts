@@ -13,6 +13,15 @@ export interface LocalEngineInfo {
   version?: string | null
   credits?: number | string | null
   models?: string[]
+  modelLabels?: Record<string, string>
+  modelMeta?: Record<string, {
+    label?: string
+    credits?: string
+    maxInputTokens?: number
+    supportsImages?: boolean
+    supportsReasoning?: boolean
+    effortOptions?: string[]
+  }>
   imageModels?: string[]
   videoModels?: string[]
   baseUrl?: string

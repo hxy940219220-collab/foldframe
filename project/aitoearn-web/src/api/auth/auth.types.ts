@@ -72,6 +72,16 @@ export interface AuthRequestOptions {
  * 更新用户信息请求参数。
  */
 export interface UpdateUserInfoParams {
-  name: string
+  name?: string
   avatar?: string
+  phone?: string
+  mail?: string
+}
+
+/**
+ * 修改登录密码请求参数。
+ */
+export interface UpdatePasswordParams {
+  currentPassword?: string
+  newPassword: string
 }
